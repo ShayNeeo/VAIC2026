@@ -78,7 +78,7 @@ class TestRAGRetriever:
 
     def test_rag_12_hash_embedding_fallback(self, retriever):
         """RAG-12: Hash embedding fallback deterministic."""
-        vec1 = retriever._embed("test query")
-        vec2 = retriever._embed("test query")
+        vec1 = retriever._hash_embed("test query")
+        vec2 = retriever._hash_embed("test query")
         assert vec1 == vec2
         assert len(vec1) == 128

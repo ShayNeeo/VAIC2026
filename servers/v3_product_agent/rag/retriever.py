@@ -60,7 +60,9 @@ class ProductRetrievalResult:
 class EmbeddingCache:
     """SQLite cache for embeddings to avoid re-computation."""
 
-    def __init__(self, db_path: str = "./data/embedding_cache.db"):
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            db_path = settings.EMBEDDING_CACHE_PATH
         import sqlite3
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -241,7 +243,7 @@ class ProductRetriever:
             pid: self._overlap(query_tokens, self._tokens(text))
             for pid, text in self._documents.items()
         }
-        if max(sparse_scores.values(), default=0.0) < 0.40:
+        if max(sparse_scores.values(), default=0.0) < settings.RAG_SPARSE_GATE:
             return []
 
         query_vector = self._embedder(normalized)

@@ -41,6 +41,8 @@ class Settings(BaseModel):
     RAG_SPARSE_WEIGHT: float = float(os.getenv("RAG_SPARSE_WEIGHT", "0.4"))
     RAG_THRESHOLD: float = float(os.getenv("RAG_THRESHOLD", "0.35"))
     RAG_TOP_K: int = int(os.getenv("RAG_TOP_K", "5"))
+    RAG_SPARSE_GATE: float = float(os.getenv("RAG_SPARSE_GATE", "0.40"))
+    EMBEDDING_CACHE_PATH: str = os.getenv("EMBEDDING_CACHE_PATH", "./data/embedding_cache.db")
 
     # LLM Client
     LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "5.0"))

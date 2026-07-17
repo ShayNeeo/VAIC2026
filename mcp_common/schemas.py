@@ -186,6 +186,7 @@ class ProductResult(BaseModel):
     retrieval_query: str
     citations: List[EvidenceItem]
     guardrail_verdict: Dict[str, Any]
+    provenance: Dict[str, Any] = Field(default_factory=dict)
     schema_version: str = "3.0.0"
 
 
@@ -340,9 +341,9 @@ class SharedCaseState(BaseModel):
     missing_information: List[str] = Field(default_factory=list)
     evidences: List[EvidenceItem] = Field(default_factory=list)
 
-    risk_level: RiskLevel = "low"
+    risk_level: RiskLevel = RiskLevel.LOW
     approval_status: Literal["pending", "approved", "rejected"] = "pending"
-    final_status: CaseStatus = "new"
+    final_status: CaseStatus = CaseStatus.NEW
     audit_log: List[Dict[str, Any]] = Field(default_factory=list)
     trace_id: str = ""
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())

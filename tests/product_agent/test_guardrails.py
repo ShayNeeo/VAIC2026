@@ -1,7 +1,7 @@
 """Test Input/Output Guardrails - Tier 2 GRD-* cases."""
 
 import pytest
-from servers.product_agent.safety.guardrails import InputGuardrails, OutputGuardrails
+from servers.v3_product_agent.safety.guardrails import InputGuardrails, OutputGuardrails
 from mcp_common.schemas import EvidenceItem
 
 

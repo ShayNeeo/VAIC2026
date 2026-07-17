@@ -1,8 +1,45 @@
-"""V3 Product Catalog - Tier A internal authoritative data (§9.2)."""
+"""V3 Product Catalog - Tier A internal authoritative data (§9.2).
 
-from typing import Any, Dict, List, Mapping
+Single source of truth for product facts. Matcher, retriever and verifier
+all read from here; no other module duplicates product data.
+
+Invariants:
+- Every entry carries ``source_metadata`` with document/section/version/owner/tier.
+- ``category`` is one of the four product families in the blueprint.
+- ``use_cases`` is the keyword vocabulary used by :data:`NEED_KEYWORDS`.
+"""
+
+from enum import Enum
+from typing import Any, Dict, List, Mapping, Tuple
 
 from mcp_common.schemas import DataTier, ProductFeeLimit, ProductPrerequisite
+
+
+class ProductNeed(str, Enum):
+    """Business needs the Product Agent can resolve (blueprint B3/PR1)."""
+
+    PAYROLL = "payroll"
+    CASH_MANAGEMENT = "cash_management"
+    COLLECTION = "collection"
+    WORKING_CAPITAL = "working_capital"
+
+
+#: Need -> signal keywords. ``select_needs`` matches these against the request.
+NEED_KEYWORDS: Dict[ProductNeed, Tuple[str, ...]] = {
+    ProductNeed.PAYROLL: ("payroll", "chi lương", "trả lương", "lương"),
+    ProductNeed.CASH_MANAGEMENT: ("cash_management", "dòng tiền", "tài khoản phụ", "đối soát", "cash"),
+    ProductNeed.COLLECTION: ("collection", "thu hộ", "chi hộ", "virtual_account", "đối soát", "thu/chi hộ"),
+    ProductNeed.WORKING_CAPITAL: ("working_capital", "vốn lưu động", "thấu chi", "tín dụng", "vốn", "hạn mức"),
+}
+
+
+#: Bundle compatibility graph. A product is only bundled with compatible peers.
+COMPATIBILITY_GRAPH: Dict[str, Dict[str, List[str]]] = {
+    "PROD-PAYROLL": {"compatible": ["PROD-CASH-MGMT", "PROD-COLLECTION"], "exclusion": []},
+    "PROD-CASH-MGMT": {"compatible": ["PROD-PAYROLL", "PROD-COLLECTION", "PROD-WORKING-CAPITAL"], "exclusion": []},
+    "PROD-COLLECTION": {"compatible": ["PROD-CASH-MGMT", "PROD-PAYROLL"], "exclusion": []},
+    "PROD-WORKING-CAPITAL": {"compatible": ["PROD-CASH-MGMT"], "exclusion": []},
+}
 
 
 # V3 Product Catalog — Tier A (Internal Authoritative) per §9.2
@@ -133,3 +170,30 @@ V3_PRODUCT_CATALOG: Mapping[str, Mapping[str, Any]] = {
         },
     },
 }
+
+
+def get_entry(product_id: str) -> Mapping[str, Any]:
+    """Return a catalog entry or raise ``KeyError`` (fail loud, not silent)."""
+    return V3_PRODUCT_CATALOG[product_id]
+
+
+def fee_value(product_id: str, fee_name: str) -> "tuple[float, str] | None":
+    """Exact fee/limit value+unit from catalog — used by NUMERIC_EXACT verify.
+
+    Returns ``None`` when the fee name is unknown so callers fail closed.
+    """
+    for fee in get_entry(product_id).get("fees_limits", []):
+        if fee.name == fee_name:
+            return fee.value, fee.unit
+    return None
+
+
+def source_ref(product_id: str) -> Dict[str, str]:
+    """Citation anchor (document/section/effective/owner) for a product."""
+    meta = get_entry(product_id)["source_metadata"]
+    return {
+        "source_document_id": meta["document"],
+        "source_section": meta["section"],
+        "source_version": meta["effective_date"],
+        "owner": meta["owner"],
+    }
