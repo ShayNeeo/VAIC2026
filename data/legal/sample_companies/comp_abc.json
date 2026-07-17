@@ -1,0 +1,14 @@
+{
+  "customer_id": "COMP-ABC",
+  "company_name": "Công ty TNHH Sản xuất ABC",
+  "tax_code": "0123456789",
+  "industry": "Sản xuất",
+  "employees_count": 500,
+  "annual_revenue": 120000000000,
+  "cash_flow_status": "phân tán",
+  "ubo_status": "missing",
+  "financial_reports": {"has_recent": false},
+  "representative": {"name": "Nguyễn Văn A", "id_number": "001234567890", "position": "Giám đốc"},
+  "legal_status": "active",
+  "note": "SYNTHETIC DEMO — Thiếu UBO và BCTC, đủ điều kiện Payroll/Cash Mgmt nhưng không đủ cho Working Capital"
+}

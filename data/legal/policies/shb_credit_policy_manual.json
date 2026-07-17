@@ -1,0 +1,99 @@
+{
+  "document_id": "SHB_Credit_Policy_Manual",
+  "title": "Sổ tay Chính sách Tín dụng Doanh nghiệp — Demo Synthetic",
+  "version": "2026.1",
+  "effective_from": "2026-01-01",
+  "effective_to": null,
+  "status": "active",
+  "owner": "Credit/Risk",
+  "note": "DỮ LIỆU SYNTHETIC CHỈ DÙNG CHO DEMO/HACKATHON — KHÔNG PHẢI CHÍNH SÁCH THẬT CỦA SHB",
+  "chapters": [
+    {
+      "chapter_id": "CHAP-III",
+      "title": "Chương III — Điều kiện cấp tín dụng",
+      "articles": [
+        {
+          "article_id": "DIEU-15",
+          "title": "Điều 15 — Điều kiện chung",
+          "text": "Doanh nghiệp xin cấp tín dụng phải đáp ứng đồng thời các điều kiện: có giấy chứng nhận đăng ký doanh nghiệp còn hiệu lực, có thông tin UBO đầy đủ, không có kết quả khớp danh sách cấm vận và có báo cáo tài chính năm gần nhất được kiểm toán.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-15-K1",
+              "text": "Khoản 1: Tất cả điều kiện trong Chương III phải được thỏa mãn đồng thời. Không có điều kiện nào có thể bị bỏ qua kể cả khi điều kiện khác được đánh giá xuất sắc.",
+              "rule_refs": ["RULE-UBO-001", "RULE-CREDIT-FS-001", "RULE-BUSINESS-REG-001"]
+            },
+            {
+              "clause_id": "DIEU-15-K2",
+              "text": "Khoản 2: Rủi ro tín dụng của doanh nghiệp phải ở mức chấp nhận được theo phân loại nội bộ của SHB.",
+              "rule_refs": []
+            }
+          ]
+        },
+        {
+          "article_id": "DIEU-16",
+          "title": "Điều 16 — Điều kiện về hoạt động kinh doanh",
+          "text": "Doanh nghiệp phải có ít nhất 12 tháng hoạt động liên tục kể từ ngày thành lập và có doanh thu từ hoạt động kinh doanh chính.",
+          "clauses": []
+        },
+        {
+          "article_id": "DIEU-17",
+          "title": "Điều 17 — Tài sản đảm bảo",
+          "text": "Đối với tín dụng có bảo đảm: tài sản phải có giấy tờ pháp lý rõ ràng, định giá bởi đơn vị thẩm định được SHB chấp thuận và không có tranh chấp pháp lý. Tỷ lệ cho vay trên giá trị tài sản (LTV) không vượt quá 70% đối với bất động sản.",
+          "clauses": []
+        },
+        {
+          "article_id": "DIEU-18",
+          "title": "Điều 18 — Mục đích vay vốn",
+          "text": "Mục đích vay vốn phải hợp pháp, có căn cứ kinh tế rõ ràng và phù hợp với hoạt động kinh doanh của doanh nghiệp.",
+          "clauses": []
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-V",
+      "title": "Chương V — Hồ sơ tín dụng",
+      "articles": [
+        {
+          "article_id": "DIEU-25",
+          "title": "Điều 25 — Báo cáo tài chính",
+          "text": "Hồ sơ cấp tín dụng vốn lưu động phải có báo cáo tài chính năm gần nhất được kiểm toán bởi công ty kiểm toán độc lập được Bộ Tài chính chấp thuận. Báo cáo tài chính không được lập quá 18 tháng tính đến ngày nộp hồ sơ. Thiếu báo cáo tài chính hoặc báo cáo quá hạn dẫn đến trạng thái pending_information.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-25-K1",
+              "text": "Khoản 1: Báo cáo tài chính phải bao gồm bảng cân đối kế toán, báo cáo kết quả hoạt động kinh doanh và báo cáo lưu chuyển tiền tệ.",
+              "rule_refs": ["RULE-CREDIT-FS-001"]
+            },
+            {
+              "clause_id": "DIEU-25-K2",
+              "text": "Khoản 2: Đối với sản phẩm thấu chi tài khoản và vốn lưu động, báo cáo tài chính năm gần nhất là bắt buộc ở mức độ blocking. Không có ngoại lệ.",
+              "rule_refs": ["RULE-CREDIT-FS-001"]
+            },
+            {
+              "clause_id": "DIEU-25-K3",
+              "text": "Khoản 3: Báo cáo tài chính phải được kiểm toán độc lập. Báo cáo nội bộ không được chấp nhận thay thế.",
+              "rule_refs": ["RULE-CREDIT-FS-001"]
+            }
+          ]
+        },
+        {
+          "article_id": "DIEU-26",
+          "title": "Điều 26 — Tài sản đảm bảo",
+          "text": "Hồ sơ tài sản đảm bảo phải bao gồm giấy chứng nhận quyền sở hữu/sử dụng, biên bản định giá không quá 6 tháng và văn bản không có tranh chấp của cơ quan có thẩm quyền.",
+          "clauses": []
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-VII",
+      "title": "Chương VII — Thẩm quyền phê duyệt",
+      "articles": [
+        {
+          "article_id": "DIEU-35",
+          "title": "Điều 35 — Phân cấp thẩm quyền theo hạn mức",
+          "text": "Thẩm quyền phê duyệt tín dụng được phân cấp theo hạn mức: dưới 5 tỷ VND do Giám đốc Chi nhánh phê duyệt, từ 5-50 tỷ do Hội đồng Tín dụng Chi nhánh, trên 50 tỷ do Hội sở. Mọi kết quả thẩm định Legal phải được đính kèm trước khi trình phê duyệt.",
+          "clauses": []
+        }
+      ]
+    }
+  ]
+}

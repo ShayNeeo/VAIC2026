@@ -16,14 +16,14 @@ from mcp_common.schemas import (
 class TestSchemas:
     def test_valid_minimal_product_result(self):
         pr = ProductResult(
-            recommended_bundle={"bundle_name": "Test", "products": []},
+            recommended_bundle={"bundle_name": "Test", "products": [], "bundle_reason": ""},
             recommended_products=[],
             missing_parameters=["need"],
             retrieval_query="test",
             citations=[],
             guardrail_verdict={"input_allowed": True, "output_allowed": True},
         )
-        assert pr.schema_version == "2.0.0"
+        assert pr.schema_version == "3.0.0"
 
     def test_valid_full_shared_case_state(self):
         state = SharedCaseState(
@@ -32,7 +32,7 @@ class TestSchemas:
             rm_id="RM-001",
         )
         assert state.final_status == "new"
-        assert state.schema_version == "2.0.0"
+        assert state.schema_version == "3.0.0"
 
     def test_invalid_final_status_enum(self):
         with pytest.raises(Exception):

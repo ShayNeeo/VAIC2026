@@ -1,0 +1,14 @@
+{
+  "customer_id": "COMP-XYZ",
+  "company_name": "Công ty Cổ phần Thương mại XYZ",
+  "tax_code": "0987654321",
+  "industry": "Thương mại",
+  "employees_count": 80,
+  "annual_revenue": 45000000000,
+  "cash_flow_status": "ổn định",
+  "ubo_status": "complete",
+  "financial_reports": {"has_recent": true},
+  "representative": {"name": "Trần Thị B", "id_number": "079123456789", "position": "Tổng Giám đốc"},
+  "legal_status": "active",
+  "note": "SYNTHETIC DEMO — Hồ sơ đầy đủ"
+}

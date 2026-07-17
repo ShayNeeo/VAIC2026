@@ -30,10 +30,10 @@ from mcp_common.schemas import (
     ResolvedValue,
 )
 
-from v3_product_agent.rag.retriever import ProductRetriever
-from v3_product_agent.product.matcher import ProductMatcher
-from v3_product_agent.safety.guardrails import InputGuardrails, OutputGuardrails
-from v3_product_agent.safety.verify import EvidenceVerifier
+from servers.v3_product_agent.rag.retriever import ProductRetriever
+from servers.v3_product_agent.product.matcher import ProductMatcher
+from servers.v3_product_agent.safety.guardrails import InputGuardrails, OutputGuardrails
+from servers.v3_product_agent.safety.verify import EvidenceVerifier
 
 
 # Initialize components
@@ -123,7 +123,7 @@ async def product_analyze(request: ProductAnalyzeRequest) -> Dict[str, Any]:
 
     # Build ProductResult
     result = ProductResult(
-        recommended_bundle=ProductBundle(**match_result["recommended_bundle"]),
+        recommended_bundle=match_result["recommended_bundle"],
         recommended_products=match_result["recommended_products"],
         missing_parameters=match_result["missing_parameters"],
         retrieval_query=match_result["retrieval_query"],

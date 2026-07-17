@@ -30,10 +30,10 @@ from mcp_common.schemas import (
     ResolvedValue,
 )
 
-from v3_product_agent.rag.retriever import ProductRetriever
-from v3_product_agent.product.matcher import ProductMatcher
-from v3_product_agent.safety.guardrails import InputGuardrails, OutputGuardrails
-from v3_product_agent.safety.verify import EvidenceVerifier
+from servers.v3_product_agent.rag.retriever import ProductRetriever
+from servers.v3_product_agent.product.matcher import ProductMatcher
+from servers.v3_product_agent.safety.guardrails import InputGuardrails, OutputGuardrails
+from servers.v3_product_agent.safety.verify import EvidenceVerifier
 
 
 # Initialize components

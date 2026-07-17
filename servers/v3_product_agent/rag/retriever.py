@@ -122,7 +122,7 @@ class ProductRetriever:
         dense_weight: float = None,
         sparse_weight: float = None,
     ):
-        from v3_product_agent.product.catalog import V3_PRODUCT_CATALOG
+        from servers.v3_product_agent.product.catalog import V3_PRODUCT_CATALOG
         self.catalog = catalog or V3_PRODUCT_CATALOG
         self.threshold = threshold or settings.RAG_THRESHOLD
         self.dense_weight = dense_weight or settings.RAG_DENSE_WEIGHT
