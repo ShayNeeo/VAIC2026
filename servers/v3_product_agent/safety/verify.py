@@ -9,11 +9,28 @@ V3 Principles (§11):
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Tuple
 
 from mcp_common.config import settings
 from mcp_common.llm_client import get_gemma_client, deterministic_semantic_score
 from mcp_common.schemas import EvidenceItem, ValidationMethod
+
+from servers.v3_product_agent.product.catalog import V3_PRODUCT_CATALOG
+
+#: Keywords that mark a numeric claim (fee / limit / rate).
+NUMERIC_KEYWORDS = ("phí", "hạn mức", "lãi suất", "fee", "limit", "rate", "%")
+
+#: Map a claim's fee keyword to the catalog ``fee.name`` it must match.
+FEE_KEYWORD_MAP = {
+    "lãi suất": "interest_rate",
+    "interest_rate": "interest_rate",
+    "rate": "interest_rate",
+    "hạn mức": "limit",
+    "limit": "limit",
+    "phí": "fee",
+    "fee": "fee",
+}
 
 
 class EvidenceVerifier:
@@ -47,6 +64,36 @@ class EvidenceVerifier:
         )
         return sources
 
+    @staticmethod
+    def _extract_number(text: str) -> "float | None":
+        """First numeric token in a claim (handles `8.5 %` style)."""
+        match = re.search(r"(\d+(?:[.,]\d+)?)", text)
+        return float(match.group(1).replace(",", ".")) if match else None
+
+    def _verify_numeric(self, ev: EvidenceItem, source_text: str) -> bool:
+        """NUMERIC_EXACT: claim value+unit must match a catalog fee/limit.
+
+        Resolution order (§11: no semantic for numbers):
+        1. exact catalog fee lookup for the cited product section,
+        2. substring quote match in source text.
+        Fail closed when neither matches.
+        """
+        number = self._extract_number(ev.claim)
+        if number is None:
+            return bool(source_text and ev.quote.strip() and ev.quote.strip() in source_text)
+
+        for pid, entry in V3_PRODUCT_CATALOG.items():
+            if entry["source_metadata"]["section"] == ev.section_or_page:
+                for fee in entry.get("fees_limits", []):
+                    expected_name = None
+                    for kw, name in FEE_KEYWORD_MAP.items():
+                        if kw in ev.claim.lower():
+                            expected_name = name
+                            break
+                    if expected_name and fee.name == expected_name and abs(fee.value - number) < 1e-6:
+                        return True
+        return bool(source_text and ev.quote.strip() and ev.quote.strip() in source_text)
+
     def verify(self, evidences: List[EvidenceItem]) -> Tuple[List[EvidenceItem], Dict[str, Any]]:
         """Return updated evidences with is_valid + summary."""
         valid = 0
@@ -58,18 +105,13 @@ class EvidenceVerifier:
             source_text = self._sources.get(key, "")
 
             # Exact match required for numeric claims (fee, limit, rate)
-            is_numeric_claim = any(
-                kw in ev.claim.lower()
-                for kw in ["phí", "hạn mức", "lãi suất", "fee", "limit", "rate", "%"]
-            )
+            is_numeric_claim = any(kw in ev.claim.lower() for kw in NUMERIC_KEYWORDS)
 
             if is_numeric_claim:
-                ev.is_valid = bool(
-                    source_text
-                    and ev.quote.strip()
-                    and ev.quote.strip() in source_text
-                )
-                ev.validation_method = ValidationMethod.EXACT_MATCH
+                # Fee/limit/rate -> exact numeric match (§11: no semantic for numbers)
+                ev.is_valid = self._verify_numeric(ev, source_text)
+                ev.validation_method = ValidationMethod.NUMERIC_EXACT
+                ev.validation_score = 1.0 if ev.is_valid else 0.0
             else:
                 # Semantic support for qualitative claims
                 if source_text and ev.quote.strip():

@@ -1,48 +1,26 @@
 """V3 Product Agent MCP Server — RAG → Guardrails → Verify pipeline.
 
-Flow:
-1. Input Guardrails (injection regex + PII mask + semantic judge)
-2. RAG Retrieval (hybrid dense+sparse, heuristic rerank, threshold 0.35)
-3. Deterministic Matcher + LLM Reason
-4. Evidence Verification (exact match fee/limit, semantic support)
-5. Output Guardrails (block ungrounded, legal blocking, fee hallucination)
+This module is wiring only. All decision logic lives in
+``servers.v3_product_agent.product.pipeline``. The server exposes three MCP
+tools and maps a :class:`PipelineResult` onto the wire contract.
 
-Tools: product_analyze, product_search, health_check
+Tools: ``product_analyze``, ``product_search``, ``health_check``
 """
 
 from __future__ import annotations
 
-import uuid
 from typing import Any, Dict, List, Optional
 
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
 from mcp_common.config import settings
-from mcp_common.schemas import (
-    ProductResult,
-    EvidenceItem,
-    ProductRecommendation,
-    ProductBundle,
-    ProductMatchScore,
-    ProductPrerequisite,
-    ValidationMethod,
-    ResolvedValue,
-)
 
-from servers.v3_product_agent.rag.retriever import ProductRetriever
-from servers.v3_product_agent.product.matcher import ProductMatcher
-from servers.v3_product_agent.safety.guardrails import InputGuardrails, OutputGuardrails
-from servers.v3_product_agent.safety.verify import EvidenceVerifier
+from servers.v3_product_agent.product.pipeline import ProductPipeline, PipelineRequest
 
 
-# Initialize components
 mcp = FastMCP("v3-product-agent")
-retriever = ProductRetriever()
-matcher = ProductMatcher()
-input_guardrails = InputGuardrails()
-output_guardrails = OutputGuardrails()
-verifier = EvidenceVerifier()
+pipeline = ProductPipeline()
 
 
 # =============================================================================
@@ -55,6 +33,7 @@ class ProductAnalyzeRequest(BaseModel):
     documents: List[Dict[str, Any]] = Field(default_factory=list)
     trace_id: Optional[str] = None
     context_snapshot: Optional[Dict[str, Any]] = None
+    legal_result: Optional[Dict[str, Any]] = None
 
 
 class ProductSearchRequest(BaseModel):
@@ -62,7 +41,7 @@ class ProductSearchRequest(BaseModel):
     top_k: int = 5
 
 
-class HealthResponse(BaseModel):
+class HealthResponseModel(BaseModel):
     status: str = "ok"
     service: str = "v3-product-agent"
     version: str = "3.0.0"
@@ -75,81 +54,41 @@ class HealthResponse(BaseModel):
 
 @mcp.tool()
 async def product_analyze(request: ProductAnalyzeRequest) -> Dict[str, Any]:
-    """
-    Full Product Agent pipeline: RAG → Guardrails → Match → Verify.
+    """Full Product Agent pipeline: RAG → Guardrails → Match → Verify.
 
     Input: customer request + company profile + documents
     Output: ProductResult with bundle, citations, guardrail verdict
     """
-    trace_id = request.trace_id or uuid.uuid4().hex[:8]
-
-    # 1. INPUT GUARDRAILS
-    guardrail_result = input_guardrails.inspect(
-        request.request_text,
-        request.documents,
-        context_snapshot=request.context_snapshot
+    result = pipeline.run(
+        PipelineRequest(
+            request_text=request.request_text,
+            company_profile=request.company_profile,
+            documents=request.documents,
+            trace_id=request.trace_id,
+            context_snapshot=request.context_snapshot,
+        ),
+        legal_result=request.legal_result,
     )
-    if not guardrail_result["allowed"]:
+
+    if not result.allowed:
         return {
             "allowed": False,
-            "error": "INPUT_BLOCKED",
-            "security_flags": guardrail_result["security_flags"],
-            "trace_id": trace_id,
+            "error": result.error or "BLOCKED",
+            "security_flags": result.security_flags,
+            "trace_id": result.trace_id,
         }
 
-    # 2. RAG RETRIEVAL
-    sanitized_text = guardrail_result["sanitized_text"]
-    retrieval_results = retriever.search(sanitized_text, top_k=settings.RAG_TOP_K)
-
-    # 3. MATCHER (deterministic + LLM reason)
-    match_result = matcher.run(
-        request_text=sanitized_text,
-        profile=request.company_profile,
-        retrieval_results=retrieval_results,
-    )
-
-    # 4. EVIDENCE VERIFICATION
-    evidences = [
-        EvidenceItem(**e) for e in match_result.get("citations", [])
-    ]
-    verified_evidences, verify_summary = verifier.verify(evidences)
-
-    # 5. OUTPUT GUARDRAILS
-    allowed, reason = output_guardrails.validate_output(
-        product_result=match_result,
-        evidences=verified_evidences,
-        legal_result={},  # Legal runs separately in orchestrator
-    )
-
-    # Build ProductResult
-    result = ProductResult(
-        recommended_bundle=match_result["recommended_bundle"],
-        recommended_products=match_result["recommended_products"],
-        missing_parameters=match_result["missing_parameters"],
-        retrieval_query=match_result["retrieval_query"],
-        citations=verified_evidences,
-        guardrail_verdict={
-            "input_allowed": guardrail_result["allowed"],
-            "input_flags": guardrail_result["security_flags"],
-            "output_allowed": allowed,
-            "output_reason": reason,
-            "evidence_valid": verify_summary["all_valid"],
-            "evidence_valid_count": verify_summary["valid"],
-            "evidence_invalid_count": verify_summary["invalid"],
-        },
-    )
-
     return {
-        "allowed": allowed,
-        "result": result.model_dump(),
-        "trace_id": trace_id,
+        "allowed": True,
+        "result": result.result.model_dump(),
+        "trace_id": result.trace_id,
     }
 
 
 @mcp.tool()
 async def product_search(request: ProductSearchRequest) -> Dict[str, Any]:
     """Raw RAG search for debugging / RM direct query."""
-    context = retriever.build_context(request.q, top_k=request.top_k)
+    context = pipeline.retriever.build_context(request.q, top_k=request.top_k)
     return {
         "query": request.q,
         "context": context["context"],
@@ -159,11 +98,12 @@ async def product_search(request: ProductSearchRequest) -> Dict[str, Any]:
 
 
 @mcp.tool()
-async def health_check() -> HealthResponse:
-    return HealthResponse(
+async def health_check() -> HealthResponseModel:
+    return HealthResponseModel(
         config={
             "rag_threshold": settings.RAG_THRESHOLD,
             "rag_top_k": settings.RAG_TOP_K,
+            "rag_sparse_gate": settings.RAG_SPARSE_GATE,
             "dense_weight": settings.RAG_DENSE_WEIGHT,
             "sparse_weight": settings.RAG_SPARSE_WEIGHT,
             "use_real_embedding": settings.USE_REAL_EMBEDDING,

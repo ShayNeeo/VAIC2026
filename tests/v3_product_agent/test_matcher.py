@@ -47,7 +47,7 @@ class TestProductMatcher:
             profile={"employees_count": 10, "annual_revenue": 1_000_000_000, "cash_flow_status": "bình thường"},
             retrieval_results=[],
         )
-        assert "Nhu cầu sản phẩm cụ thể" in result["missing_parameters"]
+        assert "product_need_unresolved" in result["missing_parameters"]
 
     def test_mat_05_dedupe_preserves_order(self, matcher):
         """MAT-05: Duplicate product IDs deduplicated."""

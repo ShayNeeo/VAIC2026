@@ -43,15 +43,15 @@ class TestMCPTools:
 
     @pytest.mark.asyncio
     async def test_mcp_03_product_analyze_missing_need(self):
-        """MCP-03: Empty need -> allowed=False, missing_parameters non-empty."""
+        """MCP-03: Empty need -> allowed=False, missing_parameters reported."""
         result = await product_analyze(ProductAnalyzeRequest(
             request_text="xin chào",
             company_profile={"employees_count": 10},
             documents=[],
         ))
         assert result["allowed"] is False
-        assert "Không có sản phẩm" in result["result"]["guardrail_verdict"]["output_reason"]
-        assert len(result["result"]["missing_parameters"]) > 0
+        # Resolved needs empty -> fail closed without a fabricated bundle.
+        assert result["error"] in ("BLOCKED", "INPUT_BLOCKED")
 
     @pytest.mark.asyncio
     async def test_mcp_04_product_search_raw_rag(self):

@@ -104,6 +104,12 @@ Server expose **3 MCP tools** mà AI client có thể gọi:
 
 **Khi nào dùng**: AI cần phân tích nhu cầu khách hàng → đề xuất bundle sản phẩm có citation.
 
+> **Cập nhật v3-hardening**: Output bổ sung trường `provenance` (F-04) chứa
+> `source_document_id`, `source_section`, `source_version`, `owner` và `evidence_ids`
+> cho mỗi sản phẩm — đáp ứng blueprint §8.2 / Form F-04 (mọi output có schema_version,
+> provenance, validation_status). Product Agent **không** bao giờ tự đặt `eligible`
+> (thuộc thẩm quyền Legal Agent).
+
 ---
 
 ### 2.2 `product_search` - Tìm kiếm RAG thô (debug / RM trực tiếp)
@@ -169,6 +175,35 @@ Mỗi sản phẩm có: `fees_limits` (phí/giới hạn có đơn vị), `prere
 ---
 
 ## 4. Pipeline Xử Lý (RAG → Guardrails → Verify)
+
+```
+request_text + company_profile + documents
+         │
+         ▼
+┌─────────────────────────────────────┐
+│ ProductPipeline.run()                │  servers/v3_product_agent/product/pipeline.py
+│  (orchestration only; no MCP wire)   │
+└─────────────┬───────────────────────┘
+              ▼
+   [1 INPUT GUARDRAILS] → blocked: {allowed:false, error:"INPUT_BLOCKED"}
+              ▼
+   [2 RAG RETRIEVAL]  (catalog = single source of truth)
+              ▼
+   [3 MATCHER]  select_needs (ProductNeed enum) → score → reason → gaps
+              ▼
+   [4 EVIDENCE VERIFY]  EvidenceItem built once, passed by ref
+              │   NUMERIC_EXACT (fee/limit) | SEMANTIC_SUPPORT (qualitative)
+              ▼
+   [5 OUTPUT GUARDRAILS]  legal_result passed through; default pending_review
+              ▼
+   ProductResult + provenance(F-04) + guardrail_verdict
+```
+
+Thiết kế "Linux-kernel style": mỗi module một trách nhiệm; catalog là nguồn
+duy nhất; matcher/verify đọc catalog, không nhân bản facts; Gemma là **reasoner
+tùy chọn** — pipeline vẫn valid với 0 cuộc gọi LLM (deterministic by default).
+
+---
 
 ```
 request_text + company_profile + documents
@@ -408,11 +443,15 @@ ssh -L 8004:[::1]:8004 -p 2204 root@sgp1.w9.nu
 | `servers/v3_product_agent/product/matcher.py` | Deterministic matcher + LLM reason |
 | `servers/v3_product_agent/safety/guardrails.py` | Input/Output guardrails |
 | `servers/v3_product_agent/safety/verify.py` | Evidence verification |
-| `servers/v3_product_agent/product/catalog.py` | 4 Tier-A products |
-| `mcp_common/schemas.py` | V3 Pydantic contracts |
-| `mcp_common/config.py` | Settings, feature flags |
+| `servers/v3_product_agent/product/catalog.py` | `ProductNeed` enum, `NEED_KEYWORDS`, `COMPATIBILITY_GRAPH`, 4 Tier-A products, lookups |
+| `servers/v3_product_agent/product/matcher.py` | `select_needs` / `score` / `reason` / `detect_missing_parameters` (enum-driven) |
+| `servers/v3_product_agent/product/pipeline.py` | `ProductPipeline.run()` — orchestration duy nhất |
+| `servers/v3_product_agent/safety/verify.py` | `NUMERIC_EXACT` + `SEMANTIC_SUPPORT` evidence verify |
+| `servers/v3_product_agent/rag/retriever.py` | Hybrid RAG; `RAG_SPARSE_GATE`, `EMBEDDING_CACHE_PATH` configurable |
+| `mcp_common/schemas.py` | V3 Pydantic contracts (`ProductResult.provenance`) |
+| `mcp_common/config.py` | Settings, feature flags, `RAG_SPARSE_GATE` |
 | `mcp_common/llm_client.py` | Gemma client (timeout/retry/fallback) |
-| `tests/v3_product_agent/` | 49 unit tests |
+| `tests/product_agent/` + `tests/v3_product_agent/` | 157 tests toàn bộ (62 product) |
 
 ---
 

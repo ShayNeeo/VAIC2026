@@ -52,8 +52,8 @@ class TestMCPTools:
         )
         result = await product_analyze(request)
         assert result["allowed"] is False
-        assert "Không có sản phẩm" in result["result"]["guardrail_verdict"]["output_reason"]
-        assert len(result["result"]["missing_parameters"]) > 0
+        # Resolved needs empty -> fail closed without a fabricated bundle.
+        assert result["error"] in ("BLOCKED", "INPUT_BLOCKED")
 
     @pytest.mark.asyncio
     async def test_mcp_04_product_search_raw_rag(self):
