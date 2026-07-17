@@ -1205,6 +1205,7 @@ mixin _$OpportunityCard {
   String get productId => throw _privateConstructorUsedError;
   String get customer => throw _privateConstructorUsedError;
   String get caseId => throw _privateConstructorUsedError;
+  @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
   OpportunityStatus get status => throw _privateConstructorUsedError;
   String get businessNeed => throw _privateConstructorUsedError;
   List<Signal> get signals => throw _privateConstructorUsedError;
@@ -1239,6 +1240,7 @@ abstract class $OpportunityCardCopyWith<$Res> {
       String productId,
       String customer,
       String caseId,
+      @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
       OpportunityStatus status,
       String businessNeed,
       List<Signal> signals,
@@ -1367,6 +1369,7 @@ abstract class _$$OpportunityCardImplCopyWith<$Res>
       String productId,
       String customer,
       String caseId,
+      @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
       OpportunityStatus status,
       String businessNeed,
       List<Signal> signals,
@@ -1488,6 +1491,7 @@ class _$OpportunityCardImpl implements _OpportunityCard {
       required this.productId,
       required this.customer,
       required this.caseId,
+      @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
       required this.status,
       required this.businessNeed,
       required final List<Signal> signals,
@@ -1519,6 +1523,7 @@ class _$OpportunityCardImpl implements _OpportunityCard {
   @override
   final String caseId;
   @override
+  @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
   final OpportunityStatus status;
   @override
   final String businessNeed;
@@ -1652,6 +1657,7 @@ abstract class _OpportunityCard implements OpportunityCard {
       required final String productId,
       required final String customer,
       required final String caseId,
+      @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
       required final OpportunityStatus status,
       required final String businessNeed,
       required final List<Signal> signals,
@@ -1678,6 +1684,7 @@ abstract class _OpportunityCard implements OpportunityCard {
   @override
   String get caseId;
   @override
+  @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
   OpportunityStatus get status;
   @override
   String get businessNeed;
