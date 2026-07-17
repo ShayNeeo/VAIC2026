@@ -1,0 +1,13 @@
+customer_id,company_name,industry_code,legal_form,registered_city,country_code,employee_count,annual_revenue_vnd,operating_model,risk_segment,rm_id,customer_status,tax_id_stub,website,onboarding_date,source_id,synthetic_flag
+CUST-0001,Công ty TNHH Sản xuất Minh An,manufacturing,joint_stock,Hà Nội,VN,500,185000000000,domestic,high,RM-01,active,TAX-0001-SYN,https://www.cust-0001.example,2024-02-15,SRC-SYN-001,true
+CUST-0002,Công ty Cổ phần Logistics Đông Dương,logistics,joint_stock,Hải Phòng,VN,320,142000000000,domestic,medium,RM-02,active,TAX-0002-SYN,https://www.cust-0002.example,2025-03-15,SRC-SYN-001,true
+CUST-0003,Công ty TNHH Công nghệ Sao Việt,technology,limited_liability,Đà Nẵng,VN,180,86000000000,export,medium,RM-03,active,TAX-0003-SYN,https://www.cust-0003.example,2026-04-15,SRC-SYN-001,true
+CUST-0004,Công ty Cổ phần Thực phẩm An Bình,food_processing,joint_stock,Bình Dương,VN,740,268000000000,domestic,high,RM-04,active,TAX-0004-SYN,https://www.cust-0004.example,2023-05-15,SRC-SYN-001,true
+CUST-0005,Công ty TNHH Dược phẩm Nam Việt,pharmaceuticals,limited_liability,Hồ Chí Minh,VN,260,124000000000,domestic,medium,RM-05,active,TAX-0005-SYN,https://www.cust-0005.example,2024-06-15,SRC-SYN-001,true
+CUST-0006,Công ty Cổ phần Năng lượng Xanh Việt,renewable_energy,joint_stock,Quảng Ninh,VN,95,312000000000,project,high,RM-01,active,TAX-0006-SYN,https://www.cust-0006.example,2025-07-15,SRC-SYN-001,true
+CUST-0007,Công ty TNHH Bán lẻ Hưng Thịnh,retail,limited_liability,Cần Thơ,VN,410,156000000000,domestic,medium,RM-02,active,TAX-0007-SYN,https://www.cust-0007.example,2026-08-15,SRC-SYN-001,true
+CUST-0008,Công ty Cổ phần Xây dựng Đại Phát,construction,joint_stock,Hà Nội,VN,860,390000000000,project,high,RM-03,active,TAX-0008-SYN,https://www.cust-0008.example,2023-01-15,SRC-SYN-001,true
+CUST-0009,Công ty TNHH Dịch vụ Y tế Tâm An,healthcare,limited_liability,Hồ Chí Minh,VN,230,118000000000,domestic,medium,RM-04,active,TAX-0009-SYN,https://www.cust-0009.example,2024-02-15,SRC-SYN-001,true
+CUST-0010,Công ty Cổ phần Xuất khẩu Biển Đông,export,joint_stock,Đà Nẵng,VN,620,344000000000,export,high,RM-05,active,TAX-0010-SYN,https://www.cust-0010.example,2025-01-15,SRC-SYN-001,true
+CUST-0011,Công ty TNHH Giáo dục Khai Minh,education,limited_liability,Huế,VN,120,52000000000,domestic,low,RM-01,active,TAX-0011-SYN,https://www.cust-0011.example,2026-02-15,SRC-SYN-001,true
+CUST-0012,Công ty Cổ phần Nông nghiệp Mekong,agriculture,joint_stock,Cần Thơ,VN,275,174000000000,domestic,medium,RM-02,active,TAX-0012-SYN,https://www.cust-0012.example,2023-03-15,SRC-SYN-001,true

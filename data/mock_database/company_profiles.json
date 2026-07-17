@@ -1,0 +1,85 @@
+[
+  {
+    "customer_id": "COMP-ABC",
+    "case_id": "CORP-DEMO-001",
+    "archetype": "manufacturing_500_staff",
+    "profile_version": "v3",
+    "attributes": {
+      "legal_name": "Công ty Cổ phần ABC Việt Nam",
+      "industry": "Sản xuất hàng tiêu dùng",
+      "employees_count": 500,
+      "annual_revenue": 120000000000,
+      "cash_flow_status": "Dòng tiền phân tán qua nhiều tài khoản phụ",
+      "ubo_status": "unverified",
+      "operating_years": 8,
+      "has_bad_debt_12m": false,
+      "account_or_unit_count": 6
+    },
+    "sales_signals": {
+      "supplier_payments_per_month": 1200,
+      "erp_system": "file_export"
+    },
+    "funding_need": {
+      "amount_vnd": 20000000000,
+      "tenor_months": 6,
+      "purpose": "seasonal_working_capital"
+    },
+    "expected_intents": ["payroll", "supplier_payment", "cash_management", "working_capital"],
+    "missingness": ["ubo_identification_form", "recent_financial_statement"],
+    "data_label": "MVP Hero Case"
+  },
+  {
+    "customer_id": "COMP-XYZ",
+    "case_id": "CORP-DEMO-002",
+    "archetype": "retail-multi-outlet",
+    "profile_version": "v2",
+    "attributes": {
+      "legal_name": "Công ty TNHH Bán lẻ XYZ",
+      "industry": "Thương mại dịch vụ",
+      "employees_count": 80,
+      "annual_revenue": 45000000000,
+      "cash_flow_status": "Tập trung tại một tài khoản chính",
+      "ubo_status": "verified",
+      "operating_years": 5,
+      "has_bad_debt_12m": false,
+      "account_or_unit_count": 1
+    },
+    "sales_signals": {
+      "supplier_payments_per_month": 50,
+      "erp_system": "api_ready"
+    },
+    "funding_need": null,
+    "expected_intents": ["payroll", "supplier_payment"],
+    "missingness": [],
+    "data_label": "MVP Happy Path Regression Case"
+  },
+  {
+    "customer_id": "COMP-DEF",
+    "case_id": "CORP-DEMO-003",
+    "archetype": "logistics-import-export",
+    "profile_version": "v1",
+    "attributes": {
+      "legal_name": "Công ty CP Logistics DEF Toàn cầu",
+      "industry": "Vận tải và kho bãi",
+      "employees_count": 120,
+      "annual_revenue": 85000000000,
+      "cash_flow_status": "Thiếu hụt thanh khoản ngắn hạn",
+      "ubo_status": "verified",
+      "operating_years": 2,
+      "has_bad_debt_12m": true,
+      "account_or_unit_count": 2
+    },
+    "sales_signals": {
+      "supplier_payments_per_month": 300,
+      "erp_system": "manual"
+    },
+    "funding_need": {
+      "amount_vnd": 5000000000,
+      "tenor_months": 3,
+      "purpose": "pay_overdue_debt"
+    },
+    "expected_intents": ["working_capital", "trade_finance"],
+    "missingness": [],
+    "data_label": "MVP Adversarial Case (Bad Debt)"
+  }
+]

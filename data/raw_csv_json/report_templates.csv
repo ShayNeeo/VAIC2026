@@ -1,0 +1,4 @@
+template_id,report_type,sections,required_fields,output_format,approval_required,version,source_id,synthetic_flag
+TPL-REPORT-001,decision_brief,case_summary;customer_context;recommended_solution;legal_findings;operations_checklist;missing_information;risk_and_guardrail;approval;next_actions,case_id;customer_id;product_result;legal_result;operations_result;evidence;approval_status,markdown|docx,true,v1.0,SRC-PROP-001,true
+TPL-REPORT-002,operations_status_report,case_status;task_status;sla_summary;exceptions;audit_highlights,case_id;tasks;sla_rules;audit_events,xlsx|markdown,false,v1.0,SRC-PROP-001,true
+TPL-REPORT-003,completeness_report,required_documents;available_documents;missing_items;invalid_items;owner_and_deadline,case_id;checklist;documents;owners,xlsx|markdown,true,v1.0,SRC-PROP-001,true

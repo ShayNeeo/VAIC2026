@@ -1,0 +1,19 @@
+ubo_id,customer_id,owner_name,owner_type,ownership_pct,ownership_path,verification_status,last_verified_date,source_of_information,pep_status,sanctions_status,source_id,synthetic_flag
+UBO-0001,CUST-0001,Nguyễn An Minh,natural_person,0.42,direct,verified,2026-06-15,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0002,CUST-0001,Lê Thùy Dung,natural_person,0.28,direct,missing_verification,,customer_submission_missing,not_screened,not_screened,SRC-SYN-001,true
+UBO-0003,CUST-0002,Phạm Hữu Long,natural_person,0.35,direct,verified,2026-05-12,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0004,CUST-0002,Công ty Đầu tư Bắc Hải,legal_entity,0.27,indirect,verified,2026-05-12,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0005,CUST-0003,Lê Hải Yến,natural_person,0.55,direct,verified,2026-07-01,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0006,CUST-0004,Vũ Đức Thành,natural_person,0.31,direct,pending_documents,,customer_submission_missing,not_screened,not_screened,SRC-SYN-001,true
+UBO-0007,CUST-0004,Nguyễn Phương Thảo,natural_person,0.24,direct,pending_documents,,customer_submission_missing,not_screened,not_screened,SRC-SYN-001,true
+UBO-0008,CUST-0005,Đặng Thu Hà,natural_person,0.48,direct,verified,2026-04-20,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0009,CUST-0006,Hoàng Quang Vinh,natural_person,0.22,direct,verified,2026-03-19,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0010,CUST-0006,Công ty Năng lượng Á Châu,legal_entity,0.51,indirect,needs_review,2026-03-19,customer_submission_missing,not_screened,not_screened,SRC-SYN-001,true
+UBO-0011,CUST-0007,Bùi Thanh Tâm,natural_person,0.64,direct,verified,2026-06-22,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0012,CUST-0008,Đỗ Văn Phúc,natural_person,0.39,direct,verified,2026-06-25,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0013,CUST-0009,Nguyễn Hồng Mai,natural_person,0.58,direct,verified,2026-05-30,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0014,CUST-0010,Trương Minh Khoa,natural_person,0.33,direct,verified,2026-05-22,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0015,CUST-0010,Lâm Gia Huy,natural_person,0.18,direct,verified,2026-05-22,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0016,CUST-0011,Phan Khánh Linh,natural_person,0.72,direct,verified,2026-06-08,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0017,CUST-0012,Mai Quốc Bảo,natural_person,0.44,direct,verified,2026-06-02,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true
+UBO-0018,CUST-0012,Nguyễn Thùy Chi,natural_person,0.21,direct,verified,2026-06-02,company_registry_mock,not_screened,not_screened,SRC-SYN-001,true

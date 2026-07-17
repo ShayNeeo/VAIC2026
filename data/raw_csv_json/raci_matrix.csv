@@ -1,0 +1,9 @@
+raci_id,workflow_name,activity,responsible,accountable,consulted,informed,approval_owner_role,source_id,synthetic_flag
+RACI-001,Corporate Request Resolution,intake,RM,Planner,Operations,Compliance,RM,SRC-PROP-001,true
+RACI-002,Corporate Request Resolution,product_solution,Product,Planner,RM,Operations,Product Lead,SRC-PROP-001,true
+RACI-003,Corporate Request Resolution,legal_eligibility,Legal & Compliance,Planner,RM,Risk Control,Compliance Lead,SRC-PROP-001,true
+RACI-004,Corporate Request Resolution,operational_checklist,Operations,Planner,RM,Legal,Operations Lead,SRC-PROP-001,true
+RACI-005,Corporate Request Resolution,evidence_validation,Risk Control,Planner,Legal/Product/Operations,RM,Risk Lead,SRC-PROP-001,true
+RACI-006,Corporate Request Resolution,create_case,Platform,Operations,RM,Risk Control,RM,SRC-PROP-001,true
+RACI-007,Corporate Payroll Onboarding,payroll_validation,Operations,Product,RM,Legal,Operations Lead,SRC-PROP-001,true
+RACI-008,Working Capital Readiness,credit_review,Credit,Planner,RM,Legal,Credit Approver,SRC-PROP-001,true

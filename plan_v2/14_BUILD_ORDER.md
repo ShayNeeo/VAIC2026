@@ -4,6 +4,8 @@
 
 Không bắt đầu task nếu dependency chưa Done, trừ khi tạo interface mock rõ ràng. Mỗi task phải cập nhật `PROGRESS.md`.
 
+Data readiness là dependency xuyên suốt. Trước V2-002/V2-006/V2-008, phải đăng ký source liên quan theo module 18, xác định Tier/owner/purpose/license và tạo synthetic contract nếu source thật chưa khả dụng.
+
 ## 2. Ordered backlog
 
 | ID | Task | Depends on | Primary artifacts | Required tests | Done when |
@@ -23,6 +25,18 @@ Không bắt đầu task nếu dependency chưa Done, trừ khi tạo interface 
 | V2-013 | API/UI | 002–012 | `/api/v2`, workspace UI | API/UI E2E | full journey usable |
 | V2-014 | Evaluation suite | 004–013 | datasets/runners/reports | eval regression | thresholds measurable |
 | V2-015 | E2E hardening | all | config/docs/docker/pilot | full suite | module 15 acceptance |
+
+## 2.1. Data workstream đi cùng backlog
+
+| ID | Data task | Phải hoàn thành trước | Artifact |
+|---|---|---|---|
+| DATA-001 | Internal source inventory + owner mapping | V2-002, V2-006 | Source Cards |
+| DATA-002 | Synthetic MVP data pack + contracts | V2-002–008 | `data/synthetic/v2/`, schemas |
+| DATA-003 | Manifest/quarantine/quality gates | V2-006 | ingest report + gates |
+| DATA-004 | Canonical IDs/entity resolution | V2-003, V2-008 | resolver + golden matches |
+| DATA-005 | Product/Legal Gold artifacts | V2-006–008 | versioned catalog/docs/rules |
+| DATA-006 | Official/vendor source POC shadow mode | Pilot | coverage/cost/legal report |
+| DATA-007 | Retention/deletion/lineage verification | V2-012, pilot | lifecycle tests/audit |
 
 ## 3. Suggested implementation file tree
 

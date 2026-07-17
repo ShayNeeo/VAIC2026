@@ -1,0 +1,23 @@
+{
+  "sop_version": "2026.1",
+  "effective_from": "2026-01-01",
+  "task_types": {
+    "product_follow_up": {"sla_business_days": 2},
+    "credit_document_collection": {"sla_business_days": 3},
+    "crm_case_preparation": {"sla_business_days": 1}
+  },
+  "document_names": {
+    "business_registration": "Đăng ký kinh doanh",
+    "payroll_service_agreement": "Hợp đồng dịch vụ chi lương",
+    "employee_payroll_list": "Danh sách nhân viên nhận lương",
+    "cash_management_agreement": "Thỏa thuận quản lý dòng tiền",
+    "board_resolution": "Nghị quyết hoặc biên bản phê duyệt nội bộ",
+    "collection_disbursement_agreement": "Hợp đồng thu hộ/chi hộ",
+    "technical_integration_profile": "Hồ sơ kỹ thuật tích hợp",
+    "financial_statements": "Báo cáo tài chính năm gần nhất",
+    "capital_use_plan": "Phương án sử dụng vốn",
+    "tax_declarations": "Tờ khai thuế gần nhất",
+    "collateral_profile": "Hồ sơ tài sản bảo đảm",
+    "ubo_status": "Thông tin chủ sở hữu hưởng lợi (UBO)"
+  }
+}

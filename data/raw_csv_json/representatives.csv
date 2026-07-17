@@ -1,0 +1,16 @@
+representative_id,customer_id,full_name,role_type,id_document_stub,date_of_birth,email,verification_status,verification_date,source_id,synthetic_flag
+REP-0001,CUST-0001,Nguyễn An Minh,chairman,VN-ID-SYN-0001,1980-04-12,minh.an@cust0001.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0002,CUST-0001,Trần Ngọc Lan,legal_representative,VN-ID-SYN-0002,1984-11-03,lan.tran@cust0001.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0003,CUST-0002,Phạm Hữu Long,legal_representative,VN-ID-SYN-0003,1978-01-26,long.pham@cust0002.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0004,CUST-0003,Lê Hải Yến,legal_representative,VN-ID-SYN-0004,1987-06-18,yen.le@cust0003.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0005,CUST-0004,Vũ Đức Thành,legal_representative,VN-ID-SYN-0005,1976-09-09,thanh.vu@cust0004.example,pending_refresh,,SRC-SYN-001,true
+REP-0006,CUST-0005,Đặng Thu Hà,legal_representative,VN-ID-SYN-0006,1982-02-14,ha.dang@cust0005.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0007,CUST-0006,Hoàng Quang Vinh,legal_representative,VN-ID-SYN-0007,1974-12-21,vinh.hoang@cust0006.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0008,CUST-0007,Bùi Thanh Tâm,legal_representative,VN-ID-SYN-0008,1986-07-30,tam.bui@cust0007.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0009,CUST-0008,Đỗ Văn Phúc,legal_representative,VN-ID-SYN-0009,1979-03-11,phuc.do@cust0008.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0010,CUST-0009,Nguyễn Hồng Mai,legal_representative,VN-ID-SYN-0010,1988-05-23,mai.nguyen@cust0009.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0011,CUST-0010,Trương Minh Khoa,legal_representative,VN-ID-SYN-0011,1977-10-08,khoa.truong@cust0010.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0012,CUST-0011,Phan Khánh Linh,legal_representative,VN-ID-SYN-0012,1989-01-17,linh.phan@cust0011.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0013,CUST-0012,Mai Quốc Bảo,legal_representative,VN-ID-SYN-0013,1981-08-27,bao.mai@cust0012.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0014,CUST-0004,Nguyễn Phương Thảo,authorized_signer,VN-ID-SYN-0014,1985-12-13,thao.nguyen@cust0004.example,verified,2026-07-10,SRC-SYN-001,true
+REP-0015,CUST-0010,Lâm Gia Huy,authorized_signer,VN-ID-SYN-0015,1983-03-29,huy.lam@cust0010.example,verified,2026-07-10,SRC-SYN-001,true

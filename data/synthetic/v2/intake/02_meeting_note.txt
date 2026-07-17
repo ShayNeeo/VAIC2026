@@ -1,0 +1,12 @@
+BIEN BAN TRAO DOI NHU CAU DOANH NGHIEP
+Cong ty Co phan Thiet bi Minh Phat
+
+Nhu cau uu tien:
+- Chi luong cho 500 nhan vien.
+- Thanh toan nha cung cap theo lo va thu ho tu dai ly.
+- Quan ly dong tien dang phan tan qua 4 tai khoan.
+- Can von luu dong de nhap hang theo mua vu.
+- Ket noi ERP SAP Business One.
+
+Pain point: quy trinh hien tai thu cong, kho doi soat va mat thoi gian.
+SYNTHETIC DEMO DATA - khong phai bien ban that.

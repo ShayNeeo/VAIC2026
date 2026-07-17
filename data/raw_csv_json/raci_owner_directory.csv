@@ -1,0 +1,15 @@
+owner_id,team,role,person_code,display_name,email,approval_limit_vnd,can_approve_actions,backup_owner_id,working_hours,active,source_id,synthetic_flag
+OWN-001,Operations,Operations Specialist,OPS-01,Nguyễn Hạ Vy,vy.ops@example.invalid,0,true,OWN-005,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-002,Operations,Operations Lead,OPS-02,Lê Minh Quân,quan.ops@example.invalid,5000000000,true,OWN-001,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-003,Legal & Compliance,Legal Specialist,LEGAL-01,Trần Hoài Nam,nam.legal@example.invalid,0,false,OWN-004,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-004,Legal & Compliance,Compliance Lead,LEGAL-02,Phạm Mai Anh,anh.compliance@example.invalid,0,true,OWN-003,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-005,Product,Product Specialist,PROD-01,Đỗ Khánh Linh,linh.product@example.invalid,0,false,OWN-006,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-006,Product,Product Lead,PROD-02,Vũ Hoàng Long,long.product@example.invalid,0,true,OWN-005,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-007,Credit,Credit Analyst,CREDIT-01,Nguyễn Quỳnh Chi,chi.credit@example.invalid,0,false,OWN-008,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-008,Credit,Credit Approver,CREDIT-02,Bùi Gia Hưng,hung.credit@example.invalid,10000000000,true,OWN-007,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-009,RM,Relationship Manager,RM-01,Phan Minh Đức,rm01@example.invalid,0,false,OWN-010,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-010,RM,Relationship Manager,RM-02,Hoàng Thu Trang,rm02@example.invalid,0,false,OWN-009,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-011,Risk Control,Evidence Validator,RISK-01,Đặng Bảo Châu,risk01@example.invalid,0,false,OWN-012,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-012,Risk Control,Risk Lead,RISK-02,Lâm Quốc Việt,risk02@example.invalid,0,true,OWN-011,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-013,Platform,Action Executor,PLAT-01,Ngô Thanh Hải,platform01@example.invalid,0,false,OWN-014,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true
+OWN-014,Platform,API Owner,PLAT-02,Mai Đức Thịnh,platform02@example.invalid,0,true,OWN-013,08:30-17:30 Asia/Saigon,true,SRC-PROP-001,true

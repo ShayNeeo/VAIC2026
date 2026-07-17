@@ -1,0 +1,701 @@
+{
+  "package_name": "ops_agent_mock_bank_dataset",
+  "version": "1.0.0",
+  "generated_at": "2026-07-17",
+  "locale": "vi-VN",
+  "currency": "VND unless stated",
+  "synthetic_only": true,
+  "intended_use": "MVP/hackathon development, RAG/retrieval tests, workflow routing, tool schemas, completeness/SLA/guardrail/evidence evaluation",
+  "not_for_production_decisions": true,
+  "source_reference_ids": [
+    "SRC-ISO-001",
+    "SRC-ISO-002",
+    "SRC-BIAN-001",
+    "SRC-BIAN-002",
+    "SRC-FATF-001",
+    "SRC-FATF-002",
+    "SRC-PROP-001",
+    "SRC-SYN-001"
+  ],
+  "datasets": {
+    "enterprise_profiles": {
+      "row_count": 12,
+      "fields": [
+        "customer_id",
+        "company_name",
+        "industry_code",
+        "legal_form",
+        "registered_city",
+        "country_code",
+        "employee_count",
+        "annual_revenue_vnd",
+        "operating_model",
+        "risk_segment",
+        "rm_id",
+        "customer_status",
+        "tax_id_stub",
+        "website",
+        "onboarding_date",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/enterprise_profiles.csv"
+    },
+    "customer_requests": {
+      "row_count": 12,
+      "fields": [
+        "request_id",
+        "customer_id",
+        "rm_id",
+        "request_type",
+        "request_title",
+        "requested_capabilities",
+        "business_goal",
+        "expected_response_by",
+        "priority",
+        "intake_channel",
+        "existing_products",
+        "rm_notes",
+        "status",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/customer_requests.csv"
+    },
+    "representatives": {
+      "row_count": 15,
+      "fields": [
+        "representative_id",
+        "customer_id",
+        "full_name",
+        "role_type",
+        "id_document_stub",
+        "date_of_birth",
+        "email",
+        "verification_status",
+        "verification_date",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/representatives.csv"
+    },
+    "beneficial_owners": {
+      "row_count": 18,
+      "fields": [
+        "ubo_id",
+        "customer_id",
+        "owner_name",
+        "owner_type",
+        "ownership_pct",
+        "ownership_path",
+        "verification_status",
+        "last_verified_date",
+        "source_of_information",
+        "pep_status",
+        "sanctions_status",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/beneficial_owners.csv"
+    },
+    "accounts": {
+      "row_count": 24,
+      "fields": [
+        "account_id",
+        "customer_id",
+        "product_id",
+        "account_type",
+        "currency",
+        "opened_date",
+        "status",
+        "ledger_balance",
+        "available_balance",
+        "overdraft_limit",
+        "last_activity_date",
+        "masked_account_no",
+        "purpose",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/accounts.csv"
+    },
+    "transactions": {
+      "row_count": 144,
+      "fields": [
+        "transaction_id",
+        "account_id",
+        "customer_id",
+        "transaction_date",
+        "value_date",
+        "direction",
+        "amount",
+        "currency",
+        "bank_transaction_code",
+        "channel",
+        "counterparty_name",
+        "counterparty_account_masked",
+        "purpose",
+        "status",
+        "reconciliation_status",
+        "source_message_id",
+        "synthetic_flag",
+        "source_id"
+      ],
+      "raw_csv": "raw_csv_json/transactions.csv"
+    },
+    "payment_orders": {
+      "row_count": 24,
+      "fields": [
+        "instruction_id",
+        "end_to_end_id",
+        "customer_id",
+        "debtor_account_id",
+        "creditor_name",
+        "creditor_account_masked",
+        "amount",
+        "currency",
+        "requested_execution_date",
+        "payment_type",
+        "charge_bearer",
+        "source_message_type",
+        "status",
+        "approval_level_required",
+        "approved_by",
+        "idempotency_key",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/payment_orders.csv"
+    },
+    "payroll_batches": {
+      "row_count": 12,
+      "fields": [
+        "batch_id",
+        "customer_id",
+        "debit_account_id",
+        "employee_count",
+        "gross_amount",
+        "currency",
+        "file_received_at",
+        "execution_date",
+        "status",
+        "approval_count",
+        "rejection_count",
+        "file_format",
+        "validation_status",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/payroll_batches.csv"
+    },
+    "loans": {
+      "row_count": 12,
+      "fields": [
+        "facility_id",
+        "customer_id",
+        "facility_type",
+        "requested_limit_vnd",
+        "approved_limit_vnd",
+        "outstanding_principal_vnd",
+        "currency",
+        "tenor_months",
+        "interest_rate_pct",
+        "status",
+        "collateral_type",
+        "covenant_status",
+        "next_review_date",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/loans.csv"
+    },
+    "uploaded_documents": {
+      "row_count": 89,
+      "fields": [
+        "document_id",
+        "customer_id",
+        "case_id",
+        "document_type",
+        "file_name",
+        "issue_date",
+        "expiry_date",
+        "status",
+        "extraction_status",
+        "verified_by",
+        "verification_timestamp",
+        "source_system",
+        "page_count",
+        "checksum_stub",
+        "visibility",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/uploaded_documents.csv"
+    },
+    "cases": {
+      "row_count": 12,
+      "fields": [
+        "case_id",
+        "customer_id",
+        "request_id",
+        "rm_id",
+        "case_type",
+        "priority",
+        "risk_level",
+        "current_status",
+        "approval_status",
+        "missing_info_count",
+        "next_action",
+        "due_at",
+        "created_at",
+        "last_updated_at",
+        "idempotency_key",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/cases.csv"
+    },
+    "tasks": {
+      "row_count": 48,
+      "fields": [
+        "task_id",
+        "case_id",
+        "task_type",
+        "domain",
+        "owner_team",
+        "owner_user",
+        "dependency_task_id",
+        "status",
+        "priority",
+        "created_at",
+        "due_at",
+        "completed_at",
+        "retry_count",
+        "output_ref",
+        "escalation_required",
+        "human_approval_required",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/tasks.csv"
+    },
+    "checklist_definitions": {
+      "row_count": 15,
+      "fields": [
+        "checklist_item_id",
+        "product_id",
+        "document_type",
+        "requirement",
+        "mandatory",
+        "applies_if",
+        "owner_role",
+        "validation_rule",
+        "sla_hours",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/checklist_definitions.csv"
+    },
+    "case_checklist": {
+      "row_count": 78,
+      "fields": [
+        "case_checklist_id",
+        "case_id",
+        "checklist_item_id",
+        "product_id",
+        "required_document_type",
+        "mandatory",
+        "status",
+        "evidence_document_id",
+        "missing_reason",
+        "owner_role",
+        "due_at",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/case_checklist.csv"
+    },
+    "sop_workflows": {
+      "row_count": 19,
+      "fields": [
+        "workflow_id",
+        "workflow_name",
+        "step_no",
+        "step_name",
+        "task_type",
+        "precondition",
+        "required_inputs",
+        "action",
+        "success_criteria",
+        "on_missing",
+        "next_status",
+        "owner_role",
+        "sla_hours",
+        "escalation_trigger",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/sop_workflows.csv"
+    },
+    "case_status_model": {
+      "row_count": 8,
+      "fields": [
+        "status_code",
+        "meaning",
+        "allowed_next_statuses",
+        "lifecycle_stage",
+        "terminal_flag",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/case_status_model.csv"
+    },
+    "raci_owner_directory": {
+      "row_count": 14,
+      "fields": [
+        "owner_id",
+        "team",
+        "role",
+        "person_code",
+        "display_name",
+        "email",
+        "approval_limit_vnd",
+        "can_approve_actions",
+        "backup_owner_id",
+        "working_hours",
+        "active",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/raci_owner_directory.csv"
+    },
+    "raci_matrix": {
+      "row_count": 8,
+      "fields": [
+        "raci_id",
+        "workflow_name",
+        "activity",
+        "responsible",
+        "accountable",
+        "consulted",
+        "informed",
+        "approval_owner_role",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/raci_matrix.csv"
+    },
+    "sla_rules": {
+      "row_count": 12,
+      "fields": [
+        "sla_rule_id",
+        "object_type",
+        "case_or_task_type",
+        "risk_level",
+        "priority",
+        "start_event",
+        "target_hours",
+        "warning_hours",
+        "calendar",
+        "pause_on",
+        "breach_action",
+        "escalation_role",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/sla_rules.csv"
+    },
+    "products": {
+      "row_count": 8,
+      "fields": [
+        "product_id",
+        "product_name",
+        "product_type",
+        "description",
+        "target_segment",
+        "key_features",
+        "prerequisites",
+        "supported_currencies",
+        "minimum_revenue_vnd",
+        "status",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/products.csv"
+    },
+    "product_policies": {
+      "row_count": 24,
+      "fields": [
+        "policy_id",
+        "product_id",
+        "rule_type",
+        "condition_field",
+        "operator",
+        "threshold_value",
+        "severity",
+        "required_evidence",
+        "rule_text",
+        "effective_from",
+        "effective_to",
+        "version",
+        "owner_team",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/product_policies.csv"
+    },
+    "product_pricing_limits": {
+      "row_count": 16,
+      "fields": [
+        "pricing_id",
+        "product_id",
+        "segment",
+        "currency",
+        "fee_type",
+        "fee_amount",
+        "fee_rate_pct",
+        "limit_amount",
+        "sla_business_hours",
+        "implementation_days",
+        "effective_from",
+        "effective_to",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/product_pricing_limits.csv"
+    },
+    "solution_bundles": {
+      "row_count": 6,
+      "fields": [
+        "bundle_id",
+        "bundle_name",
+        "use_case",
+        "target_segment",
+        "product_ids",
+        "rationale",
+        "target_outcomes",
+        "mandatory_products",
+        "optional_products",
+        "base_match_score",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/solution_bundles.csv"
+    },
+    "tool_registry": {
+      "row_count": 15,
+      "fields": [
+        "tool_name",
+        "domain",
+        "purpose",
+        "http_method",
+        "endpoint",
+        "allowed_roles",
+        "mutating",
+        "approval_required",
+        "idempotency_required",
+        "input_schema_ref",
+        "output_schema_ref",
+        "rate_limit_per_min",
+        "error_codes",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/tool_registry.csv"
+    },
+    "tool_call_examples": {
+      "row_count": 48,
+      "fields": [
+        "call_id",
+        "case_id",
+        "task_id",
+        "tool_name",
+        "called_at",
+        "actor_type",
+        "actor_id",
+        "input_json",
+        "status",
+        "http_status",
+        "response_json",
+        "duration_ms",
+        "idempotency_key",
+        "approval_id",
+        "audit_event_id",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/tool_call_examples.csv"
+    },
+    "email_templates": {
+      "row_count": 5,
+      "fields": [
+        "template_id",
+        "template_type",
+        "audience",
+        "subject_template",
+        "body_template",
+        "mandatory_fields",
+        "tone",
+        "requires_human_review",
+        "version",
+        "active",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/email_templates.csv"
+    },
+    "report_templates": {
+      "row_count": 3,
+      "fields": [
+        "template_id",
+        "report_type",
+        "sections",
+        "required_fields",
+        "output_format",
+        "approval_required",
+        "version",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/report_templates.csv"
+    },
+    "evidence": {
+      "row_count": 60,
+      "fields": [
+        "evidence_id",
+        "case_id",
+        "evidence_type",
+        "source_document_id",
+        "source_id",
+        "page_no",
+        "section",
+        "excerpt",
+        "retrieved_at",
+        "validity_status",
+        "confidence_score",
+        "permission_scope",
+        "hash_stub",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/evidence.csv"
+    },
+    "claim_evidence_map": {
+      "row_count": 36,
+      "fields": [
+        "claim_id",
+        "case_id",
+        "agent",
+        "claim_text",
+        "evidence_id",
+        "support_level",
+        "validator_status",
+        "validator_reason",
+        "reviewed_by",
+        "reviewed_at",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/claim_evidence_map.csv"
+    },
+    "source_metadata": {
+      "row_count": 8,
+      "fields": [
+        "source_id",
+        "source_type",
+        "title",
+        "owner",
+        "version",
+        "effective_from",
+        "effective_to",
+        "url_or_repo",
+        "permission",
+        "language",
+        "status",
+        "superseded_by",
+        "notes"
+      ],
+      "raw_csv": "raw_csv_json/source_metadata.csv"
+    },
+    "audit_events": {
+      "row_count": 75,
+      "fields": [
+        "audit_event_id",
+        "case_id",
+        "event_time",
+        "actor_type",
+        "actor_id",
+        "event_type",
+        "object_type",
+        "object_id",
+        "from_status",
+        "to_status",
+        "tool_name",
+        "approval_id",
+        "reason",
+        "evidence_refs",
+        "ip_stub",
+        "correlation_id",
+        "immutable_flag",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/audit_events.csv"
+    },
+    "operations_history": {
+      "row_count": 36,
+      "fields": [
+        "history_id",
+        "object_type",
+        "object_id",
+        "case_id",
+        "event_date",
+        "team",
+        "issue_code",
+        "issue_description",
+        "resolution",
+        "actual_hours",
+        "sla_met",
+        "root_cause",
+        "training_tag",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/operations_history.csv"
+    },
+    "api_contract_examples": {
+      "row_count": 15,
+      "fields": [
+        "tool_name",
+        "method",
+        "endpoint",
+        "request_schema",
+        "response_schema",
+        "example_request",
+        "example_response",
+        "error_example",
+        "approval_gate",
+        "idempotency",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/api_contract_examples.csv"
+    },
+    "enum_reference": {
+      "row_count": 23,
+      "fields": [
+        "enum_name",
+        "enum_value",
+        "meaning",
+        "source_id",
+        "synthetic_flag"
+      ],
+      "raw_csv": "raw_csv_json/enum_reference.csv"
+    }
+  },
+  "json_artifacts": [
+    "ops_agent_seed_data.json",
+    "shared_case_state_examples.json",
+    "schema_catalog.json",
+    "dataset_manifest.json"
+  ]
+}

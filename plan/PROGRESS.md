@@ -71,10 +71,10 @@ Các deviation đã được ghi chi tiết bên dưới: RAG fallback in-memory
 | Legal Agent | Có | `pytest -q` | Pass: phát hiện UBO/BCTC; resume chuyển sang passed |
 | Operations Agent | Có | `pytest -q` | Pass: checklist, email nháp, SLA deterministic |
 | Evidence Validator | Có | `pytest -q` | Pass: source/section/quote và hallucination flag |
-| Guardrails/Tool permission | Có | `pytest -q` | Pass: prompt injection và Product→CRM privilege escalation bị chặn |
+| Guardrails/Tool permission | Có | `pytest -q` | Pass: prompt injection chặn; `ToolRegistry` allowlist giờ chặn thật trên đường chạy của Legal/Operations (không chỉ registry dựng riêng trong test) — xem mục 6, 2026-07-17 (theo dõi) |
 | FastAPI lifecycle | Có | `pytest -q tests/test_api.py` | Pass: create → resume → token → approve → mock CRM |
 | End-to-end case ABC (kịch bản 34.1) | Có | `pytest -q tests/test_end_to_end.py` | Pass |
-| Tổng test/coverage | Có | `pytest --cov=app --cov-report=term-missing -q` | `16 passed`, coverage `91%` |
+| Tổng test/coverage | Có | `pytest --cov=app --cov-report=term-missing -q` | V1: `19 passed` (`pytest tests/test_api.py tests/test_end_to_end.py tests/test_planner_agent.py tests/test_product_rag.py -q`), coverage 100% cho `evidence_validator.py`/`registry.py`/`product_tools.py`. Toàn repo (V1+V2): `76 passed`, `95%` |
 
 ## 6. Việc còn thiếu / rủi ro đang mở
 
@@ -88,7 +88,17 @@ Không còn blocker cho hackathon MVP. Các việc còn thiếu là backlog nân
 
 - **`ToolRegistry` (`app/tools/registry.py`) được định nghĩa và có test (`test_tool_registry_blocks_privilege_escalation`) nhưng không được instantiate/gọi ở bất kỳ đâu trong `app/agents`, `app/services` hay `app/main.py`.** Các agent gọi thẳng hàm nghiệp vụ (vd. `validate_business_registration`, `get_required_documents`) chứ không qua `registry.call(owner, name, ...)`. Nghĩa là cơ chế "allowed-tool allowlist" mới đúng ở mức unit test cô lập, **chưa thực sự chặn gì trên luồng chạy thật** — kịch bản 34.3 (Product Agent bị ép gọi `create_case`) chưa được chứng minh end-to-end như plan mô tả.
 - **`EvidenceValidator` (`app/safety/evidence_validator.py:22`) mới cài Lớp 1/3 (deterministic exact-quote match)** theo thiết kế "Hybrid Validation" ở `06_evidence_guardrails_approval.md`. Lớp 2 (semantic cosine ≥0.85) và Lớp 3 (LLM-as-judge) chưa có. Đây là lựa chọn an toàn theo hướng thà chặn nhầm còn hơn bỏ sót (chỉ chấp nhận trích dẫn khớp y nguyên văn bản), nhưng chưa được nêu rõ là simplification trong README/PROGRESS trước đợt audit này.
-- Repo chưa `git init`, chưa có `AI_LOG.md` — rủi ro cho việc nộp bài VAIC 2026 (cần lịch sử commit + AI collaboration log).
+- Repo chưa `git init`, chưa có `AI_LOG.md` — rủi ro cho việc nộp bài VAIC 2026 (cần lịch sử commit + AI collaboration log). Cập nhật 2026-07-17 (theo dõi): repo đã có `git init` + lịch sử commit từ đợt build multi-agent (xem `git log`), `AI_LOG.md` **vẫn chưa tồn tại** — vẫn còn mở.
+
+### 2026-07-17 (theo dõi) — Đóng 2 gap guardrail đã phát hiện ở audit độc lập trên
+
+Trước khi build sang V2-004, đã kiểm tra lại toàn repo (V1 lẫn V2) theo yêu cầu người dùng và sửa 2 gap đã ghi ở mục audit phía trên:
+
+- **`ToolRegistry` giờ được wire thật.** Thêm `build_default_registry()` (`app/tools/registry.py`) đăng ký 5 tool thật (`validate_business_registration`, `check_document_expiry` → Legal; `get_required_documents`, `check_document_completeness`, `draft_customer_email` → Operations). `CaseOrchestrator.__init__` dựng 1 registry dùng chung, truyền vào `LegalAgent(tools=...)`/`OperationsAgent(tools=...)`; 2 agent này gọi qua `self.tools.call(self.owner, name, **kwargs)` thay vì import hàm trực tiếp. Test mới `test_default_tool_registry_enforces_owner_boundaries` (`tests/test_end_to_end.py`) chứng minh registry mà orchestrator dùng thật sự chặn cross-owner call (vd. Product không gọi được `draft_customer_email`), không chỉ registry dựng riêng trong test như trước. **Phạm vi có chủ đích:** Product Agent đọc `SHB_PRODUCT_CATALOG` (dict hằng, đọc-only) và gọi `ProductRAGService.search()` không đi qua registry — đây không phải hành động xuyên biên giới/ra ngoài hệ thống như ví dụ "Product Agent gọi CRM tạo case" trong plan gốc, nên không đưa vào allowlist. Đồng thời xoá 3 hàm tool "chết" chưa từng được gọi (`search_product_catalog`, `retrieve_product_policy` ở `product_tools.py`; `search_compliance_policy` ở `legal_tools.py`) — trùng chức năng với `ProductRAGService`/truy cập dict trực tiếp đã dùng thật, giữ lại chỉ gây hiểu nhầm là "đã implement".
+- **Evidence Validator có thêm Lớp 2 (semantic-similarity fallback).** Dùng lại kỹ thuật hash-embedding + cosine của `app/rag/product_retriever.py` (không gọi model/API ngoài), so khớp quote với từng *segment* nguồn (name/description/eligibility_rules/từng required_document) và lấy điểm cao nhất — so với cả đoạn văn bản gộp sẽ làm loãng điểm số (đã tự kiểm chứng bằng script: quote đúng y nguyên chỉ đạt ~0.64 nếu so với văn bản gộp, nhưng đạt 1.0 nếu so theo từng segment). Ngưỡng giữ đúng `0.85` như plan gốc, đã kiểm chứng thực nghiệm: quote lệch case/dấu câu nhưng cùng nội dung → 1.0 (được cứu, không còn bị Lớp 1 gắn nhầm là ảo giác); quote bịa dùng từ vựng cùng miền → 0.16–0.44 (vẫn bị từ chối đúng). **Giới hạn thành thật còn lại:** đây là bag-of-tokens hash, không phải embedding ngữ nghĩa thật — một câu diễn giải lại hoàn toàn bằng từ khác (không trùng token) chỉ đạt ~0.68, dưới ngưỡng, nên **chưa cứu được paraphrase thật sự** (chấp nhận thiên về từ chối nhầm hơn là bỏ sót ảo giác). Lớp 3 (LLM-as-a-judge) **vẫn cố ý chưa làm** — cần gọi LLM thật, đợi quyết định OpenAI key ở track V2 (xem mục 2026-07-17 dưới), tránh xây 2 chỗ gọi LLM khác kiểu trong 2 track cùng lúc. Test mới: `test_evidence_validator_layer2_rescues_case_and_punctuation_paraphrase`, `test_evidence_validator_layer2_still_rejects_fabricated_claim_with_overlapping_vocabulary` (`tests/test_end_to_end.py`).
+- Đã đồng bộ `.env.example` với các biến `app/config.py` thực sự đọc (`OPENAI_API_KEY`, `GOOGLE_API_KEY`, `DEFAULT_LLM`, `OPENAI_MODEL`, `GOOGLE_MODEL`, `OLLAMA_MODEL`, `OLLAMA_BASE_URL`, `VECTOR_DB_DIR`) — trước đó `.env.example` chỉ có 5 biến approval/host, thiếu hoàn toàn các biến LLM đã có sẵn trong code. Thêm `openai==2.46.0` (bản pip resolve thật, không đoán số) vào `requirements.txt` và cài vào `.venv` — đây là chuẩn bị nền cho V2-004, **chưa viết LLM client wrapper/prompt** (việc đó thuộc phạm vi V2-004).
+- Đã thêm `outputs/` vào `.gitignore` (thư mục render/export proposal do `tools/` sinh ra — hàng trăm PNG + PDF + 1 file khoá tạm Word `~$...docx` — chưa từng được track, dễ bị commit nhầm nếu ai đó `git add -A`).
+- **Chưa xử lý, cần quyết định của người dùng:** toàn bộ code V2-001/002/003 (`app/context/`, `app/integrations/`, `app/schemas/v2/`, `tests/contract/`, `tests/unit/`) và các sửa đổi ở trên hiện **chưa commit**, đang nằm trên nhánh `main` cục bộ. Rủi ro mất việc nếu có thao tác git phá huỷ; chưa chia sẻ được cho đồng đội. Đây không phải lỗi kỹ thuật mà là quyết định "khi nào commit/push" — xem báo cáo gửi người dùng.
 
 RAG_VSF đã được tham khảo theo pipeline `QueryNormalizer → HybridFusion → HeuristicReranker → ContextBuilder`. Đã áp dụng phiên bản local-first không network/model dependency vào `app/rag/product_retriever.py` để làm nền cho Product Agent.
 
@@ -118,9 +128,9 @@ RAG_VSF đã được tham khảo theo pipeline `QueryNormalizer → HybridFusio
 | Storage | MVP in-memory | Case mất khi process restart; chưa có PostgreSQL/audit store bất biến |
 | Observability | Một phần | Có trace_id và audit log; chưa có OpenTelemetry, Jaeger/LangSmith, dashboard/alert |
 | Evaluation | Một phần | Có unit/integration/security tests; chưa có 40-case golden dataset và benchmark RAG |
-| Tool permission enforcement | Chưa | `ToolRegistry` tồn tại + có test cô lập, nhưng chưa wire vào `app/agents`/`app/services` — allowlist chưa chặn gì trên luồng thật |
-| Evidence Validator (3-layer) | Một phần | Chỉ có Lớp 1 deterministic exact-match; chưa có semantic threshold và LLM-as-judge |
-| Version control / AI_LOG | Chưa | Repo chưa `git init`, chưa có `AI_LOG.md` — cần trước khi nộp bài VAIC |
+| Tool permission enforcement | Một phần | `ToolRegistry` wire thật vào Legal+Operations qua `CaseOrchestrator` (2026-07-17); Product's catalog/RAG access có chủ đích không đi qua allowlist (đọc-only, không phải hành động ra ngoài) |
+| Evidence Validator (3-layer) | Một phần | Lớp 1 (exact-match) + Lớp 2 (semantic hash-similarity, ngưỡng 0.85, đã kiểm chứng thực nghiệm) xong (2026-07-17); Lớp 3 (LLM-as-judge) vẫn chưa làm, chờ quyết định OpenAI key ở V2 |
+| Version control / AI_LOG | Một phần | Repo đã `git init` + có lịch sử commit; `AI_LOG.md` **vẫn chưa tồn tại** — cần trước khi nộp bài VAIC |
 | Production readiness | Chưa | Không được mô tả hệ thống là production-ready cho đến khi đóng các mục trên |
 
 ## 8. Artifact đã tạo trong đợt build end-to-end

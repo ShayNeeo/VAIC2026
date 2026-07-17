@@ -1,0 +1,1201 @@
+{
+  "summary": {
+    "dataset_id": "corporate-sales-single-vs-multi-agent-v1",
+    "dataset_version": "2026.07.18-v1",
+    "data_label": "SYNTHETIC BENCHMARK DATA",
+    "run_timestamp": "2026-07-17T22:21:29.174831+00:00",
+    "cache_mode": "warm",
+    "case_count": 40,
+    "git_commit": "bd18718eafb465cae44765295edbc23f2ff51534",
+    "working_tree_dirty": true,
+    "configuration": {
+      "rag_provider": "local",
+      "knowledge_embedding_provider_env": "see .env KNOWLEDGE_EMBEDDING_PROVIDER",
+      "intent_mode": "deterministic"
+    },
+    "routing_accuracy": 0.8333,
+    "single_agent_rag": {
+      "cases_evaluated": 36,
+      "infra_errors": 0,
+      "product_recall": 0.9167,
+      "product_precision": 0.8462,
+      "missing_info_recall": 0.0,
+      "legal_flag_recall": 0.0,
+      "citation_coverage": null,
+      "citation_validity": null,
+      "unsupported_claim_rate": null,
+      "abstention_accuracy": 0.9677,
+      "forbidden_violation_rate": 0.0,
+      "avg_latency_ms": 47.8179,
+      "token_usage": null,
+      "cost": null,
+      "cost_status": "NOT_CALCULATED"
+    },
+    "multi_agent": {
+      "cases_evaluated": 36,
+      "infra_errors": 0,
+      "product_recall": 0.9167,
+      "product_precision": 0.8462,
+      "missing_info_recall": 0.8889,
+      "legal_flag_recall": 0.8333,
+      "citation_coverage": 1.0,
+      "citation_validity": 1.0,
+      "unsupported_claim_rate": 0.0,
+      "abstention_accuracy": 0.9677,
+      "forbidden_violation_rate": 0.0,
+      "avg_latency_ms": 50.5556,
+      "token_usage": null,
+      "cost": null,
+      "cost_status": "NOT_CALCULATED"
+    },
+    "comparison": {
+      "product_recall": 0.0,
+      "missing_info_recall": 0.8889,
+      "legal_flag_recall": 0.8333,
+      "citation_validity": null,
+      "avg_latency_ms": 2.7377
+    }
+  },
+  "per_case": [
+    {
+      "case_id": "BENCH-A01",
+      "category": "simple_product_query",
+      "routing_correct": false,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 54.016
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 58.961
+      }
+    },
+    {
+      "case_id": "BENCH-A02",
+      "category": "simple_product_query",
+      "routing_correct": false,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 53.081
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 47.439
+      }
+    },
+    {
+      "case_id": "BENCH-A03",
+      "category": "simple_product_query",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 48.209
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 47.868
+      }
+    },
+    {
+      "case_id": "BENCH-A04",
+      "category": "simple_product_query",
+      "routing_correct": false,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 50.179
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 51.957
+      }
+    },
+    {
+      "case_id": "BENCH-A05",
+      "category": "simple_product_query",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 47.01
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 50.323
+      }
+    },
+    {
+      "case_id": "BENCH-A06",
+      "category": "simple_product_query",
+      "routing_correct": false,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 43.074
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 43.798
+      }
+    },
+    {
+      "case_id": "BENCH-A07",
+      "category": "simple_product_query",
+      "routing_correct": false,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 45.341
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": 0.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 48.862
+      }
+    },
+    {
+      "case_id": "BENCH-A08",
+      "category": "simple_product_query",
+      "routing_correct": false,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 43.168
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": null,
+        "final_status_matches_expected": null,
+        "latency_ms": 43.781
+      }
+    },
+    {
+      "case_id": "BENCH-B01",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.49
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 54.975
+      }
+    },
+    {
+      "case_id": "BENCH-B02",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 48.202
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 50.693
+      }
+    },
+    {
+      "case_id": "BENCH-B03",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.572
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 51.997
+      }
+    },
+    {
+      "case_id": "BENCH-B04",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.71
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 51.159
+      }
+    },
+    {
+      "case_id": "BENCH-B05",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 48.438
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 53.406
+      }
+    },
+    {
+      "case_id": "BENCH-B06",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 51.183
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 55.06
+      }
+    },
+    {
+      "case_id": "BENCH-B07",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 48.839
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 54.453
+      }
+    },
+    {
+      "case_id": "BENCH-B08",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 49.376
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 56.417
+      }
+    },
+    {
+      "case_id": "BENCH-B09",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.147
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 49.44
+      }
+    },
+    {
+      "case_id": "BENCH-B10",
+      "category": "multi_product_bundle",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 49.98
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 52.074
+      }
+    },
+    {
+      "case_id": "BENCH-C01",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 47.485
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 50.744
+      }
+    },
+    {
+      "case_id": "BENCH-C02",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.975
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 50.971
+      }
+    },
+    {
+      "case_id": "BENCH-C03",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 47.48
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 56.018
+      }
+    },
+    {
+      "case_id": "BENCH-C04",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 48.176
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 49.242
+      }
+    },
+    {
+      "case_id": "BENCH-C05",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 47.177
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 47.832
+      }
+    },
+    {
+      "case_id": "BENCH-C06",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 50.461
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 53.054
+      }
+    },
+    {
+      "case_id": "BENCH-C07",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 48.066
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": 1.0,
+        "legal_flag_recall": null,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 53.276
+      }
+    },
+    {
+      "case_id": "BENCH-C08",
+      "category": "missing_information",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 0.0,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": false,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.134
+      },
+      "multi_agent": {
+        "product_recall": 0.0,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": 0.0,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": false,
+        "final_status_matches_expected": false,
+        "latency_ms": 45.122
+      }
+    },
+    {
+      "case_id": "BENCH-D01",
+      "category": "legal_risk_blocking",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 0.0,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 48.063
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 1.0,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 54.943
+      }
+    },
+    {
+      "case_id": "BENCH-D02",
+      "category": "legal_risk_blocking",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 0.0,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 47.375
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 1.0,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 47.087
+      }
+    },
+    {
+      "case_id": "BENCH-D03",
+      "category": "legal_risk_blocking",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 0.0,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 44.05
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 1.0,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 46.24
+      }
+    },
+    {
+      "case_id": "BENCH-D04",
+      "category": "legal_risk_blocking",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 0.0,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.174
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 1.0,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 48.811
+      }
+    },
+    {
+      "case_id": "BENCH-D05",
+      "category": "legal_risk_blocking",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 0.0,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 0.0,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 48.764
+      },
+      "multi_agent": {
+        "product_recall": 0.0,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 0.0,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.785
+      }
+    },
+    {
+      "case_id": "BENCH-D06",
+      "category": "legal_risk_blocking",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 0.0,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": false,
+        "latency_ms": 46.953
+      },
+      "multi_agent": {
+        "product_recall": 1.0,
+        "product_precision": 1.0,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": 1.0,
+        "citation_coverage": 1.0,
+        "citation_validity": 1.0,
+        "unsupported_claim_rate": 0.0,
+        "abstention_correct": true,
+        "final_status_matches_expected": true,
+        "latency_ms": 50.748
+      }
+    },
+    {
+      "case_id": "BENCH-E01",
+      "category": "out_of_scope",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 47.736
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 49.529
+      }
+    },
+    {
+      "case_id": "BENCH-E02",
+      "category": "out_of_scope",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 48.511
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 48.703
+      }
+    },
+    {
+      "case_id": "BENCH-E03",
+      "category": "out_of_scope",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 45.909
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 48.469
+      }
+    },
+    {
+      "case_id": "BENCH-E04",
+      "category": "out_of_scope",
+      "routing_correct": true,
+      "single_agent_rag": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 49.941
+      },
+      "multi_agent": {
+        "product_recall": null,
+        "product_precision": null,
+        "forbidden_violation": false,
+        "missing_info_recall": null,
+        "legal_flag_recall": null,
+        "citation_coverage": null,
+        "citation_validity": null,
+        "unsupported_claim_rate": null,
+        "abstention_correct": true,
+        "final_status_matches_expected": null,
+        "latency_ms": 49.765
+      }
+    },
+    {
+      "case_id": "BENCH-F01",
+      "category": "security_adversarial",
+      "abstention_correct": true,
+      "routing_correct": null
+    },
+    {
+      "case_id": "BENCH-F02",
+      "category": "security_adversarial",
+      "abstention_correct": false,
+      "routing_correct": null
+    },
+    {
+      "case_id": "BENCH-F03",
+      "category": "security_adversarial",
+      "abstention_correct": true,
+      "routing_correct": null
+    },
+    {
+      "case_id": "BENCH-F04",
+      "category": "security_adversarial",
+      "abstention_correct": true,
+      "routing_correct": null
+    }
+  ]
+}

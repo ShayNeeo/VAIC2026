@@ -4,5 +4,31 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - .env.v2.example
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - rag-mcp
+    environment:
+      RAG_MCP_URL: http://rag-mcp:8100/mcp
+      RAG_MCP_SERVICE_TOKEN: ${RAG_MCP_SERVICE_TOKEN:-local-rag-mcp-change-me}
+
+  rag-mcp:
+    build:
+      context: .
+      dockerfile: services/rag_mcp/Dockerfile
+    ports:
+      - "8100:8100"
+    environment:
+      RAG_MCP_HOST: 0.0.0.0
+      RAG_MCP_PORT: 8100
+      RAG_MCP_URL: http://rag-mcp:8100/mcp
+      RAG_MCP_DB_PATH: /srv/rag-mcp/state/rag.sqlite3
+      RAG_MCP_SERVICE_TOKEN: ${RAG_MCP_SERVICE_TOKEN:-local-rag-mcp-change-me}
+      RAG_MCP_REQUIRE_AUTH: "true"
+    volumes:
+      - rag_mcp_state:/srv/rag-mcp/state
+
+volumes:
+  rag_mcp_state:
 

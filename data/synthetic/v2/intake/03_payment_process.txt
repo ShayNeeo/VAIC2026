@@ -1,0 +1,6 @@
+QUY TRINH THANH TOAN NHA CUNG CAP VA THU HO
+Cong ty co 120 nha cung cap va 350 dai ly.
+Hien tai file thanh toan duoc xuat tu ERP, doi soat thu cong vao cuoi ngay.
+Mong muon chi ho theo lo, thu ho theo tai khoan dinh danh va ket noi API.
+
+SYNTHETIC DEMO DATA - khong phai quy trinh that.

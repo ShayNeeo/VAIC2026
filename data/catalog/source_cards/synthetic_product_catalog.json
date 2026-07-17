@@ -1,0 +1,54 @@
+{
+  "schema_version": "2.0.0",
+  "source_id": "SYNTHETIC-PRODUCT-CATALOG-V2",
+  "name": "Synthetic corporate sales product catalog",
+  "domain": "product",
+  "tier": "E_SYNTHETIC",
+  "provider": "repository synthetic data",
+  "owner": {
+    "business_owner": "MVP Product Owner",
+    "data_steward": "MVP Data Steward",
+    "technical_owner": "AI Engineering"
+  },
+  "purpose": {
+    "allowed_uses": ["development", "automated_test", "offline_demo"],
+    "prohibited_uses": ["production_decision", "customer_communication_as_fact"]
+  },
+  "decision_role": "EVALUATION_ONLY",
+  "access": {
+    "method": "FILE",
+    "endpoint_or_location": "data/synthetic/v2/products.json",
+    "authentication": "repository access",
+    "sandbox_available": true
+  },
+  "governance": {
+    "legal_basis_or_license": "Project-owned synthetic content",
+    "sensitivity": "INTERNAL",
+    "retention": "repository lifecycle",
+    "residency": "local development workspace",
+    "cross_border": false,
+    "approved": true,
+    "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "freshness": {
+    "update_cadence": "manual versioned release",
+    "max_age_seconds": 31536000,
+    "stale_behavior": "BLOCK_DECISION"
+  },
+  "identifiers": {
+    "primary_key": "product_id",
+    "join_keys": ["document_id", "document_version"]
+  },
+  "quality": {
+    "required_checks": ["schema", "uniqueness", "effective_date", "lineage", "acl"],
+    "publish_gate": "all deterministic checks pass"
+  },
+  "lineage": {
+    "ingestion_job": "app.knowledge.ingestion.load_product_chunks",
+    "raw_location": "data/synthetic/v2/products.json",
+    "gold_location": "data/vector_db/v2_products.sqlite3",
+    "consumer_artifacts": ["ProductKnowledgeService", "ProductService"]
+  },
+  "lifecycle_status": "ACTIVE",
+  "risks_and_notes": ["Synthetic only; must be replaced and re-approved for pilot or production"]
+}

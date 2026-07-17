@@ -40,6 +40,7 @@ Không đọc và sửa toàn bộ repo theo suy đoán. Không thêm field vào
 | Employee/workspace/customer context | `contracts/context_snapshot.schema.json` |
 | Intent output | `contracts/intent_result.schema.json` |
 | Tool input/output và quyền gọi | `contracts/tool_contracts.json` |
+| Data source inventory, availability và preparation | `18_DATA_STRATEGY_MARKET_SOURCES.md` + `contracts/data_source_card.schema.json` |
 | Trách nhiệm module | Module plan tương ứng |
 | Thứ tự triển khai | `14_BUILD_ORDER.md` |
 | Tiêu chí hoàn thành | `15_ACCEPTANCE_TRACEABILITY.md` |
@@ -69,6 +70,7 @@ Nếu markdown và JSON contract mâu thuẫn, JSON contract thắng. Nếu code
 | `15_ACCEPTANCE_TRACEABILITY.md` | Test, acceptance, DoD | tất cả |
 | `16_EVALUATION_DATASETS.md` | Dataset schema, labeling, regression | 04–13 |
 | `17_ASSUMPTIONS_OPEN_QUESTIONS.md` | Giả định, data required, quyết định mở | 01–16 |
+| `18_DATA_STRATEGY_MARKET_SOURCES.md` | Internal/official/open/vendor data, quality, preparation | 01–17 |
 
 ## 5. Dependency graph
 
@@ -87,6 +89,10 @@ graph TD
     Workflow --> Storage[Storage & Observability]
     API --> Eval[Acceptance & Evaluation]
     Storage --> Eval
+    Data[Data Strategy & Source Cards] --> Context
+    Data --> RAG
+    Data --> Eligibility
+    Data --> Eval
 ```
 
 ## 6. Trạng thái chuẩn
@@ -110,6 +116,7 @@ new → understanding → clarification_required → planned → in_analysis
 - Không module nào tự gửi email hoặc tạo CRM record.
 - Không tạo task mới trước khi chạy deduplication.
 - Resume chỉ chạy lại node bị ảnh hưởng.
+- Không source nào vào serving/RAG/rules nếu thiếu valid Data Source Card, owner, license/purpose, quality gate và lineage.
 
 ## 8. Cách bắt đầu một task
 
