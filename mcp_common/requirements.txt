@@ -1,0 +1,4 @@
+# mcp_common requirements
+pydantic>=2.7
+httpx>=0.27
+python-dotenv>=1.0
