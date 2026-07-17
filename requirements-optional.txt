@@ -1,0 +1,8 @@
+# Optional future stack for persistent vector RAG and LLM orchestration.
+# The current deterministic MVP does not import these packages.
+-r requirements.txt
+langgraph==0.0.60
+langchain==0.2.5
+langchain-core==0.2.9
+langchain-openai==0.1.9
+chromadb==0.5.3

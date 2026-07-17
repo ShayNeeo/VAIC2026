@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SHB Corporate Expert Workspace</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#13231b;background:#f4f7f5}body{margin:0}.wrap{max-width:1100px;margin:auto;padding:28px}.hero{background:linear-gradient(135deg,#065f46,#0f766e);color:white;padding:28px;border-radius:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.card{background:white;border:1px solid #dce7e1;border-radius:14px;padding:20px;box-shadow:0 8px 30px #0b3d2a12}label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,textarea,select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #b8cac1;border-radius:8px}button{margin-top:14px;padding:10px 16px;border:0;border-radius:8px;background:#0f766e;color:white;font-weight:700;cursor:pointer}pre{white-space:pre-wrap;max-height:560px;overflow:auto;background:#0c1f18;color:#d7f7e8;padding:14px;border-radius:10px}.tag{display:inline-block;background:#d1fae5;color:#065f46;padding:4px 8px;border-radius:999px;font-size:12px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body><main class="wrap">
+  <section class="hero"><span class="tag">SYNTHETIC DEMO DATA</span><h1>SHB Corporate Expert Workspace</h1><p>Planner · Product RAG · Legal/KYC · Operations · Evidence · RM Approval</p></section>
+  <section class="grid">
+    <div class="card"><h2>Tạo case demo</h2><label>Khách hàng</label><select id="customer"><option>COMP-ABC</option><option>COMP-XYZ</option></select><label>RM ID</label><input id="rm" value="RM-999"><label>Yêu cầu</label><textarea id="request" rows="5">Mở dịch vụ Payroll và xin thấu chi vốn lưu động</textarea><button onclick="createCase()">Phân tích case</button></div>
+    <div class="card"><h2>Kết quả & trace</h2><div><button onclick="resumeCase()">Bổ sung UBO + BCTC</button> <button onclick="approveCase()">RM Approve</button></div><pre id="output">Chưa có case.</pre></div>
+  </section>
+</main><script>
+let currentCase=null;
+async function createCase(){const body={customer_id:customer.value,rm_id:rm.value,request_text:request.value,documents:[{doc_id:'DOC-001',doc_type:'Giấy chứng nhận đăng ký doanh nghiệp',status:'verified'}]};const res=await fetch('/api/v1/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await res.json();currentCase=data.case_id;output.textContent=JSON.stringify(data,null,2)}
+async function resumeCase(){if(!currentCase)return alert('Hãy tạo case trước');const body={rm_id:rm.value,documents:[{doc_id:'DOC-UBO',doc_type:'Thông tin chủ sở hữu hưởng lợi UBO',status:'verified'},{doc_id:'DOC-BCTC',doc_type:'Báo cáo tài chính năm gần nhất',status:'verified'}]};const res=await fetch(`/api/v1/cases/${currentCase}/resume`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});output.textContent=JSON.stringify(await res.json(),null,2)}
+async function approveCase(){if(!currentCase)return alert('Hãy tạo case trước');const body={rm_id:rm.value,comments:'Approved from demo workspace'};let res=await fetch(`/api/v1/cases/${currentCase}/approval-token`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const issued=await res.json();if(!res.ok){output.textContent=JSON.stringify(issued,null,2);return}res=await fetch(`/api/v1/cases/${currentCase}/approve`,{method:'POST',headers:{'Content-Type':'application/json','X-Approval-Token':issued.approval_token},body:JSON.stringify(body)});output.textContent=JSON.stringify(await res.json(),null,2)}
+</script></body></html>
