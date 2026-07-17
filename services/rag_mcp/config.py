@@ -29,11 +29,11 @@ class RagMCPSettings:
     operations_token: str = os.getenv("RAG_MCP_OPERATIONS_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-operations")
     evidence_token: str = os.getenv("RAG_MCP_EVIDENCE_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-evidence")
     require_auth: bool = _bool("RAG_MCP_REQUIRE_AUTH", True)
-    # Default is "gemini": embedding via Google AI Studio (GOOGLE_API_KEY, the
-    # AI Studio key) using gemini-embedding-2, cached locally for offline reuse.
-    # Set RAG_MCP_EMBEDDING_PROVIDER=local for a key-free deterministic run, or
-    # "openai" to use an OpenAI embedding model as fallback.
-    embedding_provider: str = os.getenv("RAG_MCP_EMBEDDING_PROVIDER", "gemini")
+    # Default is "local": a deterministic, key-free provider so the suite runs
+    # offline with zero API keys and CI is reproducible. Set
+    # RAG_MCP_EMBEDDING_PROVIDER=gemini (Google AI Studio key GOOGLE_API_KEY,
+    # gemini-embedding-2) or "openai" for production semantic recall.
+    embedding_provider: str = os.getenv("RAG_MCP_EMBEDDING_PROVIDER", "local")
     top_k: int = int(os.getenv("RAG_MCP_TOP_K", "5"))
     # 0.35 is empirically chosen for OpenAI text-embedding-3-small to filter out noise.
     threshold: float = float(os.getenv("RAG_MCP_THRESHOLD", "0.35"))

@@ -8,19 +8,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      # Embeddings use Google AI Studio (GOOGLE_API_KEY = AI Studio key) with
-      # gemini-embedding-2, cached locally for offline reuse. Intent extraction
-      # stays deterministic (INTENT_USE_LLM=false) so the suite is fast and
-      # reproducible; flip it on to exercise gemma-4-31b-it through the same key.
-      # Set KNOWLEDGE_EMBEDDING_PROVIDER / RAG_MCP_EMBEDDING_PROVIDER to "local"
-      # for a key-free run, or "openai" to use the OpenAI embedding fallback.
+      # Embeddings default to the key-free "local" provider so CI runs offline
+      # with zero API keys and is reproducible. Set KNOWLEDGE_EMBEDDING_PROVIDER
+      # / RAG_MCP_EMBEDDING_PROVIDER to "gemini" (Google AI Studio key
+      # GOOGLE_API_KEY, gemini-embedding-2) or "openai" for production semantic
+      # recall. Intent extraction stays deterministic (INTENT_USE_LLM=false).
       INTENT_USE_LLM: "false"
       DEFAULT_LLM: "google"
       GOOGLE_MODEL: "gemma-4-31b-it"
       RAG_PROVIDER: "local"
-      KNOWLEDGE_EMBEDDING_PROVIDER: "gemini"
-      RAG_MCP_EMBEDDING_PROVIDER: "gemini"
-      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      KNOWLEDGE_EMBEDDING_PROVIDER: "local"
+      RAG_MCP_EMBEDDING_PROVIDER: "local"
       APPROVAL_SECRET: "ci-only-not-a-real-secret"
     steps:
       - uses: actions/checkout@v4

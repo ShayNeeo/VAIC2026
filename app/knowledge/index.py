@@ -171,10 +171,11 @@ class LocalEmbedding:
 
 
 def create_embedding_provider(name: Optional[str] = None) -> EmbeddingProvider:
-    # Default is "gemini": Google AI Studio (GOOGLE_API_KEY) embedding via
-    # gemini-embedding-2, cached for offline reuse. Set the env var to "local"
-    # for a key-free deterministic run, or "openai" for the OpenAI fallback.
-    provider = (name or os.getenv("KNOWLEDGE_EMBEDDING_PROVIDER") or "gemini").strip().lower()
+    # Default is "local": deterministic and key-free so the suite runs offline
+    # with zero API keys and CI is reproducible. Set the env var to "gemini"
+    # (Google AI Studio key GOOGLE_API_KEY, gemini-embedding-2) or "openai" for
+    # production semantic recall.
+    provider = (name or os.getenv("KNOWLEDGE_EMBEDDING_PROVIDER") or "local").strip().lower()
     if provider == "local":
         return LocalEmbedding()
     if provider == "gemini":
