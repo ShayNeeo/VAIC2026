@@ -1,0 +1,185 @@
+{
+  "schema_version": "2.0.0",
+  "tools": [
+    {
+      "name": "get_employee_context",
+      "allowed_callers": ["ContextService"],
+      "risk": "read_low",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["employee_id"],
+        "properties": {"employee_id": {"type": "string"}}
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["role", "organization_unit", "permissions", "access_scope"],
+        "properties": {
+          "role": {"type": "string"},
+          "organization_unit": {"type": "string"},
+          "permissions": {"type": "array", "items": {"type": "string"}},
+          "access_scope": {"type": "object"}
+        }
+      },
+      "timeout_ms": 2000,
+      "max_retries": 1,
+      "approval_required": false
+    },
+    {
+      "name": "get_workspace_context",
+      "allowed_callers": ["ContextService"],
+      "risk": "read_low",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["session_id"],
+        "properties": {"session_id": {"type": "string"}}
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["current_screen"],
+        "properties": {
+          "current_screen": {"type": "string"},
+          "selected_customer_id": {"type": ["string", "null"]},
+          "active_case_id": {"type": ["string", "null"]},
+          "active_task_id": {"type": ["string", "null"]},
+          "selected_product_ids": {"type": "array", "items": {"type": "string"}}
+        }
+      },
+      "timeout_ms": 1000,
+      "max_retries": 1,
+      "approval_required": false
+    },
+    {
+      "name": "get_customer_profile",
+      "allowed_callers": ["ContextService", "EligibilityService"],
+      "risk": "read_sensitive",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["customer_id", "employee_id"],
+        "properties": {
+          "customer_id": {"type": "string"},
+          "employee_id": {"type": "string"}
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["customer_id", "profile_version", "attributes", "observed_at"],
+        "properties": {
+          "customer_id": {"type": "string"},
+          "profile_version": {"type": "string"},
+          "attributes": {"type": "object"},
+          "observed_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "timeout_ms": 3000,
+      "max_retries": 1,
+      "approval_required": false
+    },
+    {
+      "name": "search_product_knowledge",
+      "allowed_callers": ["ProductService"],
+      "risk": "read_low",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["query", "metadata_filters", "access_scope", "top_k"],
+        "properties": {
+          "query": {"type": "string"},
+          "metadata_filters": {"type": "object"},
+          "access_scope": {"type": "object"},
+          "top_k": {"type": "integer", "minimum": 1, "maximum": 20}
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["chunks", "retrieval_trace"],
+        "properties": {
+          "chunks": {"type": "array", "items": {"type": "object"}},
+          "retrieval_trace": {"type": "object"}
+        }
+      },
+      "timeout_ms": 5000,
+      "max_retries": 1,
+      "approval_required": false
+    },
+    {
+      "name": "search_legal_knowledge",
+      "allowed_callers": ["EligibilityService"],
+      "risk": "read_sensitive",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["query", "effective_at", "access_scope", "top_k"],
+        "properties": {
+          "query": {"type": "string"},
+          "effective_at": {"type": "string", "format": "date-time"},
+          "access_scope": {"type": "object"},
+          "top_k": {"type": "integer", "minimum": 1, "maximum": 20}
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["chunks", "retrieval_trace"],
+        "properties": {
+          "chunks": {"type": "array", "items": {"type": "object"}},
+          "retrieval_trace": {"type": "object"}
+        }
+      },
+      "timeout_ms": 5000,
+      "max_retries": 1,
+      "approval_required": false
+    },
+    {
+      "name": "create_crm_case",
+      "allowed_callers": ["ActionExecutor"],
+      "risk": "write_high",
+      "input_schema": {"$ref": "#/$defs/actionInput"},
+      "output_schema": {"$ref": "#/$defs/actionOutput"},
+      "timeout_ms": 10000,
+      "max_retries": 1,
+      "approval_required": true
+    },
+    {
+      "name": "create_followup_task",
+      "allowed_callers": ["ActionExecutor"],
+      "risk": "write_high",
+      "input_schema": {"$ref": "#/$defs/actionInput"},
+      "output_schema": {"$ref": "#/$defs/actionOutput"},
+      "timeout_ms": 10000,
+      "max_retries": 1,
+      "approval_required": true
+    },
+    {
+      "name": "send_customer_message",
+      "allowed_callers": ["ActionExecutor"],
+      "risk": "external_communication",
+      "input_schema": {"$ref": "#/$defs/actionInput"},
+      "output_schema": {"$ref": "#/$defs/actionOutput"},
+      "timeout_ms": 10000,
+      "max_retries": 0,
+      "approval_required": true
+    }
+  ],
+  "$defs": {
+    "actionInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["payload", "approval_token", "idempotency_key"],
+      "properties": {
+        "payload": {"type": "object"},
+        "approval_token": {"type": "string"},
+        "idempotency_key": {"type": "string"}
+      }
+    },
+    "actionOutput": {
+      "type": "object",
+      "required": ["external_id", "status"],
+      "properties": {
+        "external_id": {"type": "string"},
+        "status": {"enum": ["accepted", "completed", "failed", "unknown"]}
+      }
+    }
+  }
+}

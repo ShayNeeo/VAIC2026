@@ -12,6 +12,14 @@ The goal is not to force every problem into "RAG" or "agent". The goal is to hel
 - Usage playbook for IDEs: `docs/AI_IDE_STARTUP_PROMPT.md`
 - VAIC 2026 README/AI_LOG generation playbook: `docs/VAIC_README_AI_LOG_PROMPT.md`
 - Original lecture sources: the PDF files in this workspace
+
+### Context-Aware RM Workspace V2 build plan
+
+- New modular implementation plan: `plan_v2/INDEX.md`
+- Live V2 build status and handoff memory: `plan_v2/PROGRESS.md`
+- Machine-readable contracts: `plan_v2/contracts/`
+- For V2 implementation tasks, read `plan_v2/INDEX.md`, `plan_v2/PROGRESS.md`, `plan_v2/00_AI_BUILD_PROTOCOL.md`, and the relevant contract/module before coding.
+- Do not mix fields, status enums, or tool permissions from the archived `plan/` plan into V2. The `plan_v2/contracts/` JSON files are the V2 source of truth.
 - SHB hackathon problem brief: `docs/SHB_Corporate_Expert_Workspace_Multi_Agent_Proposal.docx`
 - Implementation plan, build status and living build log: `plan/` (start at `plan/INDEX.md`)
 
