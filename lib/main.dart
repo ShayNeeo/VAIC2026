@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rm_workspace_core/rm_workspace_core.dart';
-import 'package:rm_workspace_design/design.dart';
-
-// Note: QueueScreen is implemented in the S1 package, not in core.
-// This demo app wires the placeholder detail/approval screens.
+import 'core/rm_workspace_core.dart' hide CaseDetailScreen, ApprovalScreen;
+import 'design/design.dart';
+import 'features/queue/queue_screen.dart';
+import 'features/case_detail/case_detail_screen.dart';
+import 'features/approval/approval_screen.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CaseController()),
+        ChangeNotifierProvider(create: (_) => CaseDetailController()),
       ],
       child: const RMWorkspaceApp(),
     ),
@@ -36,6 +37,11 @@ class RMWorkspaceApp extends StatelessWidget {
 final GoRouter _router = GoRouter(
   initialLocation: '/queue',
   routes: [
+    GoRoute(
+      path: '/queue',
+      name: 'queue',
+      builder: (context, state) => const QueueScreen(),
+    ),
     GoRoute(
       path: '/case/:caseId',
       name: 'case-detail',
