@@ -1,0 +1,59 @@
+{
+  "document_id": "SHB_Product_Eligibility_Rules",
+  "title": "Điều kiện Eligibility theo Sản phẩm — Demo Synthetic",
+  "version": "2026.1",
+  "effective_from": "2026-01-01",
+  "effective_to": null,
+  "status": "active",
+  "note": "DỮ LIỆU SYNTHETIC CHỈ DÙNG CHO DEMO/HACKATHON",
+  "products": [
+    {
+      "product_id": "PROD-PAYROLL",
+      "product_name": "Dịch vụ Chi lương",
+      "required_rules": ["RULE-BUSINESS-REG-001", "RULE-LEGAL-REP-001"],
+      "blocking_rules": ["RULE-BUSINESS-REG-001", "RULE-WATCHLIST-001"],
+      "warning_rules": [],
+      "minimum_requirements": {
+        "min_employees": 5,
+        "required_documents": ["Giấy chứng nhận đăng ký doanh nghiệp", "CCCD người đại diện"]
+      }
+    },
+    {
+      "product_id": "PROD-CASH-MGMT",
+      "product_name": "Quản lý Dòng tiền",
+      "required_rules": ["RULE-BUSINESS-REG-001", "RULE-LEGAL-REP-001"],
+      "blocking_rules": ["RULE-BUSINESS-REG-001", "RULE-WATCHLIST-001"],
+      "warning_rules": [],
+      "minimum_requirements": {
+        "min_annual_revenue": 50000000000,
+        "required_documents": ["Giấy chứng nhận đăng ký doanh nghiệp", "CCCD người đại diện"]
+      }
+    },
+    {
+      "product_id": "PROD-COLLECTION",
+      "product_name": "Thu hộ và Chi hộ",
+      "required_rules": ["RULE-BUSINESS-REG-001", "RULE-LEGAL-REP-001"],
+      "blocking_rules": ["RULE-BUSINESS-REG-001", "RULE-WATCHLIST-001"],
+      "warning_rules": [],
+      "minimum_requirements": {
+        "required_documents": ["Giấy chứng nhận đăng ký doanh nghiệp", "CCCD người đại diện"]
+      }
+    },
+    {
+      "product_id": "PROD-WORKING-CAPITAL",
+      "product_name": "Vốn lưu động và Thấu chi",
+      "required_rules": ["RULE-BUSINESS-REG-001", "RULE-LEGAL-REP-001", "RULE-UBO-001", "RULE-CREDIT-FS-001", "RULE-WATCHLIST-001"],
+      "blocking_rules": ["RULE-BUSINESS-REG-001", "RULE-UBO-001", "RULE-CREDIT-FS-001", "RULE-WATCHLIST-001"],
+      "warning_rules": ["RULE-LEGAL-REP-001"],
+      "minimum_requirements": {
+        "min_operating_months": 12,
+        "required_documents": [
+          "Giấy chứng nhận đăng ký doanh nghiệp",
+          "CCCD người đại diện",
+          "Thông tin chủ sở hữu hưởng lợi (UBO)",
+          "Báo cáo tài chính năm gần nhất"
+        ]
+      }
+    }
+  ]
+}
