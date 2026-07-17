@@ -168,6 +168,7 @@ data/vector_db/
 data/state/
 data/logs/
 data/rag_mcp/
+!data/rag_mcp/*_vector_cache.json
 
 # --- Generated proposal render output (tools/render_pdf_pages.py, tools/create_rewrite_proposal.py) ---
 # Hundreds of page-render PNGs/PDFs and Office lock files (~$*.docx); regenerate from tools/, don't commit.
