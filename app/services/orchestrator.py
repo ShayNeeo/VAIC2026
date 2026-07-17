@@ -5,7 +5,8 @@ from __future__ import annotations
 import uuid
 from typing import Dict
 
-from app.agents import LegalAgent, OperationsAgent, ProductAgent
+from app.agents import OperationsAgent, ProductAgent
+from app.legal import LegalAgentV2
 from app.schemas.state import SharedCaseState
 from app.safety import EvidenceValidator, GuardrailGate
 from app.services.planner_agent import PlannerAgent
@@ -16,7 +17,7 @@ class CaseOrchestrator:
     def __init__(self) -> None:
         self.planner = PlannerAgent()
         self.product = ProductAgent()
-        self.legal = LegalAgent()
+        self.legal = LegalAgentV2()
         self.operations = OperationsAgent()
         self.validator = EvidenceValidator()
         self.guardrails = GuardrailGate()

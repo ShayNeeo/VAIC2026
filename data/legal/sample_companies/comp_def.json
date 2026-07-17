@@ -1,0 +1,14 @@
+{
+  "customer_id": "COMP-DEF",
+  "company_name": "Công ty CP Đầu tư DEF",
+  "tax_code": "0112233445",
+  "industry": "Đầu tư",
+  "employees_count": 25,
+  "annual_revenue": 30000000000,
+  "cash_flow_status": "ổn định",
+  "ubo_status": "complete",
+  "financial_reports": {"has_recent": false},
+  "representative": {"name": "Lê Văn C", "id_number": "031098765432", "position": "Giám đốc"},
+  "legal_status": "active",
+  "note": "SYNTHETIC DEMO — ĐKKD hết hạn, BCTC thiếu"
+}

@@ -1,0 +1,189 @@
+{
+  "document_id": "SHB_KYC_AML_Demo_Policy_2026",
+  "title": "Chính sách Nhận biết Khách hàng và Phòng chống Rửa tiền — Demo Synthetic",
+  "version": "2026.1",
+  "effective_from": "2026-01-01",
+  "effective_to": null,
+  "status": "active",
+  "owner": "Legal/Compliance",
+  "note": "DỮ LIỆU SYNTHETIC CHỈ DÙNG CHO DEMO/HACKATHON — KHÔNG PHẢI CHÍNH SÁCH THẬT CỦA SHB",
+  "chapters": [
+    {
+      "chapter_id": "CHAP-I",
+      "title": "Chương I — Quy định chung",
+      "articles": [
+        {
+          "article_id": "DIEU-1",
+          "title": "Điều 1 — Phạm vi áp dụng",
+          "text": "Chính sách này áp dụng cho tất cả khách hàng doanh nghiệp (pháp nhân) của SHB khi mở tài khoản, đăng ký sử dụng sản phẩm tín dụng, thanh toán quốc tế và các dịch vụ ngân hàng doanh nghiệp khác.",
+          "clauses": []
+        },
+        {
+          "article_id": "DIEU-2",
+          "title": "Điều 2 — Định nghĩa",
+          "text": "Trong chính sách này: Khách hàng doanh nghiệp là tổ chức, pháp nhân được thành lập hợp pháp tại Việt Nam hoặc nước ngoài. KYC (Know Your Customer) là quy trình nhận biết và xác minh danh tính khách hàng. UBO (Ultimate Beneficial Owner) là chủ sở hữu hưởng lợi cuối cùng, nghĩa là cá nhân thực sự kiểm soát hoặc sở hữu trên 25% vốn điều lệ của doanh nghiệp.",
+          "clauses": []
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-II",
+      "title": "Chương II — Định danh và Xác minh Doanh nghiệp",
+      "articles": [
+        {
+          "article_id": "DIEU-3",
+          "title": "Điều 3 — Định danh doanh nghiệp",
+          "text": "Mã số thuế trên giấy chứng nhận đăng ký doanh nghiệp phải khớp với hồ sơ khách hàng được lưu trữ tại SHB. Trường hợp không khớp, hồ sơ bị từ chối cho đến khi có xác nhận từ cơ quan đăng ký kinh doanh.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-3-K1",
+              "text": "Khoản 1: Doanh nghiệp phải cung cấp bản gốc hoặc bản sao công chứng Giấy chứng nhận đăng ký doanh nghiệp còn hiệu lực.",
+              "rule_refs": ["RULE-BUSINESS-REG-001"]
+            },
+            {
+              "clause_id": "DIEU-3-K2",
+              "text": "Khoản 2: Mã số thuế trên giấy đăng ký phải khớp tuyệt đối với mã số thuế trong hồ sơ KYC đã được xác minh.",
+              "rule_refs": ["RULE-BUSINESS-REG-001"]
+            },
+            {
+              "clause_id": "DIEU-3-K3",
+              "text": "Khoản 3: Giấy chứng nhận đăng ký doanh nghiệp hết hạn hoặc bị thu hồi dẫn đến trạng thái từ chối toàn bộ dịch vụ cho đến khi được gia hạn và xác nhận lại.",
+              "rule_refs": ["RULE-BUSINESS-REG-001", "RULE-DOC-EXPIRY-001"]
+            }
+          ]
+        },
+        {
+          "article_id": "DIEU-4",
+          "title": "Điều 4 — Hồ sơ đăng ký bắt buộc",
+          "text": "Bộ hồ sơ đăng ký tối thiểu cho khách hàng doanh nghiệp bao gồm Giấy chứng nhận đăng ký doanh nghiệp, CCCD/Hộ chiếu còn hiệu lực của người đại diện pháp luật và hợp đồng dịch vụ.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-4-K1",
+              "text": "Khoản 1: Giấy chứng nhận đăng ký kinh doanh (ĐKKD) phải được cấp bởi Sở Kế hoạch và Đầu tư hoặc cơ quan có thẩm quyền tương đương.",
+              "rule_refs": ["RULE-BUSINESS-REG-001"]
+            },
+            {
+              "clause_id": "DIEU-4-K2",
+              "text": "Khoản 2: CCCD/Hộ chiếu của người đại diện pháp luật phải còn hiệu lực và không bị hết hạn quá 6 tháng tính từ ngày nộp hồ sơ.",
+              "rule_refs": ["RULE-LEGAL-REP-001", "RULE-DOC-EXPIRY-001"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-III",
+      "title": "Chương III — Người đại diện pháp luật và Ủy quyền",
+      "articles": [
+        {
+          "article_id": "DIEU-5",
+          "title": "Điều 5 — Người đại diện pháp luật",
+          "text": "Người đại diện pháp luật phải được xác minh danh tính theo quy định KYC cá nhân và phải có tên trong Giấy chứng nhận đăng ký doanh nghiệp. CCCD hoặc Hộ chiếu của người đại diện phải còn hiệu lực.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-5-K1",
+              "text": "Khoản 1: Thông tin người đại diện pháp luật trên hồ sơ KYC phải khớp với thông tin đăng ký tại cơ quan nhà nước.",
+              "rule_refs": ["RULE-LEGAL-REP-001"]
+            },
+            {
+              "clause_id": "DIEU-5-K2",
+              "text": "Khoản 2: Nếu có thay đổi người đại diện pháp luật, doanh nghiệp phải thông báo cho SHB trong vòng 30 ngày và cung cấp hồ sơ cập nhật.",
+              "rule_refs": ["RULE-LEGAL-REP-001"]
+            }
+          ]
+        },
+        {
+          "article_id": "DIEU-6",
+          "title": "Điều 6 — Ủy quyền",
+          "text": "Giấy ủy quyền phải nêu rõ phạm vi ủy quyền, thời hạn và được công chứng hoặc xác nhận bởi cơ quan có thẩm quyền. Số CCCD/Hộ chiếu của người được ủy quyền phải khớp với giấy ủy quyền và hồ sơ định danh gốc.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-6-K1",
+              "text": "Khoản 1: Giấy ủy quyền phải được công chứng và còn trong thời hạn hiệu lực.",
+              "rule_refs": ["RULE-AUTH-POWER-001"]
+            },
+            {
+              "clause_id": "DIEU-6-K2",
+              "text": "Khoản 2: Bắt buộc so khớp số CCCD/Hộ chiếu giữa giấy ủy quyền và hồ sơ định danh gốc để tránh nhầm lẫn giữa người đại diện pháp luật và người được ủy quyền.",
+              "rule_refs": ["RULE-AUTH-POWER-001"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-IV",
+      "title": "Chương IV — Chủ sở hữu hưởng lợi (UBO) và KYC nâng cao",
+      "articles": [
+        {
+          "article_id": "DIEU-8",
+          "title": "Điều 8 — Chủ sở hữu hưởng lợi (UBO)",
+          "text": "Hồ sơ khách hàng doanh nghiệp phải có thông tin chủ sở hữu hưởng lợi cuối cùng (UBO). UBO là cá nhân sở hữu trực tiếp hoặc gián tiếp từ 25% trở lên vốn điều lệ, hoặc có quyền kiểm soát thực tế đối với doanh nghiệp. Thiếu thông tin UBO sẽ chặn tất cả các sản phẩm tín dụng và các sản phẩm có rủi ro cao.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-8-K1",
+              "text": "Khoản 1: Doanh nghiệp phải khai báo đầy đủ danh sách UBO bao gồm họ tên, ngày sinh, quốc tịch, tỷ lệ sở hữu và số giấy tờ định danh.",
+              "rule_refs": ["RULE-UBO-001"]
+            },
+            {
+              "clause_id": "DIEU-8-K2",
+              "text": "Khoản 2: Đối với sản phẩm vốn lưu động, thấu chi và tín dụng ngắn hạn, thông tin UBO là điều kiện bắt buộc và có mức độ nghiêm trọng 'blocking'. Hồ sơ thiếu UBO không được xét duyệt.",
+              "rule_refs": ["RULE-UBO-001"]
+            },
+            {
+              "clause_id": "DIEU-8-K3",
+              "text": "Khoản 3: Doanh nghiệp phải cập nhật thông tin UBO khi có thay đổi sở hữu trên 5% vốn điều lệ hoặc khi có thay đổi người kiểm soát thực tế.",
+              "rule_refs": ["RULE-UBO-001"]
+            }
+          ]
+        },
+        {
+          "article_id": "DIEU-9",
+          "title": "Điều 9 — Danh sách cấm vận và PEP",
+          "text": "Trước khi cung cấp bất kỳ dịch vụ nào, SHB phải thực hiện sàng lọc doanh nghiệp và các UBO theo danh sách cấm vận quốc tế (UN, OFAC) và danh sách người chính trị có ảnh hưởng (PEP). Kết quả khớp danh sách cấm vận là điều kiện hard block không thể override.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-9-K1",
+              "text": "Khoản 1: Mọi doanh nghiệp và UBO đều phải được sàng lọc theo danh sách cấm vận và PEP trước khi kích hoạt dịch vụ.",
+              "rule_refs": ["RULE-WATCHLIST-001"]
+            },
+            {
+              "clause_id": "DIEU-9-K2",
+              "text": "Khoản 2: Kết quả khớp danh sách cấm vận (sanction match) là hard block — không được cung cấp bất kỳ dịch vụ nào và phải báo cáo ngay cho bộ phận Compliance.",
+              "rule_refs": ["RULE-WATCHLIST-001"]
+            },
+            {
+              "clause_id": "DIEU-9-K3",
+              "text": "Khoản 3: Kết quả khớp PEP (politically exposed person) phải chuyển sang trạng thái pending_review và yêu cầu phê duyệt từ cấp có thẩm quyền tối thiểu là Giám đốc Chi nhánh.",
+              "rule_refs": ["RULE-WATCHLIST-001"]
+            }
+          ]
+        },
+        {
+          "article_id": "DIEU-10",
+          "title": "Điều 10 — Rủi ro rửa tiền",
+          "text": "Doanh nghiệp hoạt động trong các lĩnh vực có rủi ro rửa tiền cao (casino, tiền ảo, vũ khí, khai khoáng không giấy phép) phải qua quy trình Enhanced Due Diligence (EDD) trước khi cung cấp dịch vụ.",
+          "clauses": []
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-V",
+      "title": "Chương V — Rà soát định kỳ và cập nhật thông tin",
+      "articles": [
+        {
+          "article_id": "DIEU-12",
+          "title": "Điều 12 — Rà soát định kỳ",
+          "text": "Hồ sơ KYC của khách hàng doanh nghiệp phải được rà soát định kỳ: khách hàng rủi ro cao 12 tháng/lần, khách hàng rủi ro trung bình 24 tháng/lần, khách hàng rủi ro thấp 36 tháng/lần. Thông tin hết hạn rà soát được coi là 'stale' và không đủ để xét duyệt dịch vụ mới.",
+          "clauses": []
+        },
+        {
+          "article_id": "DIEU-13",
+          "title": "Điều 13 — Sự kiện kích hoạt cập nhật",
+          "text": "Các sự kiện bắt buộc cập nhật hồ sơ KYC: thay đổi người đại diện pháp luật, thay đổi cơ cấu sở hữu trên 5%, thay đổi ngành nghề kinh doanh chính, phát sinh giao dịch bất thường theo ngưỡng AML.",
+          "clauses": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "note": "DỮ LIỆU SYNTHETIC CHỈ DÙNG CHO DEMO/HACKATHON — Danh sách giả, không có giá trị pháp lý",
+  "last_updated": "2026-01-01",
+  "version": "2026.1",
+  "sanctions": [
+    {
+      "entity_id": "SANC-001",
+      "name": "Công ty TNHH Thương mại Đen Demo",
+      "aliases": ["CTCP Den Demo", "Den Demo Trading"],
+      "tax_code": "9999999999",
+      "type": "organization",
+      "list": "UN_CONSOLIDATED",
+      "reason": "Liên quan đến hoạt động rửa tiền quốc tế — DEMO",
+      "since": "2024-06-01",
+      "status": "active"
+    },
+    {
+      "entity_id": "SANC-002",
+      "name": "Demo Blocked Corporation",
+      "aliases": [],
+      "tax_code": "8888888888",
+      "type": "organization",
+      "list": "OFAC_SDN",
+      "reason": "Tài trợ khủng bố quốc tế — DEMO",
+      "since": "2023-01-15",
+      "status": "active"
+    }
+  ],
+  "pep": [
+    {
+      "entity_id": "PEP-001",
+      "name": "Nguyễn Demo PEP",
+      "aliases": ["N.D. PEP"],
+      "id_number": "000000000001",
+      "type": "individual",
+      "position": "Cựu quan chức cấp tỉnh — DEMO",
+      "risk_level": "high",
+      "status": "active",
+      "note": "Cần Enhanced Due Diligence"
+    },
+    {
+      "entity_id": "PEP-002",
+      "name": "Trần Demo Politician",
+      "aliases": [],
+      "id_number": "000000000002",
+      "type": "individual",
+      "position": "Đại biểu Quốc hội — DEMO",
+      "risk_level": "medium",
+      "status": "active",
+      "note": "Cần phê duyệt Giám đốc Chi nhánh"
+    }
+  ]
+}
