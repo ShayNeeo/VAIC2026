@@ -1,4 +1,4 @@
-name: deploy-pages
+name: deploy-pages-s2
 
 on:
   push:
