@@ -34,11 +34,22 @@ class IntentExtractor:
         fallback: DeterministicIntentExtractor | None = None,
     ) -> None:
         self.prefer_llm = settings.INTENT_USE_LLM if prefer_llm is None else prefer_llm
+        self.model = settings.GOOGLE_MODEL if settings.DEFAULT_LLM == "google" else settings.OPENAI_MODEL
         self.client = client
-        if self.client is None and self.prefer_llm and settings.OPENAI_API_KEY:
-            self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        if self.client is None and self.prefer_llm:
+            if settings.DEFAULT_LLM == "google" and settings.GOOGLE_API_KEY:
+                # Google AI Studio exposes an OpenAI-compatible endpoint, so the
+                # openai SDK can call gemma-4-31b-it directly with the AI Studio
+                # key. OpenAI remains a selectable fallback via DEFAULT_LLM=openai.
+                self.client = AsyncOpenAI(
+                    api_key=settings.GOOGLE_API_KEY,
+                    base_url=settings.GOOGLE_ENDPOINT,
+                )
+                self.model = settings.GOOGLE_MODEL
+            elif settings.DEFAULT_LLM == "openai" and settings.OPENAI_API_KEY:
+                self.client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+                self.model = settings.OPENAI_MODEL
         self.fallback = fallback or DeterministicIntentExtractor()
-        self.model = settings.OPENAI_MODEL
         self.last_run = {
             "mode": "not_started",
             "model": self.model,

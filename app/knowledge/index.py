@@ -53,20 +53,15 @@ class EmbeddingProvider(Protocol):
 
 
 class CachedGeminiEmbedding:
-    """Production provider using gemini-embedding-001, with local cache for offline tests.
+    """Production embedding via Google AI Studio (``google-genai`` SDK).
 
-    "text-embedding-004" (the model this class originally called) has been
-    retired: calling it now returns 404 NOT_FOUND. Verified against the live
-    API on 2026-07-18: `GET v1beta/models` lists gemini-embedding-001,
-    gemini-embedding-2-preview and gemini-embedding-2 as the models this key
-    can actually call. gemini-embedding-001 defaults to a 3072-dim output;
-    outputDimensionality truncates it (Matryoshka-style) to match the
-    dimension declared here so cosine() in this module never silently
-    compares mismatched-length vectors.
+    Uses the AI Studio key (``GOOGLE_API_KEY``) with ``gemini-embedding-2`` by
+    default, local cache keyed by content hash (offline + deterministic after
+    a warm cache). The OpenAI provider remains available as a fallback.
     """
-    name = "gemini-embedding-001"
+    name = "gemini-embedding-2"
 
-    def __init__(self, dimension: int = 768, cache_file: Optional[Path] = None) -> None:
+    def __init__(self, dimension: int = 3072, cache_file: Optional[Path] = None) -> None:
         self.dimension = dimension
         self.api_key = settings.GOOGLE_API_KEY or os.getenv("GOOGLE_API_KEY")
         self.cache_file = cache_file or Path(settings.VECTOR_DB_DIR) / "gemini_vector_cache.json"
@@ -82,39 +77,27 @@ class CachedGeminiEmbedding:
         if text_hash in self.cache:
             return self.cache[text_hash]
 
-        import urllib.error
-        import urllib.request
-        import json as json_lib
+        from dotenv import load_dotenv
 
+        load_dotenv()
         api_key = self.api_key or os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            raise RuntimeError("GOOGLE_API_KEY is not set for CachedGeminiEmbedding.")
+            raise RuntimeError("GOOGLE_API_KEY (AI Studio) is not set for CachedGeminiEmbedding.")
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.name}:embedContent?key={api_key}"
-        data = json_lib.dumps({
-            "model": f"models/{self.name}",
-            "content": {"parts": [{"text": text}]},
-            "outputDimensionality": self.dimension,
-        }).encode("utf-8")
+        from google import genai
+        from google.genai import types
 
-        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'}, method='POST')
-        try:
-            with urllib.request.urlopen(req) as response:
-                resp_body = response.read().decode('utf-8')
-                result = json_lib.loads(resp_body)
-                vector = result["embedding"]["values"]
-        except urllib.error.HTTPError as e:
-            # Surface Google's actual error body (e.g. "RESOURCE_EXHAUSTED:
-            # prepayment credits depleted") instead of a bare "HTTP Error nnn"
-            # -- that body is what actually explains failures like billing.
-            body = e.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Gemini Embedding API call failed ({e.code}): {body}") from e
-        except Exception as e:
-            raise RuntimeError(f"Failed to call Gemini Embedding API: {e}") from e
+        client = genai.Client(api_key=api_key)
+        response = client.models.embed_content(
+            model=self.name,
+            contents=[text],
+            config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY"),
+        )
+        vector = list(response.embeddings[0].values)
 
         self.cache[text_hash] = vector
         self.cache_file.parent.mkdir(parents=True, exist_ok=True)
-        self.cache_file.write_text(json_lib.dumps(self.cache), encoding="utf-8")
+        self.cache_file.write_text(json.dumps(self.cache), encoding="utf-8")
 
         return vector
 
@@ -160,14 +143,41 @@ class CachedOpenAIEmbedding:
         return vector
 
 
+class LocalEmbedding:
+    """Deterministic, key-free embedding for offline/dev/test and reproducible CI.
+
+    Hashes content tokens into a fixed-dim bag-of-words vector (preserving
+    exact-token overlap). No API key required; swap to ``gemini``/``openai`` for
+    production semantic recall once a billing-backed key is provisioned.
+    """
+
+    name = "local"
+    _DIM = 256
+
+    def __init__(self, dimension: int = _DIM) -> None:
+        self.dimension = dimension
+
+    def embed(self, text: str) -> List[float]:
+        vec = [0.0] * self.dimension
+        for token in tokens(text):
+            h = int.from_bytes(hashlib.sha256(token.encode("utf-8")).digest()[:8], "big")
+            idx = h % self.dimension
+            mag = 1.0 + ((h >> 8) & 0xFF) / 255.0
+            vec[idx] += mag
+        norm = math.sqrt(sum(v * v for v in vec))
+        if norm > 0.0:
+            vec = [v / norm for v in vec]
+        return vec
+
+
 def create_embedding_provider(name: Optional[str] = None) -> EmbeddingProvider:
-    # Default is "openai", not "gemini": verified live on 2026-07-18 that the
-    # configured GOOGLE_API_KEY's Gemini project has its prepayment credits
-    # depleted (429 RESOURCE_EXHAUSTED on every embedContent call), so Gemini
-    # cannot actually serve requests right now even though the model name/
-    # request shape are now fixed. Set KNOWLEDGE_EMBEDDING_PROVIDER=gemini
-    # once billing is restored to switch back.
-    provider = (name or os.getenv("KNOWLEDGE_EMBEDDING_PROVIDER") or "openai").strip().lower()
+    # Default is "local": deterministic and key-free so the suite runs offline
+    # with zero API keys and CI is reproducible. Set the env var to "gemini"
+    # (Google AI Studio key GOOGLE_API_KEY, gemini-embedding-2) or "openai" for
+    # production semantic recall.
+    provider = (name or os.getenv("KNOWLEDGE_EMBEDDING_PROVIDER") or "local").strip().lower()
+    if provider == "local":
+        return LocalEmbedding()
     if provider == "gemini":
         return CachedGeminiEmbedding()
     if provider == "openai":

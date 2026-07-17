@@ -162,11 +162,31 @@ class PayloadDiff with _$PayloadDiff {
 }
 
 /// Opportunity status enum
+///
+/// Accepts both the brief mock values (snake_case) and the live backend
+/// values (camelCase) via @JsonValue so Enum decode never throws.
 enum OpportunityStatus {
+  @JsonValue('ready')
+  @JsonValue('new')
+  @JsonValue('draft')
+  @JsonValue('pending_approval')
+  @JsonValue('in_review')
+  @JsonValue('completed')
   ready,           // xanh - sẵn sàng
+  @JsonValue('needInfo')
+  @JsonValue('need_info')
+  @JsonValue('need info')
+  @JsonValue('getInfo')
+  @JsonValue('pending_information')
   needInfo,        // vàng - thiếu thông tin
+  @JsonValue('reviewRequired')
+  @JsonValue('review_required')
   reviewRequired,  // đỏ - cần chuyên gia
+  @JsonValue('blocked')
+  @JsonValue('failed')
   blocked,         // đỏ - bị chặn
+  @JsonValue('aiCta')
+  @JsonValue('AICta')
   aiCta,           // xám - AI đề xuất
 }
 

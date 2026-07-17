@@ -66,7 +66,7 @@ class _DesktopLayout extends StatelessWidget {
           SizedBox(
             width: 280,
             child: Container(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               child: sidebar,
             ),
           ),
@@ -174,7 +174,7 @@ class _DesktopThreeCol extends StatelessWidget {
         SizedBox(
           width: leftWidth,
           child: Container(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             child: SingleChildScrollView(child: left),
           ),
         ),
@@ -188,7 +188,7 @@ class _DesktopThreeCol extends StatelessWidget {
         SizedBox(
           width: rightWidth,
           child: Container(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
             child: SingleChildScrollView(child: right),
           ),
         ),

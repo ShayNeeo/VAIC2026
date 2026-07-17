@@ -43,11 +43,17 @@ class Settings(BaseModel):
     # API Keys (Sẽ đọc từ Environment Variables)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
-    
+
     # Model Configurations
-    DEFAULT_LLM: str = os.getenv("DEFAULT_LLM", "openai")  # openai | google | ollama
+    # Default LLM + embedding route through Google AI Studio (the GOOGLE_API_KEY
+    # is the AI Studio key). gemma-4-31b-it is the chat model; gemini-embedding-2
+    # is the embedding model (see app/knowledge/index.py / services/rag_mcp).
+    DEFAULT_LLM: str = os.getenv("DEFAULT_LLM", "google")  # google | openai | ollama
     OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    GOOGLE_MODEL: str = os.getenv("GOOGLE_MODEL", "gemini-1.5-flash")
+    GOOGLE_MODEL: str = os.getenv("GOOGLE_MODEL", "gemma-4-31b-it")
+    GOOGLE_ENDPOINT: str = os.getenv(
+        "GOOGLE_ENDPOINT", "https://generativelanguage.googleapis.com/v1beta/openai"
+    )
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     INTENT_USE_LLM: bool = os.getenv("INTENT_USE_LLM", "false").lower() == "true"

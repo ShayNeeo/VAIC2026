@@ -29,13 +29,11 @@ class RagMCPSettings:
     operations_token: str = os.getenv("RAG_MCP_OPERATIONS_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-operations")
     evidence_token: str = os.getenv("RAG_MCP_EVIDENCE_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-evidence")
     require_auth: bool = _bool("RAG_MCP_REQUIRE_AUTH", True)
-    # Default is "openai", not "gemini": verified live on 2026-07-18 that the
-    # configured GOOGLE_API_KEY's Gemini project has its prepayment credits
-    # depleted (429 RESOURCE_EXHAUSTED on every embedContent call), so Gemini
-    # cannot actually serve requests right now even though the model name/
-    # request shape in services/rag_mcp/embedding.py are now fixed. Set
-    # RAG_MCP_EMBEDDING_PROVIDER=gemini once billing is restored.
-    embedding_provider: str = os.getenv("RAG_MCP_EMBEDDING_PROVIDER", "openai")
+    # Default is "local": a deterministic, key-free provider so the suite runs
+    # offline with zero API keys and CI is reproducible. Set
+    # RAG_MCP_EMBEDDING_PROVIDER=gemini (Google AI Studio key GOOGLE_API_KEY,
+    # gemini-embedding-2) or "openai" for production semantic recall.
+    embedding_provider: str = os.getenv("RAG_MCP_EMBEDDING_PROVIDER", "local")
     top_k: int = int(os.getenv("RAG_MCP_TOP_K", "5"))
     # 0.35 is empirically chosen for OpenAI text-embedding-3-small to filter out noise.
     threshold: float = float(os.getenv("RAG_MCP_THRESHOLD", "0.35"))

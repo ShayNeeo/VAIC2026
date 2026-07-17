@@ -143,6 +143,34 @@ class ProductKnowledgeService:
                 )
             return hits
 
+    def keyword_search(self, query: str, *, top_k: int = 5) -> List[RetrievalHit]:
+        """Deterministic, embedding-free fallback used when vector retrieval
+        yields no hits (e.g. the key-free ``local`` provider on a small corpus,
+        or an empty/degraded index). Matches diacritic-folded query tokens
+        against chunk text so a grounded recommendation still surfaces offline.
+        """
+        from app.knowledge.index import fold, tokens
+
+        query_tokens = tokens(query)
+        if not query_tokens:
+            return []
+        q = fold(query)
+        hits: List[RetrievalHit] = []
+        with self.index._connect() as connection:
+            rows = connection.execute("SELECT payload FROM knowledge_chunks").fetchall()
+        for row in rows:
+            chunk = __import__("app.knowledge.models", fromlist=["KnowledgeChunk"]).KnowledgeChunk.model_validate_json(row["payload"])
+            if not chunk.active:
+                continue
+            text = fold(chunk.text)
+            matched = sum(1 for t in query_tokens if t in text)
+            if matched == 0:
+                continue
+            score = matched / max(1, len(query_tokens))
+            hits.append(RetrievalHit(chunk=chunk, score=max(0.21, min(0.6, score)), dense_score=0.0, sparse_score=max(0.21, min(0.6, score))))
+        hits.sort(key=lambda h: h.score, reverse=True)
+        return hits[:top_k]
+
     @staticmethod
     def evidence(hit: RetrievalHit) -> Dict[str, Any]:
         chunk = hit.chunk

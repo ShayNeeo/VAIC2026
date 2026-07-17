@@ -51,20 +51,17 @@ class EmbeddingProvider(Protocol):
 
 
 class CachedGeminiEmbedding:
-    """Production provider using gemini-embedding-001, with local cache for offline tests.
+    """Production embedding provider via Google AI Studio (``google-genai`` SDK).
 
-    "text-embedding-004" (the model this class originally called) has been
-    retired: calling it now returns 404 NOT_FOUND. Verified against the live
-    API on 2026-07-18: `GET v1beta/models` lists gemini-embedding-001,
-    gemini-embedding-2-preview and gemini-embedding-2 as the models this key
-    can actually call. gemini-embedding-001 defaults to a 3072-dim output;
-    outputDimensionality truncates it (Matryoshka-style) to match the
-    dimension declared here so cosine() never silently compares
-    mismatched-length vectors.
+    Uses the AI Studio key (``GOOGLE_API_KEY``) and ``gemini-embedding-2`` by
+    default, with a local cache so repeated calls are offline and CI is
+    deterministic after a warm cache. Falls back to ``openai`` if the caller
+    prefers an OpenAI embedding model.
     """
-    name = "gemini-embedding-001"
 
-    def __init__(self, dimension: int = 768) -> None:
+    name = "gemini-embedding-2"
+
+    def __init__(self, dimension: int = 3072) -> None:
         self.dimension = dimension
         self.api_key = os.getenv("GOOGLE_API_KEY")
         self.cache_file = Path(__file__).resolve().parents[2] / "data" / "rag_mcp" / "gemini_vector_cache.json"
@@ -81,39 +78,26 @@ class CachedGeminiEmbedding:
             return self.cache[text_hash]
 
         from dotenv import load_dotenv
-        import urllib.error
-        import urllib.request
-        import json as json_lib
 
         load_dotenv()
         api_key = self.api_key or os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            raise RuntimeError("GOOGLE_API_KEY is not set for CachedGeminiEmbedding.")
+            raise RuntimeError("GOOGLE_API_KEY (AI Studio) is not set for CachedGeminiEmbedding.")
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.name}:embedContent?key={api_key}"
-        data = json_lib.dumps({
-            "model": f"models/{self.name}",
-            "content": {"parts": [{"text": text}]},
-            "outputDimensionality": self.dimension,
-        }).encode("utf-8")
+        from google import genai
+        from google.genai import types
 
-        req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'}, method='POST')
-        try:
-            with urllib.request.urlopen(req) as response:
-                resp_body = response.read().decode('utf-8')
-                result = json_lib.loads(resp_body)
-                vector = result["embedding"]["values"]
-        except urllib.error.HTTPError as e:
-            # Surface Google's actual error body (e.g. "RESOURCE_EXHAUSTED:
-            # prepayment credits depleted") instead of a bare "HTTP Error nnn".
-            body = e.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Gemini Embedding API call failed ({e.code}): {body}") from e
-        except Exception as e:
-            raise RuntimeError(f"Failed to call Gemini Embedding API: {e}") from e
+        client = genai.Client(api_key=api_key)
+        response = client.models.embed_content(
+            model=self.name,
+            contents=[text],
+            config=types.EmbedContentConfig(task_type="SEMANTIC_SIMILARITY"),
+        )
+        vector = list(response.embeddings[0].values)
 
         self.cache[text_hash] = vector
         self.cache_file.parent.mkdir(parents=True, exist_ok=True)
-        self.cache_file.write_text(json_lib.dumps(self.cache), encoding="utf-8")
+        self.cache_file.write_text(json.dumps(self.cache), encoding="utf-8")
 
         return vector
 
@@ -162,6 +146,8 @@ class CachedOpenAIEmbedding:
 
 
 def create_embedding_provider(name: str) -> EmbeddingProvider:
+    if name == "local":
+        return LocalEmbedding()
     if name == "gemini":
         return CachedGeminiEmbedding()
     if name == "openai":
@@ -170,3 +156,34 @@ def create_embedding_provider(name: str) -> EmbeddingProvider:
         f"Unsupported embedding provider {name!r}. "
         "Implement the EmbeddingProvider port before enabling it."
     )
+
+
+class LocalEmbedding:
+    """Deterministic, key-free embedding for offline/dev/test and reproducible CI.
+
+    Hashes content tokens into a fixed-dim bag-of-words vector. Not a semantic
+    model: it preserves exact-token overlap (cosine of shared tokens), which is
+    enough for retrieval on a controlled synthetic corpus and guarantees the
+    suite runs with zero API keys. Swap to ``gemini``/``openai`` for production
+    semantic recall once a billing-backed key is provisioned.
+    """
+
+    name = "local"
+    _DIM = 256
+    _SEED = 0x9E3779B9
+
+    def __init__(self, dimension: int = _DIM) -> None:
+        self.dimension = dimension
+
+    def embed(self, text: str) -> List[float]:
+        vec = [0.0] * self.dimension
+        for token in tokens(text):
+            h = int.from_bytes(hashlib.sha256(token.encode("utf-8")).digest()[:8], "big")
+            idx = h % self.dimension
+            # Add a stable per-token magnitude so repeated tokens reinforce.
+            mag = 1.0 + ((h >> 8) & 0xFF) / 255.0
+            vec[idx] += mag
+        norm = math.sqrt(sum(v * v for v in vec))
+        if norm > 0.0:
+            vec = [v / norm for v in vec]
+        return vec
