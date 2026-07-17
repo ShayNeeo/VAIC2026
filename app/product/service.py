@@ -36,6 +36,12 @@ class ProductService:
             product_ids=requested_product_ids,
             top_k=max(effective_top_k * 2, 5),
         )
+        if not hits:
+            # Graceful degradation: vector retrieval (key-free "local" provider
+            # especially) can miss on a small synthetic corpus. Fall back to a
+            # deterministic keyword match so a grounded recommendation still
+            # surfaces instead of an empty bundle.
+            hits = self.knowledge.keyword_search(query, top_k=max(effective_top_k * 2, 5))
         grouped: Dict[str, RetrievalHit] = {}
         for hit in hits:
             grouped.setdefault(hit.chunk.product_id, hit)

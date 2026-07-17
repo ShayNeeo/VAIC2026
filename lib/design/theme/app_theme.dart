@@ -71,7 +71,7 @@ ThemeData lightTheme() => ThemeData(
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       foregroundColor: AppColors.ink2,
-      side: BorderSide(color: AppColors.line),
+      side: const BorderSide(color: AppColors.line),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
     ),
@@ -81,15 +81,15 @@ ThemeData lightTheme() => ThemeData(
     fillColor: AppColors.surface,
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(13),
-      borderSide: BorderSide(color: AppColors.line),
+      borderSide: const BorderSide(color: AppColors.line),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(13),
-      borderSide: BorderSide(color: AppColors.line),
+      borderSide: const BorderSide(color: AppColors.line),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(13),
-      borderSide: BorderSide(color: AppColors.blue, width: 2),
+      borderSide: const BorderSide(color: AppColors.blue, width: 2),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   ),
@@ -98,7 +98,7 @@ ThemeData lightTheme() => ThemeData(
     elevation: 0,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
-      side: BorderSide(color: AppColors.line),
+      side: const BorderSide(color: AppColors.line),
     ),
     margin: const EdgeInsets.all(0),
   ),
@@ -140,7 +140,7 @@ ThemeData darkTheme() => ThemeData(
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       foregroundColor: Colors.white,
-      side: BorderSide(color: const Color(0xFF333A47)),
+      side: const BorderSide(color: Color(0xFF333A47)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
     ),

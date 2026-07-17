@@ -117,7 +117,7 @@ _$OpportunityCardImpl _$$OpportunityCardImplFromJson(
       productId: json['productId'] as String,
       customer: json['customer'] as String,
       caseId: json['caseId'] as String,
-      status: statusFromJson(json['status']),
+      status: $enumDecode(_$OpportunityStatusEnumMap, json['status']),
       businessNeed: json['businessNeed'] as String,
       signals: (json['signals'] as List<dynamic>)
           .map((e) => Signal.fromJson(e as Map<String, dynamic>))
@@ -146,7 +146,7 @@ Map<String, dynamic> _$$OpportunityCardImplToJson(
       'productId': instance.productId,
       'customer': instance.customer,
       'caseId': instance.caseId,
-      'status': statusToJson(instance.status),
+      'status': _$OpportunityStatusEnumMap[instance.status]!,
       'businessNeed': instance.businessNeed,
       'signals': instance.signals,
       'productFit': instance.productFit,
@@ -158,6 +158,14 @@ Map<String, dynamic> _$$OpportunityCardImplToJson(
       'sla': instance.sla,
       'expectedOutcome': instance.expectedOutcome,
     };
+
+const _$OpportunityStatusEnumMap = {
+  OpportunityStatus.ready: 'ready',
+  OpportunityStatus.needInfo: 'needInfo',
+  OpportunityStatus.reviewRequired: 'reviewRequired',
+  OpportunityStatus.blocked: 'blocked',
+  OpportunityStatus.aiCta: 'aiCta',
+};
 
 _$SignalImpl _$$SignalImplFromJson(Map<String, dynamic> json) => _$SignalImpl(
       fact: json['fact'] as String,

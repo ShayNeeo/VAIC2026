@@ -132,7 +132,7 @@ class _ApprovalForm extends StatelessWidget {
         const Text('XÁC NHẬN TRÁCH NHIỆM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1)),
         ...detail.checklist.map((c) => _ConfirmRow(id: c.id, title: c.text, subtitle: '${c.owner} · ${c.sla}', checked: commitments.contains(c.id), onToggle: onToggleCommitment)),
         const SizedBox(height: 12),
-        if (escalated) StatusBadge(status: OpportunityStatus.reviewRequired, label: 'Đã chuyển chuyên gia kiểm tra'),
+        if (escalated) const StatusBadge(status: OpportunityStatus.reviewRequired, label: 'Đã chuyển chuyên gia kiểm tra'),
         const SizedBox(height: 10),
         Row(children: [
           Expanded(child: OutlinedButton(onPressed: onEscalate, child: const Text('Chuyên gia kiểm tra'))),
@@ -208,8 +208,8 @@ class _Receipt extends StatelessWidget {
           decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(13)),
           child: Column(children: [
             ...detail.opportunities.where((o) => selected.contains(o.opportunityId)).map((o) => _ReceiptRow(label: o.product, state: o.status == OpportunityStatus.needInfo ? 'PENDING' : 'CREATED')),
-            _ReceiptRow(label: 'Email được lưu dạng draft', state: 'NOT_SENT'),
-            _ReceiptRow(label: 'Task được tạo/tái sử dụng', state: 'IDEMPOTENT'),
+            const _ReceiptRow(label: 'Email được lưu dạng draft', state: 'NOT_SENT'),
+            const _ReceiptRow(label: 'Task được tạo/tái sử dụng', state: 'IDEMPOTENT'),
           ]),
         ),
         const SizedBox(height: 13),

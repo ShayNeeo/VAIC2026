@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:json_annotation/json_annotation.dart';
 
 part 'case_models.freezed.dart';
 part 'case_models.g.dart';
@@ -74,7 +73,6 @@ class OpportunityCard with _$OpportunityCard {
     required String productId,
     required String customer,
     required String caseId,
-    @JsonKey(fromJson: statusFromJson, toJson: statusToJson)
     required OpportunityStatus status,
     required String businessNeed,
     required List<Signal> signals,
@@ -191,40 +189,6 @@ enum OpportunityStatus {
   @JsonValue('AICta')
   aiCta,           // xám - AI đề xuất
 }
-
-/// Normalizes backend / mock status strings (mixed snake_case, camelCase,
-/// spaced) into the canonical OpportunityStatus. Never throws.
-OpportunityStatus statusFromJson(dynamic value) {
-  final s = (value?.toString() ?? '').toLowerCase().replaceAll(' ', '_');
-  switch (s) {
-    case 'ready':
-    case 'new':
-    case 'draft':
-    case 'pending_approval':
-    case 'in_review':
-    case 'completed':
-      return OpportunityStatus.ready;
-    case 'needinfo':
-    case 'need_info':
-    case 'getinfo':
-    case 'get_info':
-    case 'pending_information':
-      return OpportunityStatus.needInfo;
-    case 'reviewrequired':
-    case 'review_required':
-      return OpportunityStatus.reviewRequired;
-    case 'blocked':
-    case 'failed':
-      return OpportunityStatus.blocked;
-    case 'aicta':
-    case 'ai_cta':
-      return OpportunityStatus.aiCta;
-    default:
-      return OpportunityStatus.ready;
-  }
-}
-
-String statusToJson(OpportunityStatus status) => status.name;
 
 /// Extension for display
 extension OpportunityStatusX on OpportunityStatus {

@@ -30,9 +30,6 @@ class _QueueScreenState extends State<QueueScreen> {
     super.dispose();
   }
 
-  int _count(List<CaseQueueItem> c, String k) =>
-      c.fold(0, (sum, e) => sum + (e.branchStatusCounts[k] ?? 0));
-
   @override
   Widget build(BuildContext context) {
     return Consumer<CaseController>(
@@ -299,10 +296,10 @@ class _CaseCard extends StatelessWidget {
             ),
             const SizedBox(height: 11),
             Wrap(spacing: 6, runSpacing: 6, children: [
-              if ((counts['ready'] ?? 0) > 0) StatusChip(status: OpportunityStatus.ready),
-              if ((counts['need_info'] ?? 0) > 0) StatusChip(status: OpportunityStatus.needInfo),
-              if ((counts['review_required'] ?? 0) > 0) StatusChip(status: OpportunityStatus.reviewRequired),
-              if ((counts['blocked'] ?? 0) > 0) StatusChip(status: OpportunityStatus.blocked),
+              if ((counts['ready'] ?? 0) > 0) const StatusChip(status: OpportunityStatus.ready),
+              if ((counts['need_info'] ?? 0) > 0) const StatusChip(status: OpportunityStatus.needInfo),
+              if ((counts['review_required'] ?? 0) > 0) const StatusChip(status: OpportunityStatus.reviewRequired),
+              if ((counts['blocked'] ?? 0) > 0) const StatusChip(status: OpportunityStatus.blocked),
               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(999)), child: const Text('SLA', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.subtle))),
             ]),
             const SizedBox(height: 10),

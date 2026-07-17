@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'core/rm_workspace_core.dart' hide CaseDetailScreen, ApprovalScreen;
+import 'core/rm_workspace_core.dart';
 import 'design/design.dart';
 import 'features/queue/queue_screen.dart';
 import 'features/case_detail/case_detail_screen.dart';
