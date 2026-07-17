@@ -94,8 +94,10 @@ async def verify_token(request: VerifyTokenRequest) -> Dict[str, Any]:
     if _sign_payload(request.payload) != token_data["payload_hash"]:
         return {"valid": False, "reason": "PAYLOAD_MISMATCH"}
 
-    if token_data["one_time_use"] and token_data["consumed"]:
-        return {"valid": False, "reason": "TOKEN_ALREADY_USED"}
+    if token_data["one_time_use"]:
+        stored = _token_store.get(token_data["token_id"])
+        if stored and stored.get("consumed"):
+            return {"valid": False, "reason": "TOKEN_ALREADY_USED"}
 
     token_data["consumed"] = True
     _token_store[token_data["token_id"]] = token_data

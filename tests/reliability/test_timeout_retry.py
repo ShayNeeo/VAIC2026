@@ -11,8 +11,9 @@ async def test_rel_01_gemma_timeout_fallback():
 
     client = GemmaClient(api_key="test", timeout=0.001, max_retries=1)
 
-    with patch('httpx.AsyncClient.post', new_callable=AsyncMock) as mock_post:
-        mock_post.side_effect = asyncio.TimeoutError()
+    with patch.object(client._client, "post", new_callable=AsyncMock) as mock_post:
+        import httpx
+        mock_post.side_effect = httpx.TimeoutException("timeout")
         with pytest.raises(LLMClientError):
             await client.generate("test")
         assert mock_post.call_count == 2  # initial + 1 retry
@@ -21,41 +22,37 @@ async def test_rel_01_gemma_timeout_fallback():
 # REL-02: RAG index unavailable -> circuit breaker -> manual path
 @pytest.mark.asyncio
 async def test_rel_02_rag_unavailable_circuit_breaker():
-    from servers.product_agent.rag.retriever import ProductRetriever
+    from servers.v3_product_agent.rag.retriever import ProductRetriever
 
     retriever = ProductRetriever()
-    original_embed = retriever._embed
+    original_embed = retriever._embedder
 
     def failing_embed(text):
         raise RuntimeError("Index unavailable")
-    retriever._embed = failing_embed
+    retriever._embedder = failing_embed
 
     try:
         results = retriever.search("test", top_k=3)
         assert results == []
     finally:
-        retriever._embed = original_embed
+        retriever._embedder = original_embed
 
 
 # REL-03: Concurrent approve -> single external action
 @pytest.mark.asyncio
 async def test_rel_03_concurrent_approve_idempotent():
-    from servers.approval_agent.server import issue_token, verify_token
+    from servers.approval_agent.server import issue_token, verify_token, IssueTokenRequest, VerifyTokenRequest
 
-    issue = await issue_token({
-        "case_id": "CASE-CONCURRENT",
-        "rm_id": "RM-001",
-        "permissions": ["create_crm_case"],
-        "payload": {"action": "create_case", "idempotency_key": "idem-123"}
-    })
+    issue = await issue_token(IssueTokenRequest(
+        case_id="CASE-CONCURRENT", rm_id="RM-001",
+        permissions=["create_crm_case"], payload={"action": "create_case", "idempotency_key": "idem-123"},
+    ))
 
     tasks = [
-        verify_token({
-            "token": issue["token"],
-            "case_id": "CASE-CONCURRENT",
-            "rm_id": "RM-001",
-            "payload": {"action": "create_case", "idempotency_key": "idem-123"}
-        })
+        verify_token(VerifyTokenRequest(
+            token=issue["token"], case_id="CASE-CONCURRENT", rm_id="RM-001",
+            payload={"action": "create_case", "idempotency_key": "idem-123"},
+        ))
         for _ in range(3)
     ]
     results = await asyncio.gather(*tasks)
@@ -67,27 +64,19 @@ async def test_rel_03_concurrent_approve_idempotent():
 # REL-04: Replay approval dedupe
 @pytest.mark.asyncio
 async def test_rel_04_replay_dedupe():
-    from servers.approval_agent.server import issue_token, verify_token
+    from servers.approval_agent.server import issue_token, verify_token, IssueTokenRequest, VerifyTokenRequest
 
-    issue = await issue_token({
-        "case_id": "CASE-REPLAY",
-        "rm_id": "RM-001",
-        "permissions": ["create_crm_case"],
-        "payload": {"action": "create_case"}
-    })
+    issue = await issue_token(IssueTokenRequest(
+        case_id="CASE-REPLAY", rm_id="RM-001",
+        permissions=["create_crm_case"], payload={"action": "create_case"},
+    ))
 
-    r1 = await verify_token({
-        "token": issue["token"],
-        "case_id": "CASE-REPLAY",
-        "rm_id": "RM-001",
-        "payload": {"action": "create_case"}
-    })
-    r2 = await verify_token({
-        "token": issue["token"],
-        "case_id": "CASE-REPLAY",
-        "rm_id": "RM-001",
-        "payload": {"action": "create_case"}
-    })
+    r1 = await verify_token(VerifyTokenRequest(
+        token=issue["token"], case_id="CASE-REPLAY", rm_id="RM-001", payload={"action": "create_case"},
+    ))
+    r2 = await verify_token(VerifyTokenRequest(
+        token=issue["token"], case_id="CASE-REPLAY", rm_id="RM-001", payload={"action": "create_case"},
+    ))
 
     assert r1["valid"] is True
     assert r2["valid"] is False

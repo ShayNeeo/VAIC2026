@@ -25,7 +25,7 @@ class EvidenceVerifier:
 
     def _build_sources(self) -> Dict[Tuple[str, str], str]:
         """Build source text lookup from catalog and policies."""
-        from v3_product_agent.product.catalog import V3_PRODUCT_CATALOG
+        from servers.v3_product_agent.product.catalog import V3_PRODUCT_CATALOG
 
         sources: Dict[Tuple[str, str], str] = {}
         for product in V3_PRODUCT_CATALOG.values():
