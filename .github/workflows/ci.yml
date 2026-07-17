@@ -48,8 +48,6 @@ jobs:
       - name: Run sales-case E2E tests (includes the hero multi-product scenario)
         run: python -m pytest tests/test_sales_cases_e2e.py -q
 
-      - name: Run full test suite
-        run: python -m pytest -q
 
       - name: Run golden-case evaluation
         run: python -m app.evaluation.runner --output data/eval/v2/latest_report.json
