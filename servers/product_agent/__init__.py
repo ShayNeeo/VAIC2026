@@ -1,0 +1,1 @@
+"""Product Agent MCP Server package."""
