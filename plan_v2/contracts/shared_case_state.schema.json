@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.internal/contracts/shared-case-state/2.0.0",
+  "title": "SharedCaseStateV2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "case_id", "trace_id", "status", "context",
+    "request", "workflow", "evidences", "approval", "audit_events",
+    "created_at", "updated_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "case_id": {"type": "string", "minLength": 1},
+    "trace_id": {"type": "string", "minLength": 1},
+    "status": {
+      "enum": ["new", "understanding", "clarification_required", "planned", "in_analysis", "pending_information", "pending_review", "pending_approval", "executing", "completed", "rejected", "failed"]
+    },
+    "context": {"$ref": "context_snapshot.schema.json"},
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message_id", "text", "received_at"],
+      "properties": {
+        "message_id": {"type": "string"},
+        "text": {"type": "string"},
+        "received_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "intent_result": {"oneOf": [{"$ref": "intent_result.schema.json"}, {"type": "null"}]},
+    "workflow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflow_version", "current_node", "tasks", "loop_count"],
+      "properties": {
+        "workflow_version": {"type": "string"},
+        "current_node": {"type": ["string", "null"]},
+        "tasks": {"type": "array", "items": {"$ref": "#/$defs/task"}},
+        "loop_count": {"type": "integer", "minimum": 0, "maximum": 3},
+        "resume_from_nodes": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "product_result": {"type": ["object", "null"]},
+    "eligibility_result": {"type": ["object", "null"]},
+    "operations_result": {"type": ["object", "null"]},
+    "evidences": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["not_required", "pending", "approved", "rejected", "expired", "consumed"]},
+        "approver_id": {"type": ["string", "null"]},
+        "payload_hash": {"type": ["string", "null"]},
+        "expires_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "audit_events": {"type": "array", "items": {"type": "object"}},
+    "created_at": {"type": "string", "format": "date-time"},
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "task_type", "owner", "status", "dependencies", "dedup_key"],
+      "properties": {
+        "task_id": {"type": "string"},
+        "task_type": {"type": "string"},
+        "owner": {"type": "string"},
+        "status": {"enum": ["pending", "ready", "in_progress", "completed", "failed", "blocked", "skipped"]},
+        "dependencies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "dedup_key": {"type": "string"},
+        "input_hash": {"type": ["string", "null"]},
+        "output_ref": {"type": ["string", "null"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "module", "claim", "source_document_id", "source_version", "location", "quote", "is_valid"],
+      "properties": {
+        "claim_id": {"type": "string"},
+        "module": {"type": "string"},
+        "claim": {"type": "string"},
+        "source_document_id": {"type": "string"},
+        "source_version": {"type": "string"},
+        "location": {"type": "string"},
+        "quote": {"type": "string"},
+        "is_valid": {"type": "boolean"},
+        "validation_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    }
+  }
+}

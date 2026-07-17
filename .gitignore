@@ -141,7 +141,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
-
 # Workspace files
 .serena/
 5why.jpg
@@ -155,3 +154,12 @@ customer-persona.jpg
 good-solution.jpg
 multi-agent-workflow.jpg
 problem-statetement-to-solution.jpg
+
+# --- Python / project-specific (merged from local MVP work) ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+data/vector_db/
