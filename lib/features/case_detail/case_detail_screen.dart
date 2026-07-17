@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:rm_workspace_core/rm_workspace_core.dart' hide CaseDetailScreen, ApprovalScreen;
-import 'package:rm_workspace_design/design.dart';
+import '../../core/rm_workspace_core.dart';
+import '../../design/design.dart';
 
 /// S2: Case Decision Workspace (three-column per brief §5)
 class CaseDetailScreen extends StatefulWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:rm_workspace_core/rm_workspace_core.dart';
-import 'package:rm_workspace_design/design.dart';
+import '../../core/rm_workspace_core.dart';
+import '../../design/design.dart';
 
 /// S1: Opportunity Queue Screen
 class QueueScreen extends StatefulWidget {

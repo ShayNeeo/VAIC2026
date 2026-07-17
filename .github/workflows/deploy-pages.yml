@@ -2,8 +2,8 @@ name: deploy-pages
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
           channel: 'stable'
       - run: flutter pub get
       - run: flutter analyze lib --no-fatal-infos
-      - run: flutter build web --release --base-href /s1/
+      - run: flutter build web --release
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
