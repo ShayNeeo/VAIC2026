@@ -1,4 +1,4 @@
-"""MCP Common configuration from environment."""
+"""MCP Common configuration from environment - V3 aligned."""
 
 import os
 from pydantic import BaseModel
@@ -10,7 +10,7 @@ class Settings(BaseModel):
     GOOGLE_API_KEY: str = os.getenv("GOOGLE_API_KEY", "")
     GOOGLE_MODEL: str = os.getenv("GOOGLE_MODEL", "gemma-4-31b-it")
     GOOGLE_ENDPOINT: str = os.getenv("GOOGLE_ENDPOINT", "https://generativelanguage.googleapis.com")
-    # Full generateContent URL constructed in llm_client.py
+    # Full generateContent URL: {GOOGLE_ENDPOINT}/v1beta/models/{GOOGLE_MODEL}:generateContent?key={GOOGLE_API_KEY}
 
     # VPS / SSH
     VPS_HOST: str = os.getenv("VPS_HOST", "sgp1.w9.nu")
@@ -20,16 +20,19 @@ class Settings(BaseModel):
     VPS_IPV6: str = os.getenv("VPS_IPV6", "")
 
     # MCP Server ports (one per agent)
-    PRODUCT_AGENT_PORT: int = int(os.getenv("PRODUCT_AGENT_PORT", "2204"))
-    LEGAL_AGENT_PORT: int = int(os.getenv("LEGAL_AGENT_PORT", "2205"))
-    OPERATIONS_AGENT_PORT: int = int(os.getenv("OPERATIONS_AGENT_PORT", "2206"))
-    APPROVAL_AGENT_PORT: int = int(os.getenv("APPROVAL_AGENT_PORT", "2207"))
+    PRODUCT_AGENT_PORT: int = int(os.getenv("PRODUCT_AGENT_PORT", "8004"))
+    LEGAL_AGENT_PORT: int = int(os.getenv("LEGAL_AGENT_PORT", "8005"))
+    OPERATIONS_AGENT_PORT: int = int(os.getenv("OPERATIONS_AGENT_PORT", "8006"))
+    APPROVAL_AGENT_PORT: int = int(os.getenv("APPROVAL_AGENT_PORT", "8007"))
+    ORCHESTRATOR_PORT: int = int(os.getenv("ORCHESTRATOR_PORT", "8000"))
+
+    # Network binding (IPv6 dual-stack)
+    BIND_HOST: str = os.getenv("BIND_HOST", "::")
 
     # App (FastAPI orchestrator)
     APPROVAL_SECRET: str = os.getenv("APPROVAL_SECRET", "demo-only-change-me")
     APPROVAL_TOKEN_TTL_SECONDS: int = int(os.getenv("APPROVAL_TOKEN_TTL_SECONDS", "300"))
     HOST: str = os.getenv("HOST", "0.0.0.0")
-    BIND_HOST: str = os.getenv("BIND_HOST", "::")
     PORT: int = int(os.getenv("PORT", "8000"))
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
 
@@ -55,6 +58,24 @@ class Settings(BaseModel):
     USE_GEMMA_FOR_REASON: bool = os.getenv("USE_GEMMA_FOR_REASON", "false").lower() == "true"
     USE_GEMMA_FOR_INJECTION: bool = os.getenv("USE_GEMMA_FOR_INJECTION", "false").lower() == "true"
     EVIDENCE_SEMANTIC_THRESHOLD: float = float(os.getenv("EVIDENCE_SEMANTIC_THRESHOLD", "0.6"))
+
+    # V3 Confidence Policy (§6.3)
+    CONFIDENCE_AUTHENTICATED: float = 1.00
+    CONFIDENCE_WORKSPACE: float = 1.00
+    CONFIDENCE_FRESH_CRM: float = 0.98
+    CONFIDENCE_USER_EXPLICIT: float = 0.95
+    CONFIDENCE_WORKFLOW_STATE: float = 0.95
+    CONFIDENCE_LLM_INFERENCE: float = 0.70
+    CONFIDENCE_AUTO_CONTINUE: float = 0.90
+    CONFIDENCE_SHOW_PREVIEW: float = 0.70
+    CONFIDENCE_ASK_CLARIFY: float = 0.70
+
+    # V3 Evidence thresholds
+    EVIDENCE_EXACT_MATCH_REQUIRED: bool = True
+    EVIDENCE_SEMANTIC_THRESHOLD: float = 0.60
+
+    # V3 Data tier defaults (§9.2)
+    DEFAULT_DATA_TIER: str = "A"
 
 
 @lru_cache()

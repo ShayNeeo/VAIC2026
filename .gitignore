@@ -170,4 +170,4 @@ __pycache__/
 .coverage
 htmlcov/
 .venv/
-data/vector_db/
+data/

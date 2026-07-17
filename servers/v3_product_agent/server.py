@@ -122,8 +122,14 @@ async def product_analyze(request: ProductAnalyzeRequest) -> Dict[str, Any]:
     )
 
     # Build ProductResult
+    bundle = match_result["recommended_bundle"]
+    if hasattr(bundle, 'model_dump'):
+        bundle_dict = bundle.model_dump()
+    else:
+        bundle_dict = bundle
+
     result = ProductResult(
-        recommended_bundle=ProductBundle(**match_result["recommended_bundle"]),
+        recommended_bundle=ProductBundle(**bundle_dict),
         recommended_products=match_result["recommended_products"],
         missing_parameters=match_result["missing_parameters"],
         retrieval_query=match_result["retrieval_query"],
