@@ -1,90 +1,109 @@
 import 'package:flutter/material.dart';
 
-/// App color scheme with status semantics per brief §12
+/// App color scheme matching SHB Opportunity OS reference (mobile/index.html)
 class AppColors {
-  // Status colors (semantic, not decorative)
-  static const Color statusReady = Color(0xFF00A86B);      // xanh - ready to act
-  static const Color statusNeedInfo = Color(0xFFF5A623);   // vàng - missing info
-  static const Color statusBlocked = Color(0xFFE03E3E);    // đỏ - blocked/review required
-  static const Color statusAiCta = Color(0xFF9E9E9E);      // xám - AI CTA
+  // Brand
+  static const Color navy950 = Color(0xFF06172D);
+  static const Color navy900 = Color(0xFF071A33);
+  static const Color navy800 = Color(0xFF0E2F57);
+  static const Color navy700 = Color(0xFF164778);
+  static const Color blue = Color(0xFF2D7Bdd);
+  static const Color blue100 = Color(0xFFE9F2FF);
+  static const Color orange = Color(0xFFED6B1A);
+  static const Color orange700 = Color(0xFFC94F0D);
+  static const Color orange100 = Color(0xFFFFF0E6);
+
+  // Status colors (semantic, per brief §12)
+  static const Color statusReady = Color(0xFF17875B);      // xanh - ready
+  static const Color statusReady100 = Color(0xFFE7F7EF);
+  static const Color statusNeedInfo = Color(0xFFA26B00);   // vàng - missing info
+  static const Color statusNeedInfo100 = Color(0xFFFFF4D6);
+  static const Color statusBlocked = Color(0xFFB93232);    // đỏ - blocked/review
+  static const Color statusBlocked100 = Color(0xFFFDEAEA);
+  static const Color statusAiCta = Color(0xFF637083);      // xám - AI CTA
+  static const Color statusAiCta100 = Color(0xFFEEF2F7);
 
   // Neutral palette
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color background = Color(0xFFF8F9FA);
-  static const Color onSurface = Color(0xFF1A1A2E);
-  static const Color onBackground = Color(0xFF1A1A2E);
-  static const Color divider = Color(0xFFE0E0E0);
-  static const Color primary = Color(0xFF0052CC);          // SHB blue
-  static const Color primaryContainer = Color(0xFFE8F0FE);
+  static const Color background = Color(0xFFF3F6FA);
+  static const Color ink = Color(0xFF111827);
+  static const Color ink2 = Color(0xFF253247);
+  static const Color muted = Color(0xFF637083);
+  static const Color subtle = Color(0xFF8C98A8);
+  static const Color line = Color(0xFFDDE4EC);
+  static const Color onSurface = Color(0xFF111827);
   static const Color onPrimary = Color(0xFFFFFFFF);
-  static const Color secondary = Color(0xFF5E6C84);
-  static const Color error = Color(0xFFDE350B);
-  static const Color outline = Color(0xFF79747E);
+  static const Color primary = Color(0xFF071A33);          // navy
+  static const Color primaryContainer = Color(0xFFE9F2FF);
+  static const Color secondary = Color(0xFF637083);
+  static const Color error = Color(0xFFB93232);
+  static const Color outline = Color(0xFFDDE4EC);
 }
 
-/// Light theme
+/// Light theme — SHB Opportunity OS look (navy + orange)
 ThemeData lightTheme() => ThemeData(
   useMaterial3: true,
   brightness: Brightness.light,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: AppColors.primary,
+    seedColor: AppColors.navy900,
     brightness: Brightness.light,
-    primary: AppColors.primary,
+    primary: AppColors.navy900,
     onPrimary: AppColors.onPrimary,
-    primaryContainer: AppColors.primaryContainer,
-    secondary: AppColors.secondary,
+    primaryContainer: AppColors.blue100,
+    secondary: AppColors.blue,
     error: AppColors.error,
     surface: AppColors.surface,
-    onSurface: AppColors.onSurface,
-    outline: AppColors.outline,
+    onSurface: AppColors.ink,
+    outline: AppColors.line,
   ),
   scaffoldBackgroundColor: AppColors.background,
   fontFamily: 'Inter',
   textTheme: _textTheme,
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.orange,
       foregroundColor: AppColors.onPrimary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
-      foregroundColor: AppColors.primary,
-      side: const BorderSide(color: AppColors.primary),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      foregroundColor: AppColors.ink2,
+      side: BorderSide(color: AppColors.line),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
     fillColor: AppColors.surface,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: AppColors.divider),
+      borderRadius: BorderRadius.circular(13),
+      borderSide: BorderSide(color: AppColors.line),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: AppColors.divider),
+      borderRadius: BorderRadius.circular(13),
+      borderSide: BorderSide(color: AppColors.line),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      borderRadius: BorderRadius.circular(13),
+      borderSide: BorderSide(color: AppColors.blue, width: 2),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   ),
   cardTheme: CardThemeData(
     color: AppColors.surface,
-    elevation: 1,
+    elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-      side: const BorderSide(color: AppColors.divider),
+      borderRadius: BorderRadius.circular(16),
+      side: BorderSide(color: AppColors.line),
     ),
-    margin: const EdgeInsets.all(8),
+    margin: const EdgeInsets.all(0),
   ),
   dividerTheme: const DividerThemeData(
-    color: AppColors.divider,
+    color: AppColors.line,
     thickness: 1,
     space: 1,
   ),
@@ -95,64 +114,65 @@ ThemeData darkTheme() => ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
   colorScheme: ColorScheme.fromSeed(
-    seedColor: AppColors.primary,
+    seedColor: AppColors.navy900,
     brightness: Brightness.dark,
-    primary: AppColors.primary,
+    primary: AppColors.navy700,
     onPrimary: AppColors.onPrimary,
     primaryContainer: const Color(0xFF1E3A5F),
-    secondary: AppColors.secondary,
+    secondary: AppColors.blue,
     error: const Color(0xFFFFB4AB),
-    surface: const Color(0xFF1E1E1E),
+    surface: const Color(0xFF161E29),
     onSurface: const Color(0xFFFFFFFF),
-    outline: const Color(0xFF938F99),
+    outline: const Color(0xFF333A47),
   ),
-  scaffoldBackgroundColor: const Color(0xFF121212),
+  scaffoldBackgroundColor: const Color(0xFF0C141F),
   fontFamily: 'Inter',
   textTheme: _textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.orange,
       foregroundColor: AppColors.onPrimary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      textStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
-      foregroundColor: AppColors.primary,
-      side: const BorderSide(color: AppColors.primary),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      foregroundColor: Colors.white,
+      side: BorderSide(color: const Color(0xFF333A47)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
     ),
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
-    fillColor: const Color(0xFF1E1E1E),
+    fillColor: const Color(0xFF161E29),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Color(0xFF333333)),
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: Color(0xFF333A47)),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Color(0xFF333333)),
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: Color(0xFF333A47)),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      borderRadius: BorderRadius.circular(13),
+      borderSide: const BorderSide(color: AppColors.blue, width: 2),
     ),
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   ),
   cardTheme: CardThemeData(
-    color: const Color(0xFF1E1E1E),
-    elevation: 1,
+    color: const Color(0xFF161E29),
+    elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-      side: const BorderSide(color: Color(0xFF333333)),
+      borderRadius: BorderRadius.circular(16),
+      side: const BorderSide(color: Color(0xFF333A47)),
     ),
-    margin: const EdgeInsets.all(8),
+    margin: const EdgeInsets.all(0),
   ),
   dividerTheme: const DividerThemeData(
-    color: Color(0xFF333333),
+    color: Color(0xFF333A47),
     thickness: 1,
     space: 1,
   ),

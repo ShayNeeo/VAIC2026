@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/rm_workspace_core.dart';
 import '../../design/design.dart';
 
-/// S3: Approval & Receipt (brief §11)
+/// S3: Approval & Receipt — mirrors SHB Opportunity OS approval sheet + receipt
 class ApprovalScreen extends StatefulWidget {
   final String caseId;
   const ApprovalScreen({super.key, required this.caseId});
@@ -36,40 +36,31 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/case/${widget.caseId}'),
-          tooltip: 'Quay lại',
+    return Consumer<CaseDetailController>(
+      builder: (context, ctrl, _) => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.navy900,
+          foregroundColor: Colors.white,
+          leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/case/${widget.caseId}')),
+          title: Text(_submitted ? 'Execution Receipt' : 'Duyệt phạm vi hành động', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         ),
-        title: Text('Phê duyệt ${widget.caseId}'),
-      ),
-      body: Consumer<CaseDetailController>(
-        builder: (context, ctrl, _) {
-          if (ctrl.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final detail = ctrl.caseDetail;
-          if (detail == null) {
-            return const Center(child: Text('Không có dữ liệu'));
-          }
-          if (_submitted) {
-            return _Receipt(detail: detail, selected: _selected);
-          }
-          return _ApprovalForm(
-            detail: detail,
-            selected: _selected,
-            commitments: _commitments,
-            escalated: _escalated,
-            onToggleOpportunity: (id) => setState(() =>
-                _selected.contains(id) ? _selected.remove(id) : _selected.add(id)),
-            onToggleCommitment: (id) => setState(() =>
-                _commitments.contains(id) ? _commitments.remove(id) : _commitments.add(id)),
-            onSubmit: _submit,
-            onEscalate: _escalate,
-          );
-        },
+        body: ctrl.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ctrl.caseDetail == null
+                ? const Center(child: Text('Không có dữ liệu'))
+                : _submitted
+                    ? _Receipt(detail: ctrl.caseDetail!, selected: _selected, onBack: () => context.go('/queue'))
+                    : _ApprovalForm(
+                        detail: ctrl.caseDetail!,
+                        selected: _selected,
+                        commitments: _commitments,
+                        escalated: _escalated,
+                        onToggleOpportunity: (id) => setState(() => _selected.contains(id) ? _selected.remove(id) : _selected.add(id)),
+                        onToggleCommitment: (id) => setState(() => _commitments.contains(id) ? _commitments.remove(id) : _commitments.add(id)),
+                        onSubmit: _submit,
+                        onEscalate: _escalate,
+                      ),
       ),
     );
   }
@@ -99,131 +90,146 @@ class _ApprovalForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canSubmit = selected.isNotEmpty && commitments.isNotEmpty;
+    final ready = detail.opportunities.where((o) => !selected.contains(o.opportunityId) || o.status != OpportunityStatus.needInfo).length;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Payload thay đổi',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
+      padding: const EdgeInsets.all(14),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(16)),
+          child: Row(children: [
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _SummaryCell('${selected.length}', 'Opportunity'),
+              const SizedBox(height: 8),
+              _SummaryCell('$ready', 'Sẵn sàng'),
+            ])),
+            Container(width: 1, height: 48, color: AppColors.line),
+            Expanded(child: _SummaryCell('${selected.length - ready}', 'Chờ hồ sơ')),
+          ]),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(13)),
+          child: Column(children: [
             ...detail.opportunities.map((o) {
               final checked = selected.contains(o.opportunityId);
-              return CheckboxListTile(
-                value: checked,
-                onChanged: (_) => onToggleOpportunity(o.opportunityId),
-                title: Text(o.product),
-                subtitle: Text('${o.nextBestAction} • ${o.expectedOutcome}'),
-                secondary: StatusBadge(status: o.status),
+              return InkWell(
+                onTap: () => onToggleOpportunity(o.opportunityId),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Row(children: [
+                    Container(width: 22, height: 22, decoration: BoxDecoration(color: checked ? AppColors.blue : Colors.white, border: Border.all(color: checked ? AppColors.blue : const Color(0xFFBDC8D5)), borderRadius: BorderRadius.circular(7)), child: checked ? const Icon(Icons.check, size: 16, color: Colors.white) : null),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(o.product, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink))),
+                    StatusBadge(status: o.status),
+                  ]),
+                ),
               );
             }),
-            const Divider(height: 24),
-            Text('Cam kết RM (kiểm toán)',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            ...detail.checklist.map((c) => CheckboxListTile(
-                  value: commitments.contains(c.id),
-                  onChanged: (_) => onToggleCommitment(c.id),
-                  title: Text(c.text),
-                  subtitle: Text('Owner: ${c.owner} • ${c.sla}'),
-                )),
-            const SizedBox(height: 16),
-            if (escalated)
-              const StatusBadge(
-                  status: OpportunityStatus.reviewRequired,
-                  label: 'Đã chuyển chuyên gia kiểm tra'),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.check),
-                  label: const Text('Ký phê duyệt'),
-                  onPressed: canSubmit ? onSubmit : null,
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  icon: const Icon(Icons.gavel),
-                  label: const Text('Chuyển chuyên gia kiểm tra'),
-                  onPressed: onEscalate,
-                ),
-              ],
-            ),
-            if (!canSubmit)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text('Chọn ít nhất 1 cơ hội và xác nhận mọi cam kết.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.error)),
-              ),
-          ],
+          ]),
         ),
-      ),
+        const SizedBox(height: 14),
+        const Text('XÁC NHẬN TRÁCH NHIỆM', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 1)),
+        ...detail.checklist.map((c) => _ConfirmRow(id: c.id, title: c.text, subtitle: '${c.owner} · ${c.sla}', checked: commitments.contains(c.id), onToggle: onToggleCommitment)),
+        const SizedBox(height: 12),
+        if (escalated) StatusBadge(status: OpportunityStatus.reviewRequired, label: 'Đã chuyển chuyên gia kiểm tra'),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: OutlinedButton(onPressed: onEscalate, child: const Text('Chuyên gia kiểm tra'))),
+          const SizedBox(width: 8),
+          Expanded(child: ElevatedButton.icon(icon: const Icon(Icons.shield, size: 16), label: const Text('Xác nhận'), onPressed: canSubmit ? onSubmit : null)),
+        ]),
+        if (!canSubmit) const Padding(padding: EdgeInsets.only(top: 8), child: Text('Chọn ít nhất 1 cơ hội và xác nhận mọi cam kết.', style: TextStyle(fontSize: 10, color: AppColors.statusBlocked))),
+      ]),
     );
   }
+}
+
+class _SummaryCell extends StatelessWidget {
+  final String value, label;
+  const _SummaryCell(this.value, this.label);
+  @override
+  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Column(children: [Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.navy900)), Text(label, style: const TextStyle(fontSize: 8, color: AppColors.muted))]));
+}
+
+class _ConfirmRow extends StatelessWidget {
+  final String id, title, subtitle;
+  final bool checked;
+  final void Function(String) onToggle;
+  const _ConfirmRow({required this.id, required this.title, required this.subtitle, required this.checked, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: () => onToggle(id),
+    child: Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(12)),
+      child: Row(children: [
+        Checkbox(value: checked, onChanged: (_) => onToggle(id), activeColor: AppColors.blue),
+        const SizedBox(width: 8),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.ink2)),
+          Text(subtitle, style: const TextStyle(fontSize: 8, color: AppColors.muted)),
+        ])),
+      ]),
+    ),
+  );
 }
 
 class _Receipt extends StatelessWidget {
   final CaseDetail detail;
   final Set<String> selected;
-  const _Receipt({required this.detail, required this.selected});
+  final VoidCallback onBack;
+  const _Receipt({required this.detail, required this.selected, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
-    final token = 'APR-${detail.caseId}-${selected.length}';
+    final token = 'RCPT-${DateTime.now().toIso8601String().substring(2, 10).replaceAll('-', '')}-${1000 + (selected.length * 37) % 9000}';
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.verified, size: 48, color: Theme.of(context).colorScheme.primary),
+      padding: const EdgeInsets.all(18),
+      child: Column(children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(18)),
+          child: Column(children: [
+            Container(width: 54, height: 54, decoration: BoxDecoration(color: AppColors.statusReady100, borderRadius: BorderRadius.circular(18)), child: const Icon(Icons.check, color: AppColors.statusReady, size: 30)),
+            const SizedBox(height: 10),
+            const Text('Đã phê duyệt an toàn', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.navy900)),
+            const SizedBox(height: 5),
+            const Text('Payload đã qua RBAC, evidence, payload binding và idempotency gate.', style: TextStyle(fontSize: 10, color: AppColors.muted)),
             const SizedBox(height: 12),
-            Text('Đã phê duyệt', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            Text('Mã biên lai: $token',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 16),
-            Text('Cơ hội được duyệt:',
-                style: Theme.of(context).textTheme.titleSmall),
-            ...detail.opportunities
-                .where((o) => selected.contains(o.opportunityId))
-                .map((o) => ListTile(
-                      leading: const Icon(Icons.check_circle, color: Colors.green),
-                      title: Text(o.product),
-                    )),
-            const Divider(height: 24),
-            Text('Nhật ký kiểm toán',
-                style: Theme.of(context).textTheme.titleSmall),
-            _AuditRow(step: 'Tạo case', actor: detail.rmName, time: detail.updatedAt),
-            _AuditRow(step: 'Xem xét decision brief', actor: detail.rmName, time: detail.updatedAt),
-            _AuditRow(step: 'Ký phê duyệt', actor: detail.rmName, time: DateTime.now()),
-          ],
+            Container(width: double.infinity, padding: const EdgeInsets.all(7), decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(9)), child: Text(token, style: const TextStyle(fontSize: 9, color: AppColors.muted, fontFamily: 'monospace'))),
+          ]),
         ),
-      ),
+        const SizedBox(height: 13),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color: AppColors.line), borderRadius: BorderRadius.circular(13)),
+          child: Column(children: [
+            ...detail.opportunities.where((o) => selected.contains(o.opportunityId)).map((o) => _ReceiptRow(label: o.product, state: o.status == OpportunityStatus.needInfo ? 'PENDING' : 'CREATED')),
+            _ReceiptRow(label: 'Email được lưu dạng draft', state: 'NOT_SENT'),
+            _ReceiptRow(label: 'Task được tạo/tái sử dụng', state: 'IDEMPOTENT'),
+          ]),
+        ),
+        const SizedBox(height: 13),
+        SizedBox(width: double.infinity, child: OutlinedButton(onPressed: onBack, child: const Text('Quay về Opportunity Queue'))),
+      ]),
     );
   }
 }
 
-class _AuditRow extends StatelessWidget {
-  final String step;
-  final String actor;
-  final DateTime time;
-  const _AuditRow({required this.step, required this.actor, required this.time});
-
+class _ReceiptRow extends StatelessWidget {
+  final String label, state;
+  const _ReceiptRow({required this.label, required this.state});
   @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      leading: const Icon(Icons.history, size: 18),
-      title: Text(step),
-      subtitle: Text('$actor • ${time.toLocal()}'),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Row(children: [
+      const Icon(Icons.check, color: AppColors.statusReady, size: 16),
+      const SizedBox(width: 8),
+      Expanded(child: Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.ink2))),
+      Text(state, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.muted)),
+    ]),
+  );
 }
