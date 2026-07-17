@@ -164,6 +164,7 @@ __pycache__/
 htmlcov/
 .venv/
 data/vector_db/
+!data/vector_db/*_vector_cache.json
 data/state/
 data/logs/
 data/rag_mcp/
