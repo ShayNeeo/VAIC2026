@@ -42,7 +42,13 @@
     },
     "product_result": {"type": ["object", "null"]},
     "eligibility_result": {"type": ["object", "null"]},
+    "risk_gate_result": {"type": ["object", "null"]},
     "operations_result": {"type": ["object", "null"]},
+    "customer_business_snapshot": {"type": ["object", "null"]},
+    "execution_plan": {"type": ["object", "null"]},
+    "next_best_questions": {"type": "array", "items": {"type": "object"}, "default": []},
+    "next_best_actions": {"type": "array", "items": {"type": "object"}, "default": []},
+    "ai_decision_log": {"type": "array", "items": {"type": "object"}, "default": [], "description": "Sanitized per-case AI/rule/retrieval decision log; never contains raw PII or secrets."},
     "evidences": {"type": "array", "items": {"$ref": "#/$defs/evidence"}},
     "approval": {
       "type": "object",

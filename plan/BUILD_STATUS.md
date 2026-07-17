@@ -175,26 +175,29 @@ Trạng thái dùng trong file này: **Hoàn thành (MVP)** = chạy được, c
 **Mục đích:** lớp kiểm soát độc lập, đối chiếu mọi `claim` của Product/Legal Agent với văn bản nguồn gốc để chặn ảo giác (hallucination) trước khi RM nhìn thấy.
 
 **Đã build:**
-- [`app/safety/evidence_validator.py`](../app/safety/evidence_validator.py) — `EvidenceValidator.validate()`: với mỗi `EvidenceItem`, tra `(source_doc, section)` trong bộ nguồn nội bộ (ghép từ catalog + policy), rồi kiểm tra `quote` có xuất hiện **y nguyên văn bản** trong nguồn hay không (`quote in source_text`). Nếu không khớp → `is_valid=False` + ghi `hallucination_flag` vào audit log.
+- [`app/safety/evidence_validator.py`](../app/safety/evidence_validator.py) — `EvidenceValidator.validate()`: với mỗi `EvidenceItem`, tra `(source_doc, section)` trong bộ nguồn nội bộ (ghép từ catalog + policy). **Lớp 1** kiểm tra `quote` có xuất hiện y nguyên văn bản trong nguồn (`quote in source_text`). **Lớp 2 (2026-07-17, mới thêm):** nếu Lớp 1 không khớp, so `quote` với từng segment nguồn (name/description/eligibility_rules/từng required_document) bằng cosine similarity trên hash-embedding deterministic (kỹ thuật giống `app/rag/product_retriever.py`, không gọi model/API ngoài) — nếu điểm cao nhất ≥0.85 vẫn coi là hợp lệ. Đã kiểm chứng thực nghiệm: quote lệch case/dấu câu → 1.0 (được cứu); quote bịa dùng từ vựng cùng miền → 0.16–0.44 (vẫn bị từ chối). Nếu cả 2 lớp đều không đạt → `is_valid=False` + ghi `hallucination_flag` (kèm cả 2 điểm số) vào audit log.
 
 **Cần build thêm — quan trọng, nên biết trước khi pitch:**
-- [ ] Đây mới là **Lớp 1/3** theo thiết kế gốc ([`modules/06_evidence_guardrails_approval.md`](modules/06_evidence_guardrails_approval.md) — "Phương thức kiểm tra kết hợp"). Lớp 2 (semantic similarity, ngưỡng cosine 0.85) và Lớp 3 (LLM-as-judge chấm nhị phân) **chưa tồn tại**. Vì hiện tại `claim`/`quote` đều do chính code sinh ra (không phải LLM tự do viết lại), exact-match vẫn an toàn cho MVP — nhưng nếu sau này có LLM sinh văn bản tự do, chỉ dùng Lớp 1 sẽ chặn nhầm rất nhiều câu đúng ý nhưng diễn đạt khác.
-- [ ] Khi pitch/demo, nên nói đúng là "exact-citation matching", tránh nói "3-layer hybrid validation" như plan gốc mô tả — hiện chưa đúng thực tế.
+- [ ] **Lớp 3 (LLM-as-judge chấm nhị phân) vẫn chưa có** — cần gọi LLM thật, cố ý để lại cho lúc quyết định OpenAI key được áp dụng thật (tránh xây 2 chỗ gọi LLM khác kiểu nhau ở V1 và V2 cùng lúc). Xem `plan_v2/PROGRESS.md` V2-011.
+- [ ] Lớp 2 là bag-of-tokens hash, **không phải embedding ngữ nghĩa thật** — chỉ cứu được quote lệch case/dấu câu/thứ tự từ giống hệt, **chưa cứu được** một câu diễn giải lại hoàn toàn bằng từ khác (đo thực nghiệm ra ~0.68, dưới ngưỡng 0.85). Đây là lựa chọn có chủ đích thiên về an toàn (thà từ chối nhầm còn hơn bỏ sót ảo giác), không phải bug.
+- [ ] Khi pitch/demo, nên nói đúng là "Lớp 1 exact-match + Lớp 2 deterministic similarity fallback (chưa phải embedding thật)", tránh nói đã có "3-layer hybrid validation" đầy đủ như plan gốc mô tả — Lớp 3 vẫn chưa tồn tại.
 
-**Đọc thêm:** [`modules/06_evidence_guardrails_approval.md`](modules/06_evidence_guardrails_approval.md) mục 19.
+**Đọc thêm:** [`modules/06_evidence_guardrails_approval.md`](modules/06_evidence_guardrails_approval.md) mục 19; test: `tests/test_end_to_end.py::test_evidence_validator_layer2_rescues_case_and_punctuation_paraphrase`, `::test_evidence_validator_layer2_still_rejects_fabricated_claim_with_overlapping_vocabulary`.
 
 ---
 
-## 9. Tool Registry / phân quyền gọi tool — MỘT PHẦN, có lỗ hổng cần vá
+## 9. Tool Registry / phân quyền gọi tool — Đã wire cho Legal/Operations, Product/ActionExecutor có chủ đích chưa qua
 
 **Mục đích:** đảm bảo agent chỉ được gọi đúng tool trong phạm vi được phép (vd. Product Agent không được tự gọi `create_case` trên CRM).
 
 **Đã build:**
-- [`app/tools/registry.py`](../app/tools/registry.py) — `ToolRegistry.register(name, function, *owners)` và `ToolRegistry.call(owner, name, **kwargs)` raise `ToolPermissionError` nếu `owner` không nằm trong allowlist của `name`. Cơ chế đúng, có test xác nhận hoạt động (`tests/test_end_to_end.py::test_tool_registry_blocks_privilege_escalation`).
+- [`app/tools/registry.py`](../app/tools/registry.py) — `ToolRegistry.register(name, function, *owners)`, `ToolRegistry.call(owner, name, **kwargs)` raise `ToolPermissionError` nếu `owner` không nằm trong allowlist; `build_default_registry()` (2026-07-17, mới thêm) đăng ký 5 tool thật: `validate_business_registration`, `check_document_expiry` → Legal; `get_required_documents`, `check_document_completeness`, `draft_customer_email` → Operations.
+- [`app/services/orchestrator.py`](../app/services/orchestrator.py) — `CaseOrchestrator.__init__` dựng **1 registry dùng chung**, truyền vào `LegalAgent(tools=...)` và `OperationsAgent(tools=...)`. Cả 2 agent gọi qua `self.tools.call(self.owner, name, **kwargs)` thay vì import hàm trực tiếp — allowlist giờ **chặn thật trên luồng chạy thật**, không chỉ trên registry dựng riêng trong test. Test xác nhận: `tests/test_end_to_end.py::test_default_tool_registry_enforces_owner_boundaries` (dùng đúng `build_default_registry()` mà orchestrator dùng), và toàn bộ `tests/test_end_to_end.py` (end-to-end case ABC) vẫn pass sau khi refactor.
+- Đã xoá 3 hàm tool "chết" chưa từng được gọi (`search_product_catalog`, `retrieve_product_policy` ở `product_tools.py`; `search_compliance_policy` ở `legal_tools.py`) — để lại chỉ gây hiểu nhầm là đã implement trong khi agent thật không dùng.
 
-**Cần build thêm — ưu tiên cao:**
-- [ ] **`ToolRegistry` hiện không được instantiate hay gọi ở bất kỳ đâu trong `app/agents`, `app/services`, `app/main.py`.** Tất cả agent đang import và gọi thẳng hàm nghiệp vụ (`validate_business_registration`, `get_required_documents`, `CRMService.create_case`...). Nghĩa là allowlist mới đúng trên lý thuyết/unit test cô lập, **không chặn gì trên luồng chạy thật.**
-- [ ] Việc cần làm: tạo 1 instance `ToolRegistry` dùng chung (vd. trong `app/tools/__init__.py`), `register()` toàn bộ tool nghiệp vụ với đúng owner (Product/Legal/Operations), rồi sửa từng agent + `ActionExecutor` gọi qua `registry.call(self.owner, "tool_name", **kwargs)` thay vì import trực tiếp. Sau khi xong, viết lại test 34.3 (Product Agent bị ép gọi `create_case`) để chạy trên registry thật thay vì registry dựng riêng trong test.
+**Cần build thêm — có chủ đích, không phải bỏ sót:**
+- [ ] **Product Agent's catalog/RAG access không đi qua registry.** `SHB_PRODUCT_CATALOG` là dict hằng đọc-only, `ProductRAGService.search()` là retrieval nội bộ của chính Product — không phải hành động xuyên biên giới/ra ngoài hệ thống như ví dụ "Product Agent gọi CRM tạo case" mà allowlist này nhắm tới. Nếu sau này Product cần gọi tool có tác dụng phụ (side effect), nối qua `build_default_registry()` theo đúng mẫu đã làm cho Legal/Operations.
+- [ ] **`ActionExecutor.execute()` (`app/services/approval.py`) vẫn gọi thẳng `CRMService.create_case`/`create_task`, không qua `ToolRegistry`.** Cân nhắc trước khi làm: đây là nơi DUY NHẤT được phép chạm CRM thật, chỉ chạy sau khi `GuardrailGate.can_execute()` xác nhận đã duyệt/hợp lệ/không blocking — rủi ro mà nó cần chặn (chưa duyệt/evidence chưa valid) đã có cơ chế riêng, khác với rủi ro "nhầm agent gọi nhầm tool" mà `ToolRegistry` xử lý. Ép qua registry sẽ cần tạo owner giả (vd. `"System"`) không phản ánh đúng bản chất — để nguyên, ghi rõ lý do thay vì làm cho có.
 
 **Đọc thêm:** [`modules/07_tools_and_shared_state.md`](modules/07_tools_and_shared_state.md) mục 22, [`modules/10_evaluation_and_testing.md`](modules/10_evaluation_and_testing.md) mục 34.3 (kịch bản test tương ứng).
 

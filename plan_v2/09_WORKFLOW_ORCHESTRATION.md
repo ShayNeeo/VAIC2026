@@ -17,6 +17,7 @@
 | `evaluate_eligibility` | product/context/docs | eligibility/evidence | legal/KYC read tools |
 | `validate_evidence` | results/evidence | evidence flags | knowledge read |
 | `prepare_operations` | all validated results | operations drafts | none |
+| `risk_guardrail_gate` | eligibility/evidence results | risk_gate_result, final status | none |
 | `deduplicate_actions` | drafts/existing tasks | dedup result | CRM/task read |
 | `await_information` | missing info | status | none |
 | `await_approval` | validated drafts | approval pending | none |
@@ -105,7 +106,8 @@ Every node stores `input_hash`, `output_ref`, dependencies and version. Resume i
 |---|---|
 | `app/workflow/models.py` | Node/task/command/event models |
 | `app/workflow/state_machine.py` | Allowed transitions |
-| `app/workflow/router.py` | Complexity route |
+| `app/workflow/router.py` | Complexity route — `ComplexityRouter` (implemented 2026-07-18; allowlist of read-only-on-existing-case intents only, see file docstring for why) |
+| `app/workflow/risk_gate.py` | Risk & Guardrail Gate — `RiskGuardrailGate` (implemented 2026-07-18; wires eligibility's existing passed/failed/pending_information/pending_review taxonomy from `08_ELIGIBILITY_LEGAL.md` section 5 + Evidence Validator result into one outcome/risk_level, not a new invented policy) |
 | `app/workflow/planner.py` | DAG creation/validation |
 | `app/workflow/engine.py` | Node execution |
 | `app/workflow/retry.py` | Retry policy |

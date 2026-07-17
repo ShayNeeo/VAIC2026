@@ -1,69 +1,16 @@
-"""Test fixtures for Product Agent tests."""
-import pytest
-import pytest_asyncio
-from mcp_common.schemas import SharedCaseState, EvidenceItem
+"""Test-session isolation: keep the suite fast, offline and deterministic.
 
+INTENT_USE_LLM=true in .env is a real runtime capability (see app/config.py,
+app/intent/extractor.py) that we want enabled for the running server/demo.
+Without this override, every test that builds a default IntentExtractor()/
+V2WorkflowEngine() would make a live OpenAI call, making the suite slow,
+flaky and dependent on network/API-key/cost -- exactly what the deterministic
+fallback (app/intent/fallback.py) exists to avoid in tests. python-dotenv
+does not clobber an already-set os.environ value, so setting this here before
+app.config is ever imported reliably wins over the .env file for the whole
+pytest session while leaving the .env file itself unchanged for real runs.
+"""
 
-@pytest.fixture
-def mock_company_profile():
-    return {
-        "customer_id": "COMP-ABC",
-        "employees_count": 500,
-        "annual_revenue": 100_000_000_000,
-        "cash_flow_status": "phân tán",
-        "industry": "manufacturing",
-    }
+import os
 
-
-@pytest.fixture
-def mock_documents():
-    return [
-        {"type": "business_registration", "text": "Giấy đăng ký kinh doanh COMP-ABC"},
-        {"type": "financial_statement", "text": "BCTC 2 năm gần nhất"},
-    ]
-
-
-@pytest.fixture
-def sample_evidence():
-    return [
-        EvidenceItem(
-            claim_id="EVID-001",
-            agent="Product",
-            claim="SHB Payroll có điều kiện: Doanh nghiệp từ 10 nhân sự",
-            source_document_id="Product_Catalog.pdf",
-            source_version="2025-01-01",
-            section_or_page="Payroll",
-            quote="Doanh nghiệp từ 10 nhân sự, có tài khoản SHB",
-            validation_method="exact_match",
-            is_valid=True,
-        ),
-        EvidenceItem(
-            claim_id="EVID-002",
-            agent="Product",
-            claim="SHB Cash Management cho doanh nghiệp doanh thu từ 50 tỷ",
-            source_document_id="Product_Catalog.pdf",
-            source_version="2025-01-01",
-            section_or_page="Cash_Management",
-            quote="Doanh nghiệp doanh thu từ 50 tỷ VNĐ/năm",
-            validation_method="exact_match",
-            is_valid=True,
-        ),
-    ]
-
-
-@pytest.fixture
-def mock_case_state(mock_company_profile, mock_documents):
-    return SharedCaseState(
-        case_id="CORP-TEST001",
-        customer_id="COMP-ABC",
-        rm_id="RM-001",
-        customer_request={"text": "chi lương 500 nhân viên, dòng tiền phân tán"},
-        company_profile=mock_company_profile,
-        documents=mock_documents,
-    )
-
-
-@pytest_asyncio.fixture
-async def async_client():
-    """Async client fixture for MCP tool calls."""
-    pass
+os.environ["INTENT_USE_LLM"] = "false"

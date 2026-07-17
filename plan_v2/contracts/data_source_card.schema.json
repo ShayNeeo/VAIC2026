@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.internal/contracts/data_source_card.schema.json",
+  "title": "DataSourceCard",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_id",
+    "name",
+    "domain",
+    "tier",
+    "owner",
+    "purpose",
+    "decision_role",
+    "access",
+    "governance",
+    "freshness",
+    "identifiers",
+    "quality",
+    "lineage",
+    "lifecycle_status"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "2.0.0"},
+    "source_id": {"type": "string", "minLength": 3},
+    "name": {"type": "string", "minLength": 1},
+    "domain": {
+      "type": "string",
+      "enum": ["employee", "workspace", "customer", "document", "product", "legal", "credit", "kyc_aml", "market", "operations", "evaluation"]
+    },
+    "tier": {"type": "string", "enum": ["A_INTERNAL", "A_OFFICIAL", "B_LICENSED", "C_OPEN", "D_DERIVED", "E_SYNTHETIC"]},
+    "provider": {"type": ["string", "null"]},
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["business_owner", "data_steward"],
+      "properties": {
+        "business_owner": {"type": "string"},
+        "data_steward": {"type": "string"},
+        "technical_owner": {"type": ["string", "null"]},
+        "contact": {"type": ["string", "null"]}
+      }
+    },
+    "purpose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_uses", "prohibited_uses"],
+      "properties": {
+        "allowed_uses": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "prohibited_uses": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "decision_role": {"type": "string", "enum": ["AUTHORITATIVE", "VERIFICATION", "ENRICHMENT", "DISCOVERY", "EVALUATION_ONLY"]},
+    "access": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "authentication", "sandbox_available"],
+      "properties": {
+        "method": {"type": "string", "enum": ["API", "FILE", "DATABASE", "EVENT", "WEB_UI", "DOCUMENT_UPLOAD", "MANUAL"]},
+        "endpoint_or_location": {"type": ["string", "null"]},
+        "authentication": {"type": "string"},
+        "sandbox_available": {"type": "boolean"},
+        "quota": {"type": ["string", "null"]},
+        "sla": {"type": ["string", "null"]}
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["legal_basis_or_license", "sensitivity", "retention", "residency", "approved"],
+      "properties": {
+        "legal_basis_or_license": {"type": "string"},
+        "terms_url": {"type": ["string", "null"]},
+        "sensitivity": {"type": "string", "enum": ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "PII", "SENSITIVE_PII", "RESTRICTED"]},
+        "retention": {"type": "string"},
+        "residency": {"type": "string"},
+        "cross_border": {"type": "boolean", "default": false},
+        "approved": {"type": "boolean"},
+        "approval_reference": {"type": ["string", "null"]}
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["update_cadence", "max_age_seconds", "stale_behavior"],
+      "properties": {
+        "update_cadence": {"type": "string"},
+        "max_age_seconds": {"type": "integer", "minimum": 0},
+        "stale_behavior": {"type": "string", "enum": ["ALLOW_WITH_WARNING", "BLOCK_DECISION", "FAIL_CLOSED", "MANUAL_REVIEW"]}
+      }
+    },
+    "identifiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_key", "join_keys"],
+      "properties": {
+        "primary_key": {"type": "string"},
+        "join_keys": {"type": "array", "items": {"type": "string"}},
+        "canonical_internal_id": {"type": ["string", "null"]}
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_checks", "publish_gate"],
+      "properties": {
+        "required_checks": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "publish_gate": {"type": "string"},
+        "last_report_reference": {"type": ["string", "null"]}
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ingestion_job", "raw_location", "consumer_artifacts"],
+      "properties": {
+        "ingestion_job": {"type": "string"},
+        "raw_location": {"type": "string"},
+        "silver_location": {"type": ["string", "null"]},
+        "gold_location": {"type": ["string", "null"]},
+        "consumer_artifacts": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "lifecycle_status": {"type": "string", "enum": ["PROPOSED", "ASSESSED", "APPROVED", "SHADOW", "ACTIVE", "DEGRADED", "STALE", "DEPRECATED", "DELETED"]},
+    "risks_and_notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

@@ -1,0 +1,13 @@
+facility_id,customer_id,facility_type,requested_limit_vnd,approved_limit_vnd,outstanding_principal_vnd,currency,tenor_months,interest_rate_pct,status,collateral_type,covenant_status,next_review_date,source_id,synthetic_flag
+FAC-0001,CUST-0001,working_capital_line,3000000000,2500000000,850000000,VND,6,8.2,under_review,receivables,review_required,2026-09-05,SRC-FATF-001,true
+FAC-0002,CUST-0002,short_term_loan,3450000000,2800000000,970000000,VND,9,8.35,active,property_or_equipment,compliant,2026-09-06,SRC-FATF-001,true
+FAC-0003,CUST-0003,working_capital_line,3900000000,3100000000,1090000000,VND,12,8.5,active,receivables,compliant,2026-09-07,SRC-FATF-001,true
+FAC-0004,CUST-0004,short_term_loan,4350000000,0,0,VND,6,8.649999999999999,rejected_missing_documents,property_or_equipment,compliant,2026-09-08,SRC-FATF-001,true
+FAC-0005,CUST-0005,working_capital_line,4800000000,3700000000,1330000000,VND,9,8.799999999999999,active,receivables,compliant,2026-09-09,SRC-FATF-001,true
+FAC-0006,CUST-0006,short_term_loan,5250000000,4000000000,1450000000,VND,12,8.95,active,property_or_equipment,review_required,2026-09-10,SRC-FATF-001,true
+FAC-0007,CUST-0007,working_capital_line,5700000000,4300000000,1570000000,VND,6,9.1,under_review,receivables,compliant,2026-09-11,SRC-FATF-001,true
+FAC-0008,CUST-0008,short_term_loan,6150000000,0,0,VND,9,9.25,rejected_missing_documents,property_or_equipment,compliant,2026-09-12,SRC-FATF-001,true
+FAC-0009,CUST-0009,working_capital_line,6600000000,4900000000,1810000000,VND,12,9.399999999999999,active,receivables,compliant,2026-09-13,SRC-FATF-001,true
+FAC-0010,CUST-0010,short_term_loan,7050000000,5200000000,1930000000,VND,6,9.549999999999999,under_review,property_or_equipment,compliant,2026-09-14,SRC-FATF-001,true
+FAC-0011,CUST-0011,working_capital_line,7500000000,5500000000,2050000000,VND,9,9.7,active,receivables,review_required,2026-09-05,SRC-FATF-001,true
+FAC-0012,CUST-0012,short_term_loan,7950000000,0,0,VND,12,9.85,rejected_missing_documents,property_or_equipment,compliant,2026-09-06,SRC-FATF-001,true

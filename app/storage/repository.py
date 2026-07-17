@@ -1,0 +1,498 @@
+"""SQLite pilot-shaped repository with optimistic locking and hash-chained audit."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sqlite3
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from threading import RLock
+from typing import Any, Dict, List, Optional
+
+from app.schemas.v2.intake import CustomerBusinessSnapshot, ExtractedField, FieldConflict, IntakeDocument, IntakeSession
+from app.schemas.v2.shared_case_state import SharedCaseState
+from app.storage.migrations import LATEST_SCHEMA_VERSION, apply_migrations
+
+
+class _ClosingConnection(sqlite3.Connection):
+    def __exit__(self, exc_type, exc_value, traceback):
+        try:
+            return super().__exit__(exc_type, exc_value, traceback)
+        finally:
+            self.close()
+
+
+class StateConflictError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class StoredCase:
+    state: SharedCaseState
+    version: int
+
+
+@dataclass(frozen=True)
+class StoredIntake:
+    session: IntakeSession
+    version: int
+
+
+def _canonical(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
+
+
+class V2Repository:
+    def __init__(self, db_path: str | Path) -> None:
+        self.db_path = Path(db_path)
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = RLock()
+        self._initialize()
+
+    def _connect(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self.db_path, timeout=10, factory=_ClosingConnection)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA foreign_keys=ON")
+        return connection
+
+    def _initialize(self) -> None:
+        with self._connect() as connection:
+            connection.executescript(
+                """
+                CREATE TABLE IF NOT EXISTS cases (
+                    case_id TEXT PRIMARY KEY,
+                    employee_id TEXT NOT NULL,
+                    customer_id TEXT,
+                    version INTEGER NOT NULL,
+                    state_json TEXT NOT NULL,
+                    updated_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS audit_events (
+                    sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_id TEXT UNIQUE NOT NULL,
+                    case_id TEXT NOT NULL,
+                    trace_id TEXT NOT NULL,
+                    at TEXT NOT NULL,
+                    actor TEXT NOT NULL,
+                    action TEXT NOT NULL,
+                    payload_json TEXT NOT NULL,
+                    prev_hash TEXT NOT NULL,
+                    event_hash TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS approval_tokens (
+                    token_id TEXT PRIMARY KEY,
+                    case_id TEXT NOT NULL,
+                    approver_id TEXT NOT NULL,
+                    payload_hash TEXT NOT NULL,
+                    expires_at INTEGER NOT NULL,
+                    status TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS idempotency_records (
+                    idempotency_key TEXT PRIMARY KEY,
+                    action TEXT NOT NULL,
+                    payload_hash TEXT NOT NULL,
+                    result_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
+                """
+            )
+            apply_migrations(connection)
+
+    def schema_version(self) -> int:
+        with self._connect() as connection:
+            row = connection.execute("SELECT COALESCE(MAX(version), 0) FROM schema_migrations").fetchone()
+            return int(row[0])
+
+    def health(self) -> Dict[str, Any]:
+        try:
+            with self._connect() as connection:
+                quick_check = str(connection.execute("PRAGMA quick_check").fetchone()[0])
+                case_count = int(connection.execute("SELECT COUNT(*) FROM cases").fetchone()[0])
+            healthy = quick_check == "ok" and self.schema_version() == LATEST_SCHEMA_VERSION
+            return {
+                "healthy": healthy,
+                "quick_check": quick_check,
+                "schema_version": self.schema_version(),
+                "latest_schema_version": LATEST_SCHEMA_VERSION,
+                "case_count": case_count,
+            }
+        except sqlite3.Error as exc:
+            return {
+                "healthy": False,
+                "error_code": "SQLITE_HEALTH_CHECK_FAILED",
+                "error_type": type(exc).__name__,
+            }
+
+    def save_case(self, state: SharedCaseState, *, expected_version: Optional[int] = None) -> StoredCase:
+        now = datetime.now(timezone.utc)
+        state = state.model_copy(update={"updated_at": now})
+        employee_id = state.context.employee.employee_id
+        customer_id = state.context.customer.customer_id
+        with self._lock, self._connect() as connection:
+            current = connection.execute("SELECT version FROM cases WHERE case_id=?", (state.case_id,)).fetchone()
+            if current is None:
+                if expected_version not in {None, 0}:
+                    raise StateConflictError("case does not exist at expected version")
+                version = 1
+                connection.execute(
+                    "INSERT INTO cases VALUES (?, ?, ?, ?, ?, ?)",
+                    (state.case_id, employee_id, customer_id, version, state.model_dump_json(), now.isoformat()),
+                )
+            else:
+                current_version = int(current["version"])
+                if expected_version is not None and expected_version != current_version:
+                    raise StateConflictError(f"expected version {expected_version}, current {current_version}")
+                version = current_version + 1
+                connection.execute(
+                    "UPDATE cases SET employee_id=?, customer_id=?, version=?, state_json=?, updated_at=? WHERE case_id=?",
+                    (employee_id, customer_id, version, state.model_dump_json(), now.isoformat(), state.case_id),
+                )
+        return StoredCase(state=state, version=version)
+
+    def get_case(self, case_id: str) -> Optional[StoredCase]:
+        with self._connect() as connection:
+            row = connection.execute("SELECT state_json, version FROM cases WHERE case_id=?", (case_id,)).fetchone()
+        if row is None:
+            return None
+        return StoredCase(state=SharedCaseState.model_validate_json(row["state_json"]), version=int(row["version"]))
+
+    def list_cases(self, employee_id: str) -> List[StoredCase]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT state_json, version FROM cases WHERE employee_id=? ORDER BY updated_at DESC",
+                (employee_id,),
+            ).fetchall()
+        return [StoredCase(SharedCaseState.model_validate_json(row["state_json"]), int(row["version"])) for row in rows]
+
+    def create_intake(self, session: IntakeSession) -> StoredIntake:
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                """INSERT INTO intake_sessions(
+                    intake_id,case_id,employee_id,customer_id,status,version,state_json,created_at,updated_at
+                ) VALUES (?,?,?,?,?,?,?,?,?)""",
+                (
+                    session.intake_id,
+                    session.case_id,
+                    session.employee_id,
+                    session.customer_id,
+                    session.status.value,
+                    1,
+                    session.model_dump_json(),
+                    session.created_at.isoformat(),
+                    session.updated_at.isoformat(),
+                ),
+            )
+        session.version = 1
+        return StoredIntake(session=session, version=1)
+
+    def save_intake(self, session: IntakeSession, *, expected_version: int) -> StoredIntake:
+        now = datetime.now(timezone.utc)
+        with self._lock, self._connect() as connection:
+            row = connection.execute(
+                "SELECT version FROM intake_sessions WHERE intake_id=?",
+                (session.intake_id,),
+            ).fetchone()
+            if row is None:
+                raise StateConflictError("intake session does not exist")
+            current = int(row["version"])
+            if current != expected_version:
+                raise StateConflictError(f"expected intake version {expected_version}, current {current}")
+            version = current + 1
+            session.version = version
+            session.updated_at = now
+            connection.execute(
+                """UPDATE intake_sessions SET customer_id=?,status=?,version=?,state_json=?,updated_at=?
+                   WHERE intake_id=?""",
+                (
+                    session.customer_id,
+                    session.status.value,
+                    version,
+                    session.model_dump_json(),
+                    now.isoformat(),
+                    session.intake_id,
+                ),
+            )
+        return StoredIntake(session=session, version=version)
+
+    def get_intake(self, identifier: str) -> Optional[StoredIntake]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT state_json,version FROM intake_sessions WHERE intake_id=? OR case_id=?",
+                (identifier, identifier),
+            ).fetchone()
+        if row is None:
+            return None
+        session = IntakeSession.model_validate_json(row["state_json"])
+        session.version = int(row["version"])
+        return StoredIntake(session=session, version=int(row["version"]))
+
+    def list_intakes(self, employee_id: str) -> List[StoredIntake]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT state_json,version FROM intake_sessions WHERE employee_id=? ORDER BY updated_at DESC",
+                (employee_id,),
+            ).fetchall()
+        result: List[StoredIntake] = []
+        for row in rows:
+            session = IntakeSession.model_validate_json(row["state_json"])
+            session.version = int(row["version"])
+            result.append(StoredIntake(session=session, version=int(row["version"])))
+        return result
+
+    def save_intake_document(
+        self,
+        intake_id: str,
+        document: IntakeDocument,
+        sections: List[Dict[str, Any]],
+    ) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                """INSERT INTO case_documents(
+                    document_id,intake_id,sha256,status,document_json,sections_json,created_at,updated_at
+                ) VALUES (?,?,?,?,?,?,?,?)""",
+                (
+                    document.document_id,
+                    intake_id,
+                    document.sha256,
+                    document.status.value,
+                    document.model_dump_json(),
+                    _canonical(sections),
+                    now,
+                    now,
+                ),
+            )
+
+    def update_intake_document(self, intake_id: str, document: IntakeDocument) -> None:
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                """UPDATE case_documents SET status=?,document_json=?,updated_at=?
+                   WHERE intake_id=? AND document_id=?""",
+                (
+                    document.status.value,
+                    document.model_dump_json(),
+                    datetime.now(timezone.utc).isoformat(),
+                    intake_id,
+                    document.document_id,
+                ),
+            )
+
+    def list_intake_documents(
+        self,
+        intake_id: str,
+        *,
+        include_sections: bool = False,
+    ) -> List[Any]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT document_json,sections_json FROM case_documents WHERE intake_id=? ORDER BY created_at",
+                (intake_id,),
+            ).fetchall()
+        if include_sections:
+            return [
+                (IntakeDocument.model_validate_json(row["document_json"]), json.loads(row["sections_json"]))
+                for row in rows
+            ]
+        return [IntakeDocument.model_validate_json(row["document_json"]) for row in rows]
+
+    def find_intake_document_by_hash(self, intake_id: str, digest: str) -> Optional[IntakeDocument]:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT document_json FROM case_documents WHERE intake_id=? AND sha256=?",
+                (intake_id, digest),
+            ).fetchone()
+        return IntakeDocument.model_validate_json(row["document_json"]) if row else None
+
+    def save_processing_job(
+        self,
+        intake_id: str,
+        document_id: str,
+        *,
+        stage: str,
+        status: str,
+        error_code: Optional[str] = None,
+    ) -> None:
+        job_id = f"{document_id}:{stage}"
+        now = datetime.now(timezone.utc).isoformat()
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                """INSERT INTO document_processing_jobs(
+                    job_id,intake_id,document_id,stage,status,attempt,error_code,updated_at
+                ) VALUES (?,?,?,?,?,1,?,?)
+                ON CONFLICT(document_id,stage) DO UPDATE SET
+                    status=excluded.status,
+                    attempt=document_processing_jobs.attempt+1,
+                    error_code=excluded.error_code,
+                    updated_at=excluded.updated_at""",
+                (job_id, intake_id, document_id, stage, status, error_code, now),
+            )
+
+    def processing_jobs(self, intake_id: str) -> List[Dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT * FROM document_processing_jobs WHERE intake_id=? ORDER BY updated_at,document_id",
+                (intake_id,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def save_document_extractions(self, document_id: str, sections: List[Dict[str, Any]]) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._lock, self._connect() as connection:
+            connection.execute("DELETE FROM document_extractions WHERE document_id=?", (document_id,))
+            for index, section in enumerate(sections, start=1):
+                connection.execute(
+                    "INSERT INTO document_extractions VALUES (?,?,?,?,?,?)",
+                    (
+                        f"{document_id}:{index}",
+                        document_id,
+                        str(section.get("location") or f"section:{index}"),
+                        str(section.get("text") or ""),
+                        _canonical(section.get("metadata") or {}),
+                        now,
+                    ),
+                )
+
+    def replace_extracted_fields(self, intake_id: str, fields: List[ExtractedField]) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._lock, self._connect() as connection:
+            connection.execute("DELETE FROM extracted_fields WHERE intake_id=?", (intake_id,))
+            for field in fields:
+                connection.execute(
+                    "INSERT INTO extracted_fields VALUES (?,?,?,?,?,?,?,?)",
+                    (
+                        field.field_id,
+                        intake_id,
+                        field.field_name,
+                        field.source_document_id,
+                        field.confidence,
+                        field.validation_status.value,
+                        field.model_dump_json(),
+                        now,
+                    ),
+                )
+
+    def replace_field_conflicts(self, intake_id: str, conflicts: List[FieldConflict]) -> None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._lock, self._connect() as connection:
+            connection.execute("DELETE FROM field_conflicts WHERE intake_id=?", (intake_id,))
+            for conflict in conflicts:
+                connection.execute(
+                    "INSERT INTO field_conflicts VALUES (?,?,?,?,?,?)",
+                    (
+                        conflict.conflict_id,
+                        intake_id,
+                        conflict.field_name,
+                        int(conflict.requires_confirmation),
+                        conflict.model_dump_json(),
+                        now,
+                    ),
+                )
+
+    def save_profile_draft(self, intake_id: str, profile: CustomerBusinessSnapshot) -> None:
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                """INSERT INTO customer_profile_drafts(
+                    snapshot_id,intake_id,revision,snapshot_hash,rm_confirmed,profile_json,created_at
+                ) VALUES (?,?,?,?,?,?,?)
+                ON CONFLICT(intake_id,revision) DO UPDATE SET
+                    snapshot_hash=excluded.snapshot_hash,
+                    rm_confirmed=excluded.rm_confirmed,
+                    profile_json=excluded.profile_json""",
+                (
+                    profile.snapshot_id,
+                    intake_id,
+                    profile.revision,
+                    profile.snapshot_hash,
+                    int(profile.rm_confirmed),
+                    profile.model_dump_json(),
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+
+    def append_audit(self, *, event_id: str, case_id: str, trace_id: str, actor: str, action: str, payload: Dict[str, Any]) -> str:
+        at = datetime.now(timezone.utc).isoformat()
+        sanitized = self._sanitize(payload)
+        payload_json = _canonical(sanitized)
+        with self._lock, self._connect() as connection:
+            previous = connection.execute(
+                "SELECT event_hash FROM audit_events WHERE case_id=? ORDER BY sequence DESC LIMIT 1",
+                (case_id,),
+            ).fetchone()
+            prev_hash = previous["event_hash"] if previous else "GENESIS"
+            material = _canonical({
+                "event_id": event_id,
+                "case_id": case_id,
+                "trace_id": trace_id,
+                "at": at,
+                "actor": actor,
+                "action": action,
+                "payload": sanitized,
+                "prev_hash": prev_hash,
+            })
+            event_hash = hashlib.sha256(material.encode("utf-8")).hexdigest()
+            connection.execute(
+                "INSERT INTO audit_events(event_id,case_id,trace_id,at,actor,action,payload_json,prev_hash,event_hash) VALUES (?,?,?,?,?,?,?,?,?)",
+                (event_id, case_id, trace_id, at, actor, action, payload_json, prev_hash, event_hash),
+            )
+        return event_hash
+
+    def audit_events(self, case_id: str) -> List[Dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute("SELECT * FROM audit_events WHERE case_id=? ORDER BY sequence", (case_id,)).fetchall()
+        return [{**dict(row), "payload": json.loads(row["payload_json"])} for row in rows]
+
+    def verify_audit_chain(self, case_id: str) -> bool:
+        previous = "GENESIS"
+        for row in self.audit_events(case_id):
+            if row["prev_hash"] != previous:
+                return False
+            material = _canonical({
+                "event_id": row["event_id"], "case_id": row["case_id"], "trace_id": row["trace_id"],
+                "at": row["at"], "actor": row["actor"], "action": row["action"],
+                "payload": row["payload"], "prev_hash": row["prev_hash"],
+            })
+            if hashlib.sha256(material.encode("utf-8")).hexdigest() != row["event_hash"]:
+                return False
+            previous = row["event_hash"]
+        return True
+
+    def register_approval(self, token_id: str, case_id: str, approver_id: str, payload_hash: str, expires_at: int) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                "INSERT INTO approval_tokens VALUES (?, ?, ?, ?, ?, 'issued')",
+                (token_id, case_id, approver_id, payload_hash, expires_at),
+            )
+
+    def consume_approval(self, token_id: str) -> bool:
+        with self._lock, self._connect() as connection:
+            cursor = connection.execute(
+                "UPDATE approval_tokens SET status='consumed' WHERE token_id=? AND status='issued'",
+                (token_id,),
+            )
+            return cursor.rowcount == 1
+
+    def approval(self, token_id: str) -> Optional[Dict[str, Any]]:
+        with self._connect() as connection:
+            row = connection.execute("SELECT * FROM approval_tokens WHERE token_id=?", (token_id,)).fetchone()
+        return dict(row) if row else None
+
+    def get_idempotent_result(self, key: str) -> Optional[Dict[str, Any]]:
+        with self._connect() as connection:
+            row = connection.execute("SELECT result_json FROM idempotency_records WHERE idempotency_key=?", (key,)).fetchone()
+        return json.loads(row["result_json"]) if row else None
+
+    def save_idempotent_result(self, key: str, action: str, payload_hash: str, result: Dict[str, Any]) -> Dict[str, Any]:
+        with self._lock, self._connect() as connection:
+            connection.execute(
+                "INSERT OR IGNORE INTO idempotency_records VALUES (?, ?, ?, ?, ?)",
+                (key, action, payload_hash, _canonical(result), datetime.now(timezone.utc).isoformat()),
+            )
+            row = connection.execute("SELECT result_json FROM idempotency_records WHERE idempotency_key=?", (key,)).fetchone()
+        return json.loads(row["result_json"])
+
+    @staticmethod
+    def _sanitize(payload: Dict[str, Any]) -> Dict[str, Any]:
+        sensitive = {"approval_token", "token", "secret", "password", "raw_email_body", "identity_number"}
+        return {key: "[REDACTED]" if key.lower() in sensitive else value for key, value in payload.items()}

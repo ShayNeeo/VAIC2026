@@ -1,0 +1,36 @@
+{
+  "schema_version": "2.0.0",
+  "source_id": "SYNTHETIC-LEGAL-REFERENCE-PACK-V1",
+  "name": "Synthetic corporate legal, KYC and eligibility reference pack",
+  "domain": "legal",
+  "tier": "E_SYNTHETIC",
+  "provider": "repository curated synthetic data",
+  "dataset_version": "2026.07-demo-v2",
+  "effective_from": "2026-01-01",
+  "effective_to": "2026-12-31",
+  "owner": {
+    "business_owner": "MVP Legal and Compliance Owner",
+    "data_steward": "MVP Legal Data Steward",
+    "technical_owner": "AI Engineering"
+  },
+  "purpose": {
+    "allowed_uses": ["development", "automated_test", "offline_demo", "legal_explanation"],
+    "prohibited_uses": ["production_legal_opinion", "production_credit_decision"]
+  },
+  "decision_role": "EVIDENCE_ONLY",
+  "governance": {
+    "legal_basis_or_license": "Project-owned synthetic content",
+    "sensitivity": "INTERNAL_RESTRICTED",
+    "approved": true,
+    "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "quality": {
+    "required_checks": ["utf8", "schema", "uniqueness", "product_reference", "effective_date", "lineage", "prompt_injection"],
+    "publish_gate": "all deterministic checks pass"
+  },
+  "lifecycle_status": "ACTIVE",
+  "risks_and_notes": [
+    "Synthetic legal content provides evidence and explanation only.",
+    "A deterministic rule engine and authorized human remain responsible for pass/fail."
+  ]
+}

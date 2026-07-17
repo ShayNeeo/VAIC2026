@@ -1,0 +1,25 @@
+{
+  "dataset_id":"corporate-sales-v2-reliability","version":"2026.07.17-v1","synthetic":true,
+  "cases":[
+    {"id":"L01","kind":"retry_success","failures":0,"attempts":2},
+    {"id":"L02","kind":"retry_success","failures":1,"attempts":2},
+    {"id":"L03","kind":"retry_success","failures":1,"attempts":3},
+    {"id":"L04","kind":"retry_success","failures":2,"attempts":3},
+    {"id":"L05","kind":"retry_success","failures":0,"attempts":1},
+    {"id":"L06","kind":"retry_denied","attempts":2},
+    {"id":"L07","kind":"retry_denied","attempts":3},
+    {"id":"L08","kind":"retry_denied","attempts":4},
+    {"id":"L09","kind":"retry_denied","attempts":2},
+    {"id":"L10","kind":"retry_denied","attempts":5},
+    {"id":"L11","kind":"cache_isolation","writer_scope":"RM-1","reader_scope":"RM-2"},
+    {"id":"L12","kind":"cache_isolation","writer_scope":"HN01","reader_scope":"HCM01"},
+    {"id":"L13","kind":"cache_isolation","writer_scope":"CASE-1","reader_scope":"CASE-2"},
+    {"id":"L14","kind":"cache_isolation","writer_scope":"ORG-A","reader_scope":"ORG-B"},
+    {"id":"L15","kind":"cache_isolation","writer_scope":"CUSTOMER-A","reader_scope":"CUSTOMER-B"},
+    {"id":"L16","kind":"circuit_open","failure_threshold":1},
+    {"id":"L17","kind":"circuit_open","failure_threshold":2},
+    {"id":"L18","kind":"circuit_open","failure_threshold":3},
+    {"id":"L19","kind":"circuit_open","failure_threshold":1},
+    {"id":"L20","kind":"circuit_open","failure_threshold":2}
+  ]
+}

@@ -1,0 +1,37 @@
+history_id,object_type,object_id,case_id,event_date,team,issue_code,issue_description,resolution,actual_hours,sla_met,root_cause,training_tag,source_id,synthetic_flag
+HIS-00001,case,CASE-2026-001,CASE-2026-001,2026-07-15,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,1.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00002,case,CASE-2026-001,CASE-2026-001,2026-07-15,Legal & Compliance,MISSING_MANDATORY_DOC,Thiếu hoặc chưa xác minh hồ sơ bắt buộc.,Tạo missing-information task.,3.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00003,case,CASE-2026-001,CASE-2026-001,2026-07-15,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,5.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00004,case,CASE-2026-002,CASE-2026-002,2026-07-16,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,2.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00005,case,CASE-2026-002,CASE-2026-002,2026-07-16,Legal & Compliance,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,4.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00006,case,CASE-2026-002,CASE-2026-002,2026-07-16,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,6.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00007,case,CASE-2026-003,CASE-2026-003,2026-07-17,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,3.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00008,case,CASE-2026-003,CASE-2026-003,2026-07-17,Legal & Compliance,MISSING_MANDATORY_DOC,Thiếu hoặc chưa xác minh hồ sơ bắt buộc.,Tạo missing-information task.,5.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00009,case,CASE-2026-003,CASE-2026-003,2026-07-17,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,7.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00010,case,CASE-2026-004,CASE-2026-004,2026-07-15,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,1.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00011,case,CASE-2026-004,CASE-2026-004,2026-07-15,Legal & Compliance,MISSING_MANDATORY_DOC,Thiếu hoặc chưa xác minh hồ sơ bắt buộc.,Tạo missing-information task.,3.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00012,case,CASE-2026-004,CASE-2026-004,2026-07-15,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,5.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00013,case,CASE-2026-005,CASE-2026-005,2026-07-16,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,2.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00014,case,CASE-2026-005,CASE-2026-005,2026-07-16,Legal & Compliance,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,4.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00015,case,CASE-2026-005,CASE-2026-005,2026-07-16,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,6.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00016,case,CASE-2026-006,CASE-2026-006,2026-07-17,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,3.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00017,case,CASE-2026-006,CASE-2026-006,2026-07-17,Legal & Compliance,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,5.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00018,case,CASE-2026-006,CASE-2026-006,2026-07-17,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,7.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00019,case,CASE-2026-007,CASE-2026-007,2026-07-15,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,1.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00020,case,CASE-2026-007,CASE-2026-007,2026-07-15,Legal & Compliance,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,3.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00021,case,CASE-2026-007,CASE-2026-007,2026-07-15,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,5.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00022,case,CASE-2026-008,CASE-2026-008,2026-07-16,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,2.5,true,external_dependency,retry_idempotency,SRC-SYN-001,true
+HIS-00023,case,CASE-2026-008,CASE-2026-008,2026-07-16,Legal & Compliance,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,4.5,true,external_dependency,retry_idempotency,SRC-SYN-001,true
+HIS-00024,case,CASE-2026-008,CASE-2026-008,2026-07-16,Operations,TOOL_TIMEOUT,Mock API timeout trong bước tạo follow-up task.,Resume bằng idempotency key sau khi kiểm tra kết quả cuối.,6.5,false,external_dependency,retry_idempotency,SRC-SYN-001,true
+HIS-00025,case,CASE-2026-009,CASE-2026-009,2026-07-17,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,3.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00026,case,CASE-2026-009,CASE-2026-009,2026-07-17,Legal & Compliance,MISSING_MANDATORY_DOC,Thiếu hoặc chưa xác minh hồ sơ bắt buộc.,Tạo missing-information task.,5.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00027,case,CASE-2026-009,CASE-2026-009,2026-07-17,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,7.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00028,case,CASE-2026-010,CASE-2026-010,2026-07-15,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,1.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00029,case,CASE-2026-010,CASE-2026-010,2026-07-15,Legal & Compliance,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,3.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00030,case,CASE-2026-010,CASE-2026-010,2026-07-15,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,5.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00031,case,CASE-2026-011,CASE-2026-011,2026-07-16,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,2.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00032,case,CASE-2026-011,CASE-2026-011,2026-07-16,Legal & Compliance,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,4.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00033,case,CASE-2026-011,CASE-2026-011,2026-07-16,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,6.5,true,none,happy_path,SRC-SYN-001,true
+HIS-00034,case,CASE-2026-012,CASE-2026-012,2026-07-17,RM,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,3.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00035,case,CASE-2026-012,CASE-2026-012,2026-07-17,Legal & Compliance,MISSING_MANDATORY_DOC,Thiếu hoặc chưa xác minh hồ sơ bắt buộc.,Tạo missing-information task.,5.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true
+HIS-00036,case,CASE-2026-012,CASE-2026-012,2026-07-17,Operations,NONE,Không có lỗi trọng yếu.,Tiếp tục workflow.,7.5,true,input_completeness,missing_data_loop,SRC-SYN-001,true

@@ -1,0 +1,13 @@
+{
+  "schema_version":"2.0.0","source_id":"SYNTHETIC-OPERATIONS-SOP-V2","name":"Synthetic corporate sales operations SOP","domain":"operations","tier":"E_SYNTHETIC","provider":"repository synthetic data",
+  "owner":{"business_owner":"MVP Operations Owner","data_steward":"MVP Operations Steward","technical_owner":"AI Engineering"},
+  "purpose":{"allowed_uses":["development","automated_test","offline_demo"],"prohibited_uses":["production_sla_commitment"]},
+  "decision_role":"EVALUATION_ONLY",
+  "access":{"method":"FILE","endpoint_or_location":"data/synthetic/v2/operations_sop.json","authentication":"repository access","sandbox_available":true},
+  "governance":{"legal_basis_or_license":"Project-owned synthetic content","sensitivity":"INTERNAL","retention":"repository lifecycle","residency":"local development workspace","cross_border":false,"approved":true,"approval_reference":"MVP-SYNTHETIC-DATA-ONLY"},
+  "freshness":{"update_cadence":"manual versioned release","max_age_seconds":31536000,"stale_behavior":"BLOCK_DECISION"},
+  "identifiers":{"primary_key":"sop_version","join_keys":["task_type"]},
+  "quality":{"required_checks":["schema","effective_date","document_taxonomy","sla_source"],"publish_gate":"all deterministic checks pass"},
+  "lineage":{"ingestion_job":"app.operations.service.OperationsService","raw_location":"data/synthetic/v2/operations_sop.json","gold_location":"in-process SOP registry","consumer_artifacts":["OperationsService"]},
+  "lifecycle_status":"ACTIVE","risks_and_notes":["Synthetic SLA only; requires Operations owner sign-off before pilot"]
+}

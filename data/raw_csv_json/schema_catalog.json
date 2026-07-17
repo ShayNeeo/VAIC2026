@@ -1,0 +1,146 @@
+{
+  "shared_case_state": {
+    "type": "object",
+    "required": [
+      "case_id",
+      "request_id",
+      "company_profile",
+      "tasks",
+      "approval_status",
+      "final_status"
+    ],
+    "properties": {
+      "case_id": {
+        "type": "string"
+      },
+      "request_id": {
+        "type": "string"
+      },
+      "customer_request": {
+        "type": "object"
+      },
+      "company_profile": {
+        "type": "object"
+      },
+      "documents": {
+        "type": "array"
+      },
+      "execution_plan": {
+        "type": "array"
+      },
+      "product_result": {
+        "type": "object"
+      },
+      "legal_result": {
+        "type": "object"
+      },
+      "operations_result": {
+        "type": "object"
+      },
+      "missing_information": {
+        "type": "array"
+      },
+      "evidence": {
+        "type": "array"
+      },
+      "tool_calls": {
+        "type": "array"
+      },
+      "tasks": {
+        "type": "array"
+      },
+      "risk_level": {
+        "type": "string"
+      },
+      "approval_status": {
+        "type": "string"
+      },
+      "final_status": {
+        "type": "string"
+      },
+      "audit_events": {
+        "type": "array"
+      }
+    }
+  },
+  "check_completeness_request": {
+    "type": "object",
+    "required": [
+      "case_id",
+      "required_items",
+      "available_documents"
+    ],
+    "properties": {
+      "case_id": {
+        "type": "string"
+      },
+      "required_items": {
+        "type": "array"
+      },
+      "available_documents": {
+        "type": "array"
+      },
+      "policy_version": {
+        "type": "string"
+      }
+    }
+  },
+  "create_case_request": {
+    "type": "object",
+    "required": [
+      "customer_id",
+      "case_type",
+      "priority",
+      "idempotency_key",
+      "approval_id"
+    ],
+    "properties": {
+      "customer_id": {
+        "type": "string"
+      },
+      "case_type": {
+        "type": "string"
+      },
+      "priority": {
+        "type": "string"
+      },
+      "idempotency_key": {
+        "type": "string"
+      },
+      "approval_id": {
+        "type": "string"
+      }
+    }
+  },
+  "create_task_request": {
+    "type": "object",
+    "required": [
+      "case_id",
+      "task_type",
+      "owner_user",
+      "due_at",
+      "idempotency_key",
+      "approval_id"
+    ],
+    "properties": {
+      "case_id": {
+        "type": "string"
+      },
+      "task_type": {
+        "type": "string"
+      },
+      "owner_user": {
+        "type": "string"
+      },
+      "due_at": {
+        "type": "string"
+      },
+      "idempotency_key": {
+        "type": "string"
+      },
+      "approval_id": {
+        "type": "string"
+      }
+    }
+  }
+}
