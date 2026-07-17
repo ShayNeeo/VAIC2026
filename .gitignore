@@ -155,6 +155,14 @@ good-solution.jpg
 multi-agent-workflow.jpg
 problem-statetement-to-solution.jpg
 
+# --- Deploy secrets / VPS credentials (NEVER commit) ---
+deploy/.env
+deploy/**/*.env
+deploy/ssh_config
+deploy/*.key
+deploy/*.pem
+*.local.env
+
 # --- Python / project-specific (merged from local MVP work) ---
 __pycache__/
 *.py[cod]
