@@ -141,3 +141,17 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Workspace files
+.serena/
+5why.jpg
+AGENTS.md
+PROBLEM STATEMENT - SHB2.pdf
+SHB_Corporate_Expert_Workspace_Multi_Agent_Proposal.docx
+VAIC_2026_Winning_Operating_Plan.ods
+VAIC_2026_compressed.pdf
+checkpoints.jpg
+customer-persona.jpg
+good-solution.jpg
+multi-agent-workflow.jpg
+problem-statetement-to-solution.jpg
