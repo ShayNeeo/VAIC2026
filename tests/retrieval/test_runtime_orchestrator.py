@@ -57,15 +57,19 @@ def test_orchestrator_diagnostics_report_real_candidate_counts(tmp_path):
 
 
 def test_grounding_pack_content_hash_changes_if_item_set_differs(tmp_path):
-    # PROD-WORKING-CAPITAL (not SYNTH-PROD-*) matches this repo's real,
-    # legacy v2 eligibility_rules.json scope naming, which is what
-    # LegalKnowledgeService.ingest() actually indexes -- see
-    # data/synthetic/v2/eligibility_rules.json.
     orchestrator = _legal_orchestrator(tmp_path)
-    narrow = orchestrator.retrieve(_request(product_ids=["PROD-WORKING-CAPITAL"]))
-    broad = orchestrator.retrieve(_request())
-    assert narrow.grounding_pack is not None and broad.grounding_pack is not None
-    assert narrow.grounding_pack.content_hash != broad.grounding_pack.content_hash
+    # Same request twice must be byte-for-byte deterministic.
+    a = orchestrator.retrieve(_request())
+    b = orchestrator.retrieve(_request())
+    assert a.grounding_pack.content_hash == b.grounding_pack.content_hash
+    # Two different queries that retrieve genuinely different item sets must
+    # produce different content hashes. "UBO" resolves to the UBO rule chunk,
+    # "bad debt" to the bulk-payment tech rule chunk -- so the grounding packs
+    # are not equivalent.
+    ubo = orchestrator.retrieve(_request(normalized_query="UBO xac minh", raw_query="UBO"))
+    debt = orchestrator.retrieve(_request(normalized_query="no bad debt 12 thang", raw_query="bad debt"))
+    assert ubo.grounding_pack is not None and debt.grounding_pack is not None
+    assert ubo.grounding_pack.content_hash != debt.grounding_pack.content_hash
 
 
 def test_unknown_agent_type_is_a_configuration_error_not_a_crash(tmp_path):

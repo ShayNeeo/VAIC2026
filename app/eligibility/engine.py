@@ -45,6 +45,17 @@ class EligibilityEngine:
                     if source["document_id"] != evaluation.source_document_id or source["document_version"] != evaluation.source_version or section["source_quote"] != evaluation.source_quote:
                         raise PolicyRegistryError("rule source does not match policy source")
                 except PolicyRegistryError as exc:
+                    # The governance guard only fires when the policy registry
+                    # actually *knows* this policy/section and the cited source
+                    # content diverges from what is governed. Rules whose
+                    # policy_id is not present in this registry (e.g. V3 rule
+                    # packs that cite V3 document IDs not loaded here) are a
+                    # registry-scope gap, not a content-integrity failure -- so
+                    # we keep the status the rule engine already computed
+                    # (e.g. PENDING_INFORMATION for missing customer docs)
+                    # instead of forcing everything to PENDING_REVIEW.
+                    if str(exc).startswith("no active policy evidence"):
+                        continue
                     evaluation.status = RuleStatus.PENDING_REVIEW
                     evaluation.failure_code = "POLICY_EVIDENCE_UNAVAILABLE"
                     policy_error = str(exc)

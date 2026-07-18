@@ -92,7 +92,7 @@ class LegalKnowledgeService:
                         effective_to=rule["effective_to"],
                         active=True,
                         segments=[],
-                        access_scope={"branches": ["*"]},
+                        access_scope=rule.get("access_scope", {"branches": ["*"]}),
                         content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
                         # Phase 2: this rule set is only ever ingested after
                         # require_serving_approval() passes (see call above)

@@ -39,6 +39,6 @@ def test_workspace_contains_four_guided_cases_and_expected_outputs():
         "Case 4 · Yêu cầu không an toàn",
         "Output kỳ vọng của case mẫu",
         "Bổ sung hồ sơ UBO và BCTC",
-        "RM phê duyệt tạo case/task",
+        "RM phê duyệt payload cụ thể",
     ):
         assert label in html

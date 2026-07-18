@@ -40,6 +40,7 @@ class EligibilityRule(BaseModel):
     source_version: str
     source_location: str
     source_quote: str
+    access_scope: Optional[dict] = None
     # Policy flag, not a technical property of the rule: may a human
     # specialist override a FAILED verdict on this specific rule after
     # independent verification (see app/workflow/risk_gate.py's
