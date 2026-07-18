@@ -10,6 +10,16 @@ from app.knowledge.service import ProductKnowledgeService
 
 
 class ProductService:
+    _CANONICAL_MAP = {
+        "PRD-PY-001": "PROD-PAYROLL",
+        "PRD-CM-001": "PROD-CASH-MGMT",
+        "PRD-CO-001": "PROD-BULK-PAYMENT",
+        "PRD-PO-001": "PROD-BULK-PAYMENT",
+        "PRD-WC-001": "PROD-WORKING-CAPITAL",
+        "PRD-WC-002": "PROD-WORKING-CAPITAL",
+        "PRD-WC-003": "PROD-WORKING-CAPITAL",
+    }
+
     def __init__(self, knowledge: ProductKnowledgeService) -> None:
         self.knowledge = knowledge
 
@@ -97,9 +107,10 @@ class ProductService:
 
     @staticmethod
     def _context_bonus(product_id: str, attrs: Dict[str, Any]) -> float:
-        if product_id == "PROD-PAYROLL" and int(attrs.get("employees_count", 0)) >= 10:
+        canonical_id = ProductService._CANONICAL_MAP.get(product_id, product_id)
+        if canonical_id == "PROD-PAYROLL" and int(attrs.get("employees_count", 0)) >= 10:
             return 0.12
-        if product_id == "PROD-CASH-MGMT" and float(attrs.get("annual_revenue", 0)) >= 50_000_000_000:
+        if canonical_id == "PROD-CASH-MGMT" and float(attrs.get("annual_revenue", 0)) >= 50_000_000_000:
             return 0.12
         return 0.0
 
@@ -110,15 +121,21 @@ class ProductService:
 
     @staticmethod
     def _documents_from_chunk(hit: RetrievalHit) -> List[str]:
-        marker = "Hồ sơ: "
-        if marker not in hit.chunk.text:
-            return []
-        return [item.strip() for item in hit.chunk.text.split(marker, 1)[1].split(";") if item.strip()]
+        text = hit.chunk.text
+        for marker in ("Hồ sơ: ", "Điều kiện đầu vào: "):
+            if marker in text:
+                parts = text.split(marker, 1)
+                raw_docs = parts[1].split(" | ")[0]
+                return [item.strip() for item in raw_docs.split(";") if item.strip()]
+        return []
 
     @staticmethod
     def _reason(product_id: str, attrs: Dict[str, Any]) -> str:
-        if product_id == "PROD-PAYROLL" and attrs.get("employees_count"):
+        canonical_id = ProductService._CANONICAL_MAP.get(product_id, product_id)
+        if canonical_id == "PROD-PAYROLL" and attrs.get("employees_count"):
             return f"Nhu cầu khớp payroll và hồ sơ có {attrs['employees_count']} nhân sự."
-        if product_id == "PROD-CASH-MGMT" and attrs.get("annual_revenue"):
+        if canonical_id == "PROD-CASH-MGMT" and attrs.get("annual_revenue"):
             return "Nhu cầu dòng tiền khớp catalog và doanh thu hồ sơ đạt tín hiệu sàng lọc ban đầu."
+        if canonical_id == "PROD-WORKING-CAPITAL" and attrs.get("annual_revenue"):
+            return "Nhu cầu bổ sung vốn lưu động phù hợp với hồ sơ doanh nghiệp."
         return "Nhu cầu khớp nội dung catalog còn hiệu lực; điều kiện sẽ được kiểm tra riêng."

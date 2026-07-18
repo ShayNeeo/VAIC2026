@@ -26,7 +26,7 @@ Tổng readiness: **49/65 (75,4%)** cho target production. Local/sandbox MVP ch�
 
 | Chỉ số | Kết quả synthetic |
 |---|---:|
-| Unit/integration/contract/API/UI/MCP tests | 172 passed |
+| Unit/integration/contract/API/UI/MCP tests | 275 passed |
 | Coverage toàn repo | 92% |
 | Business golden cases | 40/40 |
 | Security cases | 25/25 |
@@ -37,6 +37,7 @@ Tổng readiness: **49/65 (75,4%)** cho target production. Local/sandbox MVP ch�
 | OOS precision | 100% |
 | Eligibility accuracy | 100% |
 | Unsafe approval rate | 0% |
+| Relevant-policy precision / recall | 100% / 100% (synthetic eligibility set) |
 | Browser console error/warning | 0 |
 | AI log raw PII recorded | false |
 

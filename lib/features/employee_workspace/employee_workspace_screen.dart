@@ -298,33 +298,186 @@ class _InformationSection extends StatelessWidget {
   }
 }
 
-class _IdentityCard extends StatelessWidget {
+class _WelcomeHeader extends StatelessWidget {
   final EmployeeContext ctx;
-  const _IdentityCard({required this.ctx});
+  const _WelcomeHeader({required this.ctx});
+
+  String get _roleLabel {
+    switch (ctx.authorizationContext.primaryRole) {
+      case 'relationship_manager':
+        return 'Relationship Manager';
+      case 'legal_specialist':
+        return 'Legal Specialist';
+      case 'product_specialist':
+        return 'Product Specialist';
+      case 'operations_specialist':
+        return 'Operations Specialist';
+      case 'manager':
+        return 'Sales Manager';
+      default:
+        return ctx.authorizationContext.primaryRole;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [AppColors.navy900, AppColors.navy700]),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 27,
+            backgroundColor: AppColors.orange,
+            child: Text(ctx.employeeId.substring(0, 1), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Workspace của bạn', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const SizedBox(height: 3),
+                Text(ctx.employeeId, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 3),
+                Text(_roleLabel, style: const TextStyle(color: Colors.white, fontSize: 13)),
+              ],
+            ),
+          ),
+          const Icon(Icons.verified_user_outlined, color: AppColors.statusReady, size: 26),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodaySummary extends StatelessWidget {
+  final EmployeeContext ctx;
+  final EmployeeWorkspaceController controller;
+  const _TodaySummary({required this.ctx, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final critical = controller.workQueue.where((item) => item.priority == 'high').length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(icon: Icons.dashboard_customize_outlined, title: 'Tổng quan nhanh', caption: 'Thông tin bạn cần trước khi bắt đầu'),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 420 ? 3 : 2;
+            final width = (constraints.maxWidth - ((columns - 1) * 8)) / columns;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                SizedBox(width: width, child: _MetricCard(icon: Icons.priority_high_rounded, label: 'Ưu tiên cao', value: '$critical', color: AppColors.statusBlocked)),
+                SizedBox(width: width, child: _MetricCard(icon: Icons.pending_actions_outlined, label: 'Việc đang chờ', value: '${controller.workQueue.length}', color: AppColors.statusNeedInfo)),
+                SizedBox(width: width, child: _MetricCard(icon: Icons.business_outlined, label: 'Khách hàng', value: '${ctx.authorizationContext.customerScope.length}', color: AppColors.blue)),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  const _MetricCard({required this.icon, required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(ctx.employeeId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            const SizedBox(height: 4),
-            Text('Vai trò: ${ctx.authorizationContext.primaryRole}'),
-            Text('Phạm vi khách hàng: ${ctx.authorizationContext.customerScope.join(", ")}'),
-            if (ctx.personalizationContext.personalizationDegraded)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Chip(
-                  label: const Text('Personalization đang ở chế độ mặc định (store lỗi)'),
-                  backgroundColor: AppColors.statusNeedInfo100,
-                ),
-              ),
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 8),
+            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 2),
+            Text(label, maxLines: 2, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String caption;
+  const _SectionTitle({required this.icon, required this.title, required this.caption});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.navy700, size: 22),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 17)),
+              const SizedBox(height: 2),
+              Text(caption, style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InformationSection extends StatelessWidget {
+  final EmployeeContext ctx;
+  const _InformationSection({required this.ctx});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionTitle(icon: Icons.info_outline, title: 'Thông tin cần biết', caption: 'Phạm vi dữ liệu và quyền của bạn'),
+        const SizedBox(height: 10),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const CircleAvatar(backgroundColor: AppColors.blue100, child: Icon(Icons.business_outlined, color: AppColors.navy700)),
+                title: const Text('Khách hàng được phân công', style: TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(ctx.authorizationContext.customerScope.isEmpty ? 'Chưa có phạm vi' : ctx.authorizationContext.customerScope.join(' · ')),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const CircleAvatar(backgroundColor: AppColors.statusReady100, child: Icon(Icons.verified_outlined, color: AppColors.statusReady)),
+                title: const Text('Danh tính đã xác minh', style: TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: const Text('Role và permission được lấy từ SSO/IAM'),
+                trailing: ctx.authorizationContext.identityVerified ? const Icon(Icons.check_circle, color: AppColors.statusReady) : const Icon(Icons.warning_amber, color: AppColors.statusNeedInfo),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const CircleAvatar(backgroundColor: AppColors.orange100, child: Icon(Icons.lock_outline, color: AppColors.orange700)),
+                title: const Text('Quyền đang có', style: TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text('${ctx.authorizationContext.permissions.length} quyền được cấp'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

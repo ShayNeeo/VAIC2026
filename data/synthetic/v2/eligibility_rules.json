@@ -5,7 +5,9 @@
     {
       "rule_id": "RULE-BUSINESS-REG-001",
       "version": "2026.1",
-      "scope": ["*"],
+      "scope": [
+        "*"
+      ],
       "effective_from": "2026-01-01",
       "effective_to": null,
       "severity": "blocking",
@@ -13,6 +15,8 @@
       "operator": "required_document",
       "expected": "business_registration",
       "failure_code": "BUSINESS_REGISTRATION_MISSING",
+      "policy_id": "SYN-B2B-KYC-001",
+      "section_id": "KYC-3",
       "source_document_id": "SYN-KYC-POLICY",
       "source_version": "2026.1",
       "source_location": "Điều 3",
@@ -21,7 +25,9 @@
     {
       "rule_id": "RULE-PAYROLL-EMPLOYEE-001",
       "version": "2026.1",
-      "scope": ["PROD-PAYROLL"],
+      "scope": [
+        "PROD-PAYROLL"
+      ],
       "effective_from": "2026-01-01",
       "effective_to": null,
       "severity": "blocking",
@@ -29,6 +35,8 @@
       "operator": "gte",
       "expected": 10,
       "failure_code": "EMPLOYEE_COUNT_BELOW_MINIMUM",
+      "policy_id": "SYN-B2B-PAYROLL-001",
+      "section_id": "PAYROLL-3.1",
       "source_document_id": "SYN-PRODUCT-CATALOG",
       "source_version": "2026.1",
       "source_location": "3.1 Payroll",
@@ -37,7 +45,9 @@
     {
       "rule_id": "RULE-CASH-REVENUE-001",
       "version": "2026.1",
-      "scope": ["PROD-CASH-MGMT"],
+      "scope": [
+        "PROD-CASH-MGMT"
+      ],
       "effective_from": "2025-10-15",
       "effective_to": null,
       "severity": "blocking",
@@ -45,6 +55,8 @@
       "operator": "gte",
       "expected": 50000000000,
       "failure_code": "REVENUE_BELOW_MINIMUM",
+      "policy_id": "SYN-B2B-CASH-001",
+      "section_id": "CASH-12-REV",
       "source_document_id": "SYN-CASH-MGMT-POLICY",
       "source_version": "2026.1",
       "source_location": "Điều 12",
@@ -53,7 +65,9 @@
     {
       "rule_id": "RULE-CASH-ACCOUNT-001",
       "version": "2026.1",
-      "scope": ["PROD-CASH-MGMT"],
+      "scope": [
+        "PROD-CASH-MGMT"
+      ],
       "effective_from": "2025-10-15",
       "effective_to": null,
       "severity": "blocking",
@@ -61,6 +75,8 @@
       "operator": "gte",
       "expected": 3,
       "failure_code": "ACCOUNT_COUNT_BELOW_MINIMUM",
+      "policy_id": "SYN-B2B-CASH-001",
+      "section_id": "CASH-12-ACC",
       "source_document_id": "SYN-CASH-MGMT-POLICY",
       "source_version": "2026.1",
       "source_location": "Điều 12",
@@ -69,7 +85,9 @@
     {
       "rule_id": "RULE-CREDIT-OPERATING-YEARS-001",
       "version": "2026.1",
-      "scope": ["PROD-WORKING-CAPITAL"],
+      "scope": [
+        "PROD-WORKING-CAPITAL"
+      ],
       "effective_from": "2025-12-01",
       "effective_to": null,
       "severity": "blocking",
@@ -77,15 +95,25 @@
       "operator": "gte",
       "expected": 2,
       "failure_code": "OPERATING_HISTORY_TOO_SHORT",
+      "policy_id": "SYN-B2B-CREDIT-001",
+      "section_id": "CREDIT-5-YEARS",
       "source_document_id": "SYN-CREDIT-POLICY",
       "source_version": "2026.1",
       "source_location": "Chương 5",
-      "source_quote": "Doanh nghiệp hoạt động liên tục tối thiểu 2 năm."
+      "source_quote": "Doanh nghiệp hoạt động liên tục tối thiểu 2 năm.",
+      "access_scope": {
+        "branches": [
+          "HN01",
+          "HCM01"
+        ]
+      }
     },
     {
       "rule_id": "RULE-CREDIT-FS-001",
       "version": "2026.1",
-      "scope": ["PROD-WORKING-CAPITAL"],
+      "scope": [
+        "PROD-WORKING-CAPITAL"
+      ],
       "effective_from": "2025-12-01",
       "effective_to": null,
       "severity": "blocking",
@@ -93,22 +121,37 @@
       "operator": "required_document",
       "expected": "financial_statements",
       "failure_code": "FINANCIAL_STATEMENTS_MISSING",
+      "policy_id": "SYN-B2B-CREDIT-001",
+      "section_id": "CREDIT-5-FS",
       "source_document_id": "SYN-CREDIT-POLICY",
       "source_version": "2026.1",
       "source_location": "Chương 5",
-      "source_quote": "Hồ sơ tín dụng phải có báo cáo tài chính năm gần nhất."
+      "source_quote": "Hồ sơ tín dụng phải có báo cáo tài chính năm gần nhất.",
+      "access_scope": {
+        "branches": [
+          "HN01",
+          "HCM01"
+        ]
+      }
     },
     {
       "rule_id": "RULE-CREDIT-UBO-001",
       "version": "2026.1",
-      "scope": ["PROD-WORKING-CAPITAL"],
+      "scope": [
+        "PROD-WORKING-CAPITAL"
+      ],
       "effective_from": "2026-01-01",
       "effective_to": null,
       "severity": "blocking",
       "field": "ubo_status",
       "operator": "one_of",
-      "expected": ["complete", "verified"],
+      "expected": [
+        "complete",
+        "verified"
+      ],
       "failure_code": "UBO_MISSING_OR_UNVERIFIED",
+      "policy_id": "SYN-B2B-KYC-001",
+      "section_id": "KYC-8",
       "source_document_id": "SYN-KYC-POLICY",
       "source_version": "2026.1",
       "source_location": "Điều 8",
@@ -118,7 +161,9 @@
     {
       "rule_id": "RULE-CREDIT-BAD-DEBT-001",
       "version": "2026.1",
-      "scope": ["PROD-WORKING-CAPITAL"],
+      "scope": [
+        "PROD-WORKING-CAPITAL"
+      ],
       "effective_from": "2025-12-01",
       "effective_to": null,
       "severity": "blocking",
@@ -126,15 +171,26 @@
       "operator": "equals",
       "expected": false,
       "failure_code": "BAD_DEBT_FOUND",
+      "policy_id": "SYN-B2B-CREDIT-001",
+      "section_id": "CREDIT-5-DEBT",
       "source_document_id": "SYN-CREDIT-POLICY",
       "source_version": "2026.1",
       "source_location": "Chương 5",
-      "source_quote": "Không có nợ xấu trong 12 tháng gần nhất theo nguồn được phép."
+      "source_quote": "Không có nợ xấu trong 12 tháng gần nhất theo nguồn được phép.",
+      "access_scope": {
+        "branches": [
+          "HN01",
+          "HCM01"
+        ]
+      },
+      "human_review_allowed": true
     },
     {
       "rule_id": "RULE-BULK-TECH-001",
       "version": "2026.1",
-      "scope": ["PROD-BULK-PAYMENT"],
+      "scope": [
+        "PROD-BULK-PAYMENT"
+      ],
       "effective_from": "2026-02-01",
       "effective_to": null,
       "severity": "warning",
@@ -142,6 +198,8 @@
       "operator": "equals",
       "expected": true,
       "failure_code": "TECHNICAL_CONTACT_NEEDED",
+      "policy_id": "SYN-B2B-BULK-001",
+      "section_id": "BULK-4-TECH",
       "source_document_id": "SYN-TRANSACTION-HANDBOOK",
       "source_version": "2026.1",
       "source_location": "Phần 4",

@@ -2,8 +2,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'adapters/backend_adapter.dart';
 import 'models/case_models.dart';
+import 'models/v2_projection.dart';
 import 'models/employee_models.dart';
 
 part 'api_client.freezed.dart';
@@ -12,7 +12,7 @@ part 'api_client.g.dart';
 /// Default backend endpoint. Override via constructor (e.g. local CF tunnel).
 const String kDefaultBaseUrl = 'https://vaic-api.w9.nu';
 
-/// API client for RM Workspace backend
+/// API client for the live VAIC2026 backend (v2 contract, plan_v2).
 class ApiClient {
   final String baseUrl;
   final http.Client _client;
@@ -41,6 +41,8 @@ class ApiClient {
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
+        'x-employee-id': kDemoEmployeeId,
+        'x-session-id': kDemoSessionId,
         if (_authToken != null) 'Authorization': 'Bearer $_authToken',
       };
 
@@ -48,13 +50,11 @@ class ApiClient {
     try {
       final response = await call().timeout(const Duration(seconds: 30));
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return parser(data);
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic>) return parser(data);
+        throw ApiException(statusCode: response.statusCode, message: 'Unexpected response format');
       }
-      throw ApiException(
-        statusCode: response.statusCode,
-        message: _parseError(response.body),
-      );
+      throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
     } on TimeoutException {
       throw const NetworkException('Request timeout');
     } on FormatException {
@@ -74,64 +74,72 @@ class ApiClient {
     }
   }
 
-  // GET /api/v1/cases  -> backend returns List[SharedCaseState]
+  // GET /api/v2/cases -> list of SharedCaseState -> demo queue items
   Future<List<CaseQueueItem>> getCases({Map<String, String>? query}) async {
-    final uri = Uri.parse('$baseUrl/api/v1/cases').replace(queryParameters: query);
+    final uri = Uri.parse('$baseUrl/api/v2/cases').replace(queryParameters: query);
     final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final data = jsonDecode(response.body);
-      if (data is List) return mapQueue(data);
-      if (data is Map && data['cases'] is List) return mapQueue(data['cases'] as List);
+      if (data is List) return [for (final e in data) projectQueueItem(e as Map<String, dynamic>)];
       return [];
     }
     throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
   }
 
-  // GET /api/v1/cases/{caseId} -> backend returns SharedCaseState dict
+  // GET /api/v2/cases/{caseId} -> SharedCaseState -> demo detail
   Future<CaseDetail> getCase(String caseId) async {
-    final uri = Uri.parse('$baseUrl/api/v1/cases/$caseId');
+    final uri = Uri.parse('$baseUrl/api/v2/cases/$caseId');
     final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return mapDetail(data);
+      return projectDetail(data);
     }
     throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
   }
 
-  // POST /api/v1/cases/{caseId}/approval-token
-  Future<ApprovalTokenResponse> issueApprovalToken(String caseId, String rmId, {String? comments}) async {
-    final uri = Uri.parse('$baseUrl/api/v1/cases/$caseId/approval-token');
+  // POST /api/v2/cases/{caseId}/approval-preview -> payload diff
+  Future<ApprovalPreview> previewApproval(String caseId) async {
+    final uri = Uri.parse('$baseUrl/api/v2/cases/$caseId/approval-preview');
     return _request(
-      () => _client.post(uri, headers: _headers, body: jsonEncode({'rm_id': rmId, 'comments': comments})),
+      () => _client.post(uri, headers: _headers),
+      (data) => ApprovalPreview.fromJson(data),
+    );
+  }
+
+  // POST /api/v2/cases/{caseId}/approve -> issues approval token
+  Future<ApprovalTokenResponse> issueApprovalToken(String caseId) async {
+    final uri = Uri.parse('$baseUrl/api/v2/cases/$caseId/approve');
+    return _request(
+      () => _client.post(uri, headers: _headers, body: jsonEncode({'expected_state_version': 1})),
       (data) => ApprovalTokenResponse.fromJson(data),
     );
   }
 
-  // POST /api/v1/cases/{caseId}/approve
+  // POST /api/v2/cases/{caseId}/execute -> run actions with token
   Future<ApprovalResult> approveCase(String caseId, String rmId, String token, {String? comments}) async {
-    final uri = Uri.parse('$baseUrl/api/v1/cases/$caseId/approve');
+    final uri = Uri.parse('$baseUrl/api/v2/cases/$caseId/execute');
     return _request(
       () => _client.post(
         uri,
         headers: {..._headers, 'x-approval-token': token},
-        body: jsonEncode({'rm_id': rmId, 'comments': comments}),
+        body: jsonEncode({'expected_state_version': 1, 'idempotency_key': 'ipk-$caseId-${DateTime.now().microsecondsSinceEpoch}'}),
       ),
       (data) => ApprovalResult.fromJson(data),
     );
   }
 
-  // POST /api/v1/cases/{caseId}/reject
+  // POST /api/v2/cases/{caseId}/reject
   Future<ApprovalResult> rejectCase(String caseId, String rmId, String reason) async {
-    final uri = Uri.parse('$baseUrl/api/v1/cases/$caseId/reject');
+    final uri = Uri.parse('$baseUrl/api/v2/cases/$caseId/reject');
     return _request(
-      () => _client.post(uri, headers: _headers, body: jsonEncode({'rm_id': rmId, 'reason': reason})),
+      () => _client.post(uri, headers: _headers, body: jsonEncode({'expected_state_version': 1, 'reason': reason})),
       (data) => ApprovalResult.fromJson(data),
     );
   }
 
-  // GET /api/v1/search/products
+  // GET /api/v2/knowledge/products/search -> {query, hits[]}
   Future<ProductSearchResult> searchProducts(String query, {int topK = 5}) async {
-    final uri = Uri.parse('$baseUrl/api/v1/search/products').replace(queryParameters: {'q': query, 'top_k': topK.toString()});
+    final uri = Uri.parse('$baseUrl/api/v2/knowledge/products/search').replace(queryParameters: {'q': query, 'top_k': topK.toString()});
     return _request(
       () => _client.get(uri, headers: _headers),
       (data) => ProductSearchResult.fromJson(data),
@@ -258,8 +266,9 @@ class AuthException implements Exception {
 class ApprovalTokenResponse with _$ApprovalTokenResponse {
   const factory ApprovalTokenResponse({
     required String caseId,
+    required int stateVersion,
     required String approvalToken,
-    required int expiresIn,
+    required int expiresAt,
   }) = _ApprovalTokenResponse;
   factory ApprovalTokenResponse.fromJson(Map<String, dynamic> json) => _$ApprovalTokenResponseFromJson(json);
 }
@@ -268,19 +277,38 @@ class ApprovalTokenResponse with _$ApprovalTokenResponse {
 class ApprovalResult with _$ApprovalResult {
   const factory ApprovalResult({
     required String caseId,
-    required String approvalStatus,
-    required String finalStatus,
-    required List<dynamic> actionsExecuted,
+    required int stateVersion,
+    required String status,
+    required String result,
   }) = _ApprovalResult;
   factory ApprovalResult.fromJson(Map<String, dynamic> json) => _$ApprovalResultFromJson(json);
 }
 
 @freezed
+class ApprovalPreview with _$ApprovalPreview {
+  const factory ApprovalPreview({
+    required String caseId,
+    required int stateVersion,
+    required String action,
+    required String target,
+    required String payloadHash,
+    required bool reversible,
+  }) = _ApprovalPreview;
+  factory ApprovalPreview.fromJson(Map<String, dynamic> json) => _$ApprovalPreviewFromJson(json);
+}
+
+@freezed
 class ProductSearchResult with _$ProductSearchResult {
   const factory ProductSearchResult({
+    required String query,
     required List<ProductMatch> results,
   }) = _ProductSearchResult;
-  factory ProductSearchResult.fromJson(Map<String, dynamic> json) => _$ProductSearchResultFromJson(json);
+  factory ProductSearchResult.fromJson(Map<String, dynamic> json) {
+    final hits = (json['hits'] as List? ?? [])
+        .map((e) => ProductMatch.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return ProductSearchResult(query: json['query']?.toString() ?? '', results: hits);
+  }
 }
 
 @freezed

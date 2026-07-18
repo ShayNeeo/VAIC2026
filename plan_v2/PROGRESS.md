@@ -7,7 +7,7 @@
 | Plan version | `2.0.0` |
 | Cập nhật cuối | `2026-07-18` |
 | Giai đoạn | `Local/sandbox MVP complete; production integration pending` |
-| Test/eval | `172 tests`; `40 business + 25 security + 20 reliability cases` |
+| Test/eval | `275 tests`; `40 business + 25 security + 20 reliability cases` |
 | API | `39 /api/v2 routes`; `19` public sales-case facade routes |
 | Blocker production | Thiếu data/API/SSO-IAM/policy owner/security sign-off thật |
 
