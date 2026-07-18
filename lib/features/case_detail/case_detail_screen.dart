@@ -326,9 +326,9 @@ class _ActionCenter extends StatelessWidget {
             child: Column(children: [
               _ActionRow(icon: Icons.add_task, text: 'Tạo $ready opportunity trong CRM', positive: true),
               _ActionRow(icon: Icons.task_alt, text: 'Tạo ${detail.checklist.length} task nội bộ', positive: true),
-              _ActionRow(icon: Icons.description, text: 'Lưu draft email cho khách hàng', positive: true),
+              const _ActionRow(icon: Icons.description, text: 'Lưu draft email cho khách hàng', positive: true),
               if (pending > 0) _ActionRow(icon: Icons.hourglass_empty, text: 'Giữ $pending nhánh ở trạng thái chờ hồ sơ', positive: false),
-              _ActionRow(icon: Icons.block, text: 'Không gửi email tự động', positive: false),
+              const _ActionRow(icon: Icons.block, text: 'Không gửi email tự động', positive: false),
               const _ActionRow(icon: Icons.credit_card_off, text: 'Không cam kết hạn mức', positive: false),
             ]),
           ),
