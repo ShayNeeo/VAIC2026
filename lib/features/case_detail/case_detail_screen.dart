@@ -425,7 +425,7 @@ class _EvidenceItem extends StatelessWidget {
       return ExpansionTile(
         tilePadding: EdgeInsets.zero,
         childrenPadding: const EdgeInsets.only(left: 23, right: 4, bottom: 8),
-        leading: const Icon(Icons.policy_outlined, size: 17, color: AppColors.statusReview),
+        leading: const Icon(Icons.policy_outlined, size: 17, color: AppColors.statusBlocked),
         title: Text(doc, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.ink)),
         subtitle: Text('$section · hiệu lực $date\n$tier', style: const TextStyle(fontSize: 9, color: AppColors.subtle)),
         children: [Align(alignment: Alignment.centerLeft, child: Text('Trích dẫn: “$owner”', style: const TextStyle(fontSize: 10, color: AppColors.ink2, height: 1.4)))],
