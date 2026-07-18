@@ -43,19 +43,7 @@ class CaseController extends ChangeNotifier {
       if (useMock) {
         _cases = await MockLoader.loadQueue();
       } else {
-        try {
-          final live = await api.getCases();
-          if (live.isEmpty) {
-            _cases = await MockLoader.loadQueue();
-          } else {
-            _cases = live;
-          }
-        } catch (e) {
-          // Live backend unavailable -> fall back to synthetic mock so the
-          // RM demo never shows a hard error.
-          _cases = await MockLoader.loadQueue();
-          _error = null;
-        }
+        _cases = await api.getCases();
       }
     } catch (e) {
       _error = e.toString();
@@ -94,12 +82,7 @@ class CaseDetailController extends ChangeNotifier {
       if (useMock) {
         _case = await MockLoader.loadCase(caseId);
       } else {
-        try {
-          _case = await api.getCase(caseId);
-        } catch (e) {
-          _case = await MockLoader.loadCase(caseId);
-          _error = null;
-        }
+        _case = await api.getCase(caseId);
       }
     } catch (e) {
       _error = e.toString();

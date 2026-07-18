@@ -8,7 +8,6 @@ import 'features/queue/queue_screen.dart';
 import 'features/case_detail/case_detail_screen.dart';
 import 'features/approval/approval_screen.dart';
 import 'features/employee_workspace/employee_workspace_screen.dart';
-import 'features/auth/login_screen.dart';
 
 void main() {
   runApp(
@@ -39,13 +38,8 @@ class RMWorkspaceApp extends StatelessWidget {
 }
 
 final GoRouter _router = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/queue',
   routes: [
-    GoRoute(
-      path: '/login',
-      name: 'login',
-      builder: (context, state) => const LoginScreen(),
-    ),
     GoRoute(
       path: '/queue',
       name: 'queue',
@@ -74,4 +68,3 @@ final GoRouter _router = GoRouter(
     ),
   ],
 );
-
