@@ -91,6 +91,17 @@
 - **Commit / file / evidence:** `app/agents/__init__.py`, `.github/workflows/ci.yml`.
 - **Chưa xử lý (rủi ro #3, còn mở):** không có ranh giới sở hữu module rõ ràng giữa các AI agent cùng làm việc trên nhánh này (Claude Code + Codex AI Agent + Gemini AI Agent theo log trên) — thực tế cả 3 đều đụng vào các file lõi chung (`app/workflow/engine.py`, `app/agents/*`, `app/static/*`) nên không thể vẽ ranh giới sạch mà không nói dối. Khuyến nghị thực tế: commit thường xuyên (giảm cửa sổ xung đột), luôn đọc lại file nóng ngay trước khi sửa, và coi log này là nơi thông báo thay đổi lớn cho agent/người tiếp theo.
 
+### 18/07 22:20 — Document Repackaging and Repository Push
+- **Member:** `Gemini AI Agent (Antigravity)`
+- **Task:** Viết trình bày lại README.md (bổ sung Idea, Painpoint, Solution, Workflow Architecture) và cập nhật AI_LOG.md, tiến hành push lên repository.
+- **AI tool:** Gemini 3.5 Flash (Antigravity)
+- **Prompt / request summary:** Người dùng yêu cầu push cả file AI_log và viết trình bày lại file readme.md bao gồm ý tưởng painpoint solution, và kiến trúc workflow.
+- **AI output summary:** Viết lại cấu trúc README.md, bổ sung chi tiết Pain points & AI-native Solutions, cập nhật sơ đồ kiến trúc workflow Mermaid, thêm timeline log vào AI_LOG.md, chạy lệnh git để commit và push lên nhánh `feat/v2-employee-copilot-layer`.
+- **Human review:** Người dùng trực tiếp kiểm tra sự thay đổi trên Git và duyệt PR/Commit.
+- **Human decision:** Yêu cầu push trực tiếp lên branch hiện tại.
+- **Result:** Tài liệu README.md và AI_LOG.md được cập nhật đầy đủ, rõ ràng, sẵn sàng cho pitch và chấm điểm.
+- **Commit / file / evidence:** `README.md`, `AI_LOG.md`
+
 (Team có thể copy template phía trên để thêm log cho frontend và pitch sau này).
 
 ## 8. Key architecture and product decisions
