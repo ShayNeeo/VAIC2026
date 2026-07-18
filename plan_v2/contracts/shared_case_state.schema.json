@@ -44,6 +44,7 @@
     "eligibility_result": {"type": ["object", "null"]},
     "risk_gate_result": {"type": ["object", "null"]},
     "operations_result": {"type": ["object", "null"]},
+    "case_checklist": {"type": ["object", "null"]},
     "customer_business_snapshot": {"type": ["object", "null"]},
     "execution_plan": {"type": ["object", "null"]},
     "next_best_questions": {"type": "array", "items": {"type": "object"}, "default": []},
@@ -94,8 +95,9 @@
         "location": {"type": "string"},
         "quote": {"type": "string"},
         "is_valid": {"type": "boolean"},
-        "human_review_allowed": {"type": "boolean", "default": false},
-        "validation_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+        "validation_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "human_review_allowed": {"type": "boolean"},
+        "meta": {"type": ["object", "null"]}
       }
     }
   }

@@ -14,7 +14,6 @@ from app.intent.slot_resolver import SlotResolver
 from app.knowledge.legal_service import LegalKnowledgeService
 from app.knowledge.service import ProductKnowledgeService
 from app.operations.service import OperationsService
-from app.observability.runtime import metrics
 from app.product.service import ProductService
 from app.safety.evidence_validator import ValidationStatus, validate_claim
 from app.schemas.v2.shared_case_state import (
@@ -26,6 +25,12 @@ from app.workflow.planner import PlannerService
 from app.workflow.risk_gate import RiskGateDecision, RiskGuardrailGate
 from app.workflow.router import ComplexityRouter
 from app.workflow.state_machine import transition
+from app.safety.domain_guardrails import (
+    validate_product_agent_output,
+    validate_legal_agent_output,
+    validate_operations_agent_output,
+    GuardrailViolation,
+)
 
 
 def _hash(value: Any) -> str:
@@ -214,6 +219,20 @@ class V2WorkflowEngine:
                 requested_product_ids=requested,
                 customer_attributes=state.context.customer.attributes,
             )
+            # Enforce P0.4 Domain Guardrails: Product Agent
+            try:
+                # Allowed catalog IDs: mock for MVP + SYNTH for V3 tests
+                validate_product_agent_output(
+                    state.product_result.get("recommendations", []), 
+                    allowed_catalog_ids=[
+                        "PROD-PAYROLL", "PROD-CASH-MGMT", "PROD-WORKING-CAPITAL", "PROD-BULK-PAYMENT",
+                        "SYNTH-PROD-PAYROLL", "SYNTH-PROD-CASH-MGMT", "SYNTH-PROD-WORKING-CAPITAL", "SYNTH-PROD-BULK-PAYMENT",
+                    ]
+                )
+            except GuardrailViolation as e:
+                self._event(state, "ProductAgent", "guardrail_violation", {"reason": str(e)})
+                raise
+                
             self._complete_task(state, "product", state.product_result)
             self._product_evidence(state)
             recommendations = state.product_result.get("recommendations", [])
@@ -255,10 +274,16 @@ class V2WorkflowEngine:
             ]
             state.eligibility_result = self.eligibility.evaluate(
                 product_ids,
-                customer=state.context.customer.attributes,
+                customer={**state.context.customer.attributes, **(state.customer_business_snapshot or {})},
                 documents=documents,
-                branch=str(state.context.employee.access_scope.get("branch", "*")),
             )
+            # Enforce P0.4 Domain Guardrails: Legal Agent
+            try:
+                validate_legal_agent_output(state.eligibility_result)
+            except GuardrailViolation as e:
+                self._event(state, "LegalAgent", "guardrail_violation", {"reason": str(e)})
+                raise
+                
             self._complete_task(state, "eligibility", state.eligibility_result)
             self._legal_evidence(state)
             self._ai_log(
@@ -280,18 +305,6 @@ class V2WorkflowEngine:
                         for product in state.eligibility_result.get("products", [])
                         for rule in product.get("rules", [])
                     ],
-                    "policies": [
-                        {
-                            "policy_id": policy.get("policy_id"),
-                            "version": policy.get("document_version"),
-                            "claim_id": policy.get("claim_id"),
-                            "evidence_valid": policy.get("evidence_valid"),
-                        }
-                        for product in state.eligibility_result.get("products", [])
-                        for policy in product.get("related_policies", [])
-                    ],
-                    "policy_count": sum(len(product.get("related_policies", [])) for product in state.eligibility_result.get("products", [])),
-                    "retrieval_mode": self.legal_knowledge.rag_health().get("mode"),
                 },
                 sources=[
                     {
@@ -373,6 +386,13 @@ class V2WorkflowEngine:
                 next_best_actions=state.next_best_actions,
                 evidence_ids=[item.claim_id for item in state.evidences],
             )
+            # Enforce P0.4 Domain Guardrails: Operations Agent
+            try:
+                validate_operations_agent_output(state.operations_result)
+            except GuardrailViolation as e:
+                self._event(state, "OperationsAgent", "guardrail_violation", {"reason": str(e)})
+                raise
+                
             self._complete_task(state, "operations", state.operations_result)
             self._ai_log(
                 state,
@@ -440,12 +460,9 @@ class V2WorkflowEngine:
         payload = state.operations_result.get("action_payload") or state.operations_result.get("crm_case_draft") or {}
         state.status = transition(state.status, CaseStatus.PENDING_APPROVAL)
         state.approval = Approval(status=ApprovalStatus.PENDING, payload_hash=_hash(payload))
-        state.risk_gate_result = {
-            **(state.risk_gate_result or {}),
-            "specialist_clearance": True,
-            "specialist_clearance_scope": "current_case_version",
-        }
         state.workflow.current_node = "await_approval"
+        if state.risk_gate_result:
+            state.risk_gate_result["specialist_overridden"] = True
         self._event(state, "SpecialistReview", "specialist_review_cleared_case", {})
         return self._touch(state)
 
@@ -522,38 +539,26 @@ class V2WorkflowEngine:
         self.legal_knowledge.ensure_index()
         index = self.legal_knowledge.index
         for product in state.eligibility_result.get("products", []):
-            invalid = 0
-            for policy in product.get("related_policies", []):
-                claim_id = policy["claim_id"]
+            for rule in product.get("rules", []):
+                claim_id = f"ELIG-{product['product_id']}-{rule['rule_id']}"
                 result = validate_claim(
                     claim_id=claim_id,
-                    source_document_id=policy["document_id"],
-                    source_version=policy["document_version"],
-                    quote=policy["source_quote"],
+                    source_document_id=rule["source_document_id"],
+                    source_version=rule["source_version"],
+                    quote=rule["source_quote"],
                     index=index,
                 )
-                policy["evidence_valid"] = result.is_valid
-                invalid += int(not result.is_valid)
                 state.evidences.append(
                     Evidence(
                         claim_id=claim_id, module="Eligibility",
-                        claim=f"Chính sách {policy['policy_id']} liên quan tới {product['product_id']} ({policy['decision_effect']}).",
-                        source_document_id=policy["document_id"], source_version=policy["document_version"],
-                        location=policy["section"], quote=policy["source_quote"],
+                        claim=f"{rule['rule_id']} kết luận {rule['status']} cho {product['product_id']}.",
+                        source_document_id=rule["source_document_id"], source_version=rule["source_version"],
+                        location=rule["source_location"], quote=rule["source_quote"],
                         is_valid=result.is_valid,
                         validation_score=1.0 if result.exact_match else 0.0,
                         human_review_allowed=result.status == ValidationStatus.INVALID,
                     )
                 )
-            metrics.increment("legal.policy_retrieved", len(product.get("related_policies", [])))
-            metrics.increment("legal.policy_missing_evidence", invalid)
-            if invalid:
-                product["status"] = "pending_review"
-                product["legal_summary"]["conclusion"] = "Cần chuyên viên Legal/Compliance xem xét vì policy evidence chưa hợp lệ."
-                product["legal_summary"]["warnings"] = list(dict.fromkeys([*product["legal_summary"].get("warnings", []), "POLICY_EVIDENCE_UNAVAILABLE"]))
-        statuses = {item.get("status") for item in state.eligibility_result.get("products", [])}
-        if "pending_review" in statuses:
-            state.eligibility_result["overall_status"] = "pending_review"
 
     @staticmethod
     def _event(state: SharedCaseState, actor: str, action: str, payload: Dict[str, Any]) -> None:

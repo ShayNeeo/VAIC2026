@@ -84,9 +84,19 @@ class OperationsService:
             eligibility_result=eligibility_result,
             evidence_ids=list(evidence_ids or []),
         )
+        import uuid
+        
+        requirements = []
+        for item in missing:
+            requirements.append({"code": item["document_type_id"], "description": f"Yêu cầu từ operations (SOP: {self.sop['sop_version']})"})
+            
         result = {
             "artifact_version": version,
             "sop_version": self.sop["sop_version"],
+            "agent_run_id": f"ARUN-OPS-{uuid.uuid4().hex[:8].upper()}",
+            "facts_used": [{"checklist": checklist}],
+            "requirements": requirements,
+            "citations": [],
             "decision_brief": {
                 "products": products,
                 "eligibility_status": eligibility_result.get("overall_status"),

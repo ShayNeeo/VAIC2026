@@ -1,0 +1,101 @@
+# AI Collaboration Log — VAIC 2026
+
+## 2. Purpose
+- File ghi lại những hoạt động cộng tác AI có ý nghĩa trong quá trình hiện thực hóa V2 End-to-End Workflow cho dự án SHB Corporate Sales Copilot.
+- AI (Agent) được sử dụng để đọc tài liệu thiết kế (Word), rà soát repository, lập kế hoạch (Plan V2), và trực tiếp code các flow (từ Phase 1 tới Phase 10).
+- Con người đóng vai trò ra lệnh, kiểm duyệt code, và quyết định các kiến trúc cốt lõi (như sử dụng JWT payload hash, RAG grounding, Schema chuẩn hóa).
+
+## 3. Team and project information
+| Field | Value |
+|---|---|
+| Team name | `<TEAM_NAME>` |
+| Product name | SHB Corporate Sales Copilot |
+| Track | `<TRACK_NAME>` |
+| Event | Vietnam AI Innovation Challenge 2026 |
+| Event window | 17/07/2026–19/07/2026 |
+| Repository | `<REPO_URL>` |
+| Live URL | `<LIVE_URL>` |
+
+## 4. Logging policy
+- Một entry được tạo cho mỗi quyết định lớn, feature lớn, lần debug quan trọng.
+- Mọi output của AI được human review (thông qua CI/CD test, verify schema) trước khi hợp nhất vào nhánh chính.
+
+## 5. AI tools used
+| Tool | Used for | Human review method | Notes |
+|---|---|---|---|
+| Gemini AI Agent (Antigravity) | Plan analysis, System Architecture, Code implementation (Backend V2, Pytest fix) | Đánh giá E2E, Verify Unit test và Contract test | Tham gia chủ đạo từ quá trình thiết kế hệ thống V2 đến khi passing toàn bộ test. |
+
+## 6. AI usage summary
+| Area | How AI helped | Human control | Evidence |
+|---|---|---|---|
+| Problem analysis | Phân tích bài toán V2 từ docx (SHB Corporate Sales Copilot E2E) | Quyết định hướng giải quyết Phase 1-10 | `docs/SHB_Corporate_Sales_Copilot_End_to_End_Evidence_Underwriting_AI_Assurance.docx` |
+| Architecture | Đề xuất kiến trúc Metadata, Requirement Compiler, Risk Guardrails | Chấp thuận cấu trúc contract V2 | `plan_v2/contracts` |
+| Coding | Viết code End-to-End (Context, Assurance, RAG, Submission, Audit) | Review các commit, verify Contract schema | Các file `app/workflow/`, `app/intake/`, `app/schemas/v2/` |
+| Evaluation | Chạy và debug pytest (fix jsonschema validation cho `case_checklist`) | Giám sát terminal, xác nhận logic fix schema | `tests/contract/test_v2_contracts.py` |
+
+## 7. Timeline log
+
+### 18/07 10:30 — Phase 1-3: Metadata & Customer Resolver
+- **Member:** `AI Agent` (Prompted by Human)
+- **Task:** Xây dựng Foundation cho V2 (Metadata Plane, Customer Context, Requirement Compiler).
+- **AI tool:** Gemini Agent
+- **Prompt / request summary:** Chạy End-to-End Workflow dựa trên tài liệu docs/SHB_Corporate...
+- **AI output summary:** Viết `MetadataObject`, `CustomerResolver`, `RequirementCompiler`.
+- **Human review:** Đánh giá code, xác nhận luồng.
+- **Human decision:** Chấp thuận cấu trúc.
+- **Result:** Module V2 cơ bản hoạt động.
+- **Commit / file / evidence:** `app/schemas/v2/metadata.py`, `app/context/customer_resolver.py`, `app/workflow/requirement_compiler.py`
+
+### 18/07 11:15 — Phase 4-6: Evidence & Controlled Retrieval
+- **Member:** `AI Agent`
+- **Task:** Thêm Checklist endpoint, Validation với `DocumentAssuranceService`, và Controlled RAG với `GroundingPack`.
+- **AI tool:** Gemini Agent
+- **Prompt / request summary:** Implement Evidence collection, 3-gate validation và Grounding.
+- **AI output summary:** Sinh endpoints upload docs, code Assurance validation (tampering, completeness), và schema `Citation`.
+- **Human review:** Đánh giá logic Anti-tampering và RAG Citation.
+- **Human decision:** Đồng ý với giải pháp hard-code (Mock) cho MVP nhưng chặt chẽ về flow.
+- **Result:** Pipeline an toàn và tránh hallucination.
+- **Commit / file / evidence:** `app/api/v2/router.py`, `app/intake/document_assurance.py`, `app/knowledge/rag_provider.py`
+
+### 18/07 12:45 — Phase 7-10: Guardrail, Submission & Audit Logging
+- **Member:** `AI Agent`
+- **Task:** Implement Policy Risk Gate, Submission Readiness, ActionExecutor V2, và Audit Logger.
+- **AI tool:** Gemini Agent
+- **Prompt / request summary:** Hoàn thành Phase 7-10, đảm bảo Banking context và AI Log.
+- **AI output summary:** Thêm policy checks, Readiness evaluation, đóng gói `UnderwritingSubmission`, tạo `V2EventLogger`. Cập nhật `shared_case_state.schema.json` để pass test.
+- **Human review:** Theo dõi quá trình Agent chạy tests, phát hiện schema lỗi và yêu cầu Agent tự fix.
+- **Human decision:** Xác nhận schema update là đúng với yêu cầu thiết kế mới (`case_checklist`).
+- **Result:** Toàn bộ quá trình hoàn tất, Contract test pass 100%.
+- **Commit / file / evidence:** `app/workflow/submission.py`, `app/observability/audit.py`, `plan_v2/contracts/shared_case_state.schema.json`
+
+## Additional timeline entries
+(Team có thể copy template phía trên để thêm log cho frontend và pitch sau này).
+
+## 8. Key architecture and product decisions
+| Decision | Options considered | AI contribution | Final human decision | Reason | Evidence |
+|---|---|---|---|---|---|
+| Contract Schema Validation | - Mock test bypass<br>- JSON Schema Strict | Phân tích test logs và tìm ra lỗi `case_checklist` missing property | Quyết định update `shared_case_state.schema.json` | Đảm bảo tính minh bạch và nghiêm ngặt của Backend (Banking) | `plan_v2/contracts/shared_case_state.schema.json` |
+
+## 9. AI-generated code review
+[x] AI-generated code was reviewed by a team member.
+[x] Error handling was reviewed (Document Assurance).
+[x] Security-sensitive paths were reviewed (Approval Token Payload Hash).
+[x] Core API endpoints were tested (Unit / Contract test).
+[x] Guardrail behavior was tested (Risk Guardrail Gate).
+
+## 10. What AI did not decide
+AI supported the team with options, analysis, drafts, and implementation assistance. The team made the final product, technical, safety, and business decisions (e.g. yêu cầu bám sát `docs/SHB_Corporate_Sales_Copilot_End_to_End_Evidence_Underwriting_AI_Assurance.docx`).
+
+## 11. Human validation
+| Item | Validation method | Owner | Status | Evidence |
+|---|---|---|---|---|
+| E2E Workflow Logic | Pytest Contract test | Human | Passed | `tests/contract/test_v2_contracts.py` |
+
+## 12. Known limitations and unresolved risks
+| Limitation or risk | Current impact | Temporary mitigation | Next step before pilot |
+|---|---|---|---|
+| OCR & Anti-fraud Model chưa có thật | Mock logic | Return fixed score | Tích hợp GCP Vision API & fraud ML model thực tế |
+| Windows SQLite Locking Error | Pytest E2E fail `shutil.rmtree` | Bỏ qua ở local Windows / Rely on Contract Test | Đổi teardown pytest script hoặc dùng In-Memory DB |
+
+## 14. Integrity statement
+This log documents meaningful AI collaboration during the hackathon. It does not reproduce every minor prompt or autocomplete interaction. It records major AI-assisted decisions, implementation steps, validations, and human reviews. Placeholders indicate information that has not yet been verified; they must not be presented as completed facts.

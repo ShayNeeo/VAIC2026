@@ -24,6 +24,21 @@ class ApiClient {
   void setAuthToken(String token) => _authToken = token;
   void clearAuthToken() => _authToken = null;
 
+  Future<String> login(String employeeId, String password) async {
+    final uri = Uri.parse('$baseUrl/api/v2/auth/login');
+    final response = await _client
+        .post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'employee_id': employeeId, 'password': password}))
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final token = data['access_token']?.toString();
+      if (token == null || token.isEmpty) throw const AuthException('Missing access token');
+      setAuthToken(token);
+      return token;
+    }
+    throw AuthException(_parseError(response.body));
+  }
+
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         'x-employee-id': kDemoEmployeeId,

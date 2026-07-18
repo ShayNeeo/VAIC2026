@@ -18,6 +18,17 @@
 > trùng lặp vào HTML — sửa đúng chỗ test kiểm tra sai layer (nội dung vốn
 > render bằng JS, test lại fetch HTML tĩnh chưa chạy JS). **343/343 test
 > pass.**
+>
+> **Cập nhật 4 (P0 sau focused audit — sửa `impact.py`):** Mục 14 sửa đúng
+> bug audit tìm thấy (`docs/SPECIALIST_REVIEW_FOCUSED_AUDIT.md` mục 2.1):
+> 4/8 field `correct_context()` tự khai là sửa được thực ra bị từ chối do
+> `impact.py` khớp nhầm substring "customer". Thay bằng một registry duy
+> nhất (`CONTEXT_CORRECTION_POLICIES`) cả `router.py` lẫn `impact.py` cùng
+> đọc, không giữ hai danh sách tách rời nữa. Có test parametrize cho cả 8
+> field, test chống drift, và lần đầu tiên chạy trọn kịch bản real pipeline
+> (không seed state tay) từ tạo case → PATCH ubo_status → pending_review →
+> Legal Specialist clear → RM approve → RM execute → trace. **373/373 test
+> pass** (343 cũ + 30 mới).
 
 Phạm vi: hiện thực hoá gap #1/#2/#3 trong
 `docs/EMPLOYEE_ROLE_DESIGN_EVALUATION_REPORT.md` (điểm 70/100) — Product,
@@ -686,3 +697,152 @@ theo thời gian, mà không giải quyết được gì thêm.
   "Case 2" có thực sự làm `#scenarioGuide` hiện đúng text hay không). Nếu
   cần mức đảm bảo đó, cần thêm một lớp test hoàn toàn khác (browser
   automation), ngoài phạm vi P0 này.
+
+## 14. P0 sau focused audit — sửa bug `impact.py` (2 danh sách field trôi khỏi nhau)
+
+### 14.1 Bug gốc
+
+`docs/SPECIALIST_REVIEW_FOCUSED_AUDIT.md` mục 2.1 tìm thấy bằng probe HTTP
+thật: `PATCH /cases/{case_id}/context` từ chối đúng 4/8 field nó tự khai là
+sửa được.
+
+`app/api/v2/router.py::correct_context()` khai `allowed_fields` gồm 8 field
+(`employees_count`, `annual_revenue`, `cash_flow_status`,
+`account_or_unit_count`, `operating_years`, `has_bad_debt_12m`,
+`ubo_status`, `name`). Nhưng `app/workflow/impact.py::impacted_nodes()`
+chỉ có logic riêng cho 4 field đầu (đi thẳng vào nhóm re-run product
+matching); 4 field còn lại rơi vào nhánh kiểm tra kế tiếp
+`if any("customer" in item ...)` — và vì MỌI field đều có dạng
+`customer.attributes.X` (luôn chứa chữ "customer"), nhánh này luôn đúng
+trước khi kịp phân biệt field cụ thể, trả về `FULL` (yêu cầu chạy lại từ
+`collect_context`). `V2WorkflowEngine.resume()` sau đó từ chối thẳng bất kỳ
+resume nào bắt đầu từ `collect_context`/`extract_intent`/`resolve_slots`
+(coi đó là thay đổi cấp request, cần một async full run mới, không phải
+resume) → `409 CONTEXT_CORRECTION_REJECTED`.
+
+Đây là bug có từ trước 3 vòng implementation gần đây (`impact.py` không
+nằm trong bất kỳ file nào các vòng trước sửa), nhưng ảnh hưởng trực tiếp
+giá trị thực dụng của `human_review_allowed`: đường chuẩn duy nhất một RM
+sửa `ubo_status` (field duy nhất gắn với rule `human_review_allowed=true`)
+để tái hiện đúng kịch bản UBO reviewable đã bị chặn.
+
+### 14.2 Cách sửa: một registry duy nhất, không giữ hai danh sách tách rời
+
+`app/workflow/impact.py` thêm `CONTEXT_CORRECTION_POLICIES: Dict[str, List[str]]`
+— map trực tiếp 8 tên field sang danh sách node cần resume:
+
+```python
+CONTEXT_CORRECTION_POLICIES = {
+    "employees_count": DOWNSTREAM_PRODUCT_MATCH,       # ["retrieve_products", "evaluate_eligibility", "validate_evidence", "prepare_operations"]
+    "annual_revenue": DOWNSTREAM_PRODUCT_MATCH,
+    "cash_flow_status": DOWNSTREAM_PRODUCT_MATCH,
+    "account_or_unit_count": DOWNSTREAM_PRODUCT_MATCH,
+    "operating_years": DOWNSTREAM_ELIGIBILITY,          # ["evaluate_eligibility", "validate_evidence", "prepare_operations"]
+    "has_bad_debt_12m": DOWNSTREAM_ELIGIBILITY,
+    "ubo_status": DOWNSTREAM_ELIGIBILITY,
+    "name": DOWNSTREAM_ELIGIBILITY,
+}
+```
+
+`impacted_nodes()` tra registry này TRƯỚC khi rơi vào nhánh substring
+"customer" cũ (nhánh cũ vẫn giữ nguyên cho các change token khác — ví dụ
+`customer_id` từ một luồng khác, hoặc `document:financial_statements` từ
+`/resume` — không đụng vào hành vi đã đúng).
+
+`app/api/v2/router.py::correct_context()` đổi `allowed_fields` từ một set
+hard-code riêng sang `CONTEXT_CORRECTION_POLICIES.keys()` — chỉ còn MỘT
+nguồn sự thật, không còn hai danh sách hai người phải nhớ giữ đồng bộ.
+
+Phân biệt 2 nhóm impact có chủ đích, không gộp hết vào một nhóm cho đơn
+giản: 4 field đầu ảnh hưởng đến việc công ty đủ điều kiện sản phẩm nào
+(product matching phải chạy lại); 4 field sau chỉ ảnh hưởng eligibility
+trên danh sách sản phẩm đã match sẵn (không cần chạy lại product
+matching) — giữ đúng phân biệt vốn có trong code gốc cho 4 field đầu
+(test `test_context_correction_records_provenance_and_invalidates_approval`
+đã có từ trước, assert `impacted_nodes[0] == "retrieve_products"` cho
+`employees_count`, vẫn pass không đổi).
+
+### 14.3 Test mới
+
+**`tests/unit/test_v2_context_correction_policy.py`** (10 test, chạy trực
+tiếp trên `impacted_nodes()`/registry, không qua HTTP):
+
+- `test_router_correct_context_derives_allowed_fields_from_the_registry` —
+  đọc source thật của endpoint đã build (qua `create_router()`), assert nó
+  tham chiếu `CONTEXT_CORRECTION_POLICIES` và không còn hard-code
+  `employees_count` — nếu ai đó quay lại pattern cũ, test này fail ngay.
+- 8 test parametrize field-by-field khớp router/registry (không lệch).
+- `test_registry_has_no_undeclared_extra_fields` — chiều ngược lại, không
+  field nào nằm trong registry mà router không biết tới.
+- 4 test parametrize xác nhận đúng nhóm impact (product-match vs
+  eligibility-only), có assert riêng `"collect_context" not in nodes` cho
+  nhóm eligibility-only.
+- 2 test bảo toàn hành vi cũ cho change token KHÔNG phải
+  `customer.attributes.*` field (`customer_id` → vẫn `FULL`;
+  `document:financial_statements` → vẫn `DOWNSTREAM_ELIGIBILITY`).
+
+**`tests/test_specialist_review_real_pipeline_e2e.py`** (10 test, chạy qua
+HTTP thật trên `app.main.app`, KHÔNG seed `SharedCaseState` bằng tay):
+
+- `test_ubo_context_correction_reaches_downstream_eligibility_not_rejected`
+  — regression hẹp đúng vào bug: PATCH `ubo_status` phải trả `200`, không
+  còn `409`.
+- `test_every_declared_correctable_field_is_actually_accepted` (parametrize
+  8 field) — acceptance criterion đúng như yêu cầu: cả 8 field router khai
+  correctable đều thực sự sửa được qua endpoint thật, không field nào
+  `409 CONTEXT_CORRECTION_REJECTED`.
+- `test_ubo_block_flows_through_real_pipeline_to_legal_clearance_approval_and_execution`
+  — kịch bản đầy đủ, chạy thật từ đầu đến cuối, KHÔNG dùng
+  `_seed_pending_review_case()` (helper 29 test cũ dùng để dựng state tay):
+  tạo case → engine route `PROD-WORKING-CAPITAL` → PATCH `ubo_status` sang
+  giá trị FAILED thật (`"Có xung đột thông tin chưa giải quyết"`, không
+  phải giá trị "missing") → engine resume → case đạt `pending_review` với
+  `risk_gate_result.required_reviewer_roles` chứa `legal_specialist`,
+  `human_review_allowed=True`, `triggered_rules` chứa
+  `RULE-CREDIT-UBO-001` → Legal Specialist gọi
+  `GET /review-context` rồi `POST /specialist-reviews` — có kiểm tra
+  `expected_case_version` sai bị `409 CASE_VERSION_CONFLICT` trước, sau đó
+  version đúng mới `201` và case chuyển `pending_approval` → RM
+  `approval-preview` → `approve` → `execute` → `200`,
+  `result.crm_case_id` bắt đầu bằng `SHB-CRM-` → `GET /trace` xác nhận
+  `audit_chain_valid=True` và đúng thứ tự 5 action:
+  `case_created, context_corrected, specialist_review_cleared,
+  payload_approved, actions_executed`.
+
+Đây là lần đầu tiên toàn bộ chuỗi "RM sửa field → specialist clear →
+RM duyệt → RM thực thi" được xác nhận chạy được trên pipeline thật
+(async `V2WorkflowEngine`, `EligibilityEngine`, `RiskGuardrailGate` thật)
+thay vì trên state dựng sẵn — đóng nốt giới hạn mục 2.1 của
+`docs/SPECIALIST_REVIEW_FOCUSED_AUDIT.md` đã nêu rõ ("phần còn lại của
+kịch bản E2E chưa được xác minh qua pipeline thật trong audit này").
+
+### 14.4 Kết quả chạy thật
+
+```text
+./.venv/Scripts/python.exe -m pytest tests/unit/test_v2_context_correction_policy.py tests/test_specialist_review_real_pipeline_e2e.py -q
+→ 30 passed
+
+./.venv/Scripts/python.exe -m pytest -q
+→ 373 passed, 0 failed
+```
+
+(343 test cũ + 30 test mới = 373, không có regression, không có test nào
+bị sửa để né lỗi.)
+
+### 14.5 File thay đổi
+
+| File | Loại | Thay đổi |
+| --- | --- | --- |
+| `app/workflow/impact.py` | Sửa | Thêm `CONTEXT_CORRECTION_POLICIES`, `DOWNSTREAM_PRODUCT_MATCH`; `impacted_nodes()` tra registry trước khi rơi vào nhánh substring cũ |
+| `app/api/v2/router.py` | Sửa | `correct_context()`'s `allowed_fields` đổi từ set hard-code sang `CONTEXT_CORRECTION_POLICIES.keys()` |
+| `tests/unit/test_v2_context_correction_policy.py` | Mới | 10 test cho registry/`impacted_nodes()`, bao gồm test chống drift |
+| `tests/test_specialist_review_real_pipeline_e2e.py` | Mới | 10 test HTTP thật, gồm kịch bản E2E đầy đủ qua pipeline thật |
+
+### 14.6 Hạn chế / còn lại
+
+- Chưa chạy lại phần P1 (`GET .../specialist-reviews` hiển thị chéo giữa
+  các subtype specialist) — audit xếp P1, chưa được yêu cầu xử lý.
+- Chưa re-score focused audit (P2 trong đề xuất của audit) — cần yêu cầu
+  rõ ràng từ người dùng trước khi làm, để tránh tự chấm lại điểm của chính
+  mình mà không có ai xác nhận tiêu chí.
+- Chưa nối Flutter UI (P3).

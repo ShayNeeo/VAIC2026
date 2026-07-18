@@ -56,6 +56,7 @@ class DeterministicIntentExtractor:
 
         required = list(INTENT_TAXONOMY[primary]["required_slots"])
         missing = [slot for slot in required if slot not in resolved_slots and slot not in entities]
+        print(f"DEBUG FALLBACK: primary={primary}, missing={missing}, resolved_slots={list(resolved_slots.keys())}, conflicts={bool(context and context.conflicts)}")
         if context and context.conflicts:
             action = RecommendedAction.REQUEST_CONFIRMATION
         elif primary == "out_of_scope":

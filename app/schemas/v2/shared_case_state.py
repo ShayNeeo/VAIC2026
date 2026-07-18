@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .common import SCHEMA_VERSION
 from .context_snapshot import ContextSnapshot
 from .intent_result import IntentResult
+from app.metadata.models import MetadataEnvelope
 
 Score = Annotated[float, Field(ge=0.0, le=1.0)]
 
@@ -79,8 +80,17 @@ class Evidence(BaseModel):
     location: str
     quote: str
     is_valid: bool
-    human_review_allowed: bool = False
     validation_score: Optional[Score] = None
+    # Set from app.safety.evidence_validator.ValidationStatus (see
+    # V2WorkflowEngine._product_evidence/_legal_evidence): True only for a
+    # citation/grounding mismatch (the source document is current and
+    # exists, but the quoted text was not found in it) -- a specialist can
+    # independently re-verify the underlying claim against the real
+    # document. False (default, and always for is_valid=True) for a
+    # structural document problem -- expired source, version mismatch,
+    # None of which a human override should bypass. See app/workflow/risk_gate.py.
+    human_review_allowed: bool = False
+    meta: Optional[MetadataEnvelope] = None
 
 
 class Request(BaseModel):
@@ -131,6 +141,7 @@ class SharedCaseState(BaseModel):
     eligibility_result: Optional[Dict[str, Any]] = None
     risk_gate_result: Optional[Dict[str, Any]] = None
     operations_result: Optional[Dict[str, Any]] = None
+    case_checklist: Optional[Dict[str, Any]] = None
     customer_business_snapshot: Optional[Dict[str, Any]] = None
     execution_plan: Optional[Dict[str, Any]] = None
     next_best_questions: List[Dict[str, Any]] = Field(default_factory=list)

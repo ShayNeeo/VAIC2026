@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import base64
-import hashlib
-import hmac
-import json
-import secrets
+import jwt
 import time
 import uuid
+import json
+import hashlib
 from typing import Any, Dict, Iterable
 
 from app.config import settings
 from app.storage.repository import V2Repository
-
 
 class ApprovalError(ValueError):
     pass
@@ -35,52 +32,55 @@ class ApprovalServiceV2:
     def issue(self, *, case_id: str, approver_id: str, permissions: Iterable[str], payload: Dict[str, Any]) -> Dict[str, Any]:
         issued_at = int(time.time())
         claims = {
-            "token_id": str(uuid.uuid4()),
+            "iss": "shb_copilot",
+            "aud": "underwriting_engine",
+            "sub": approver_id,
+            "role": "rm_approver",
             "case_id": case_id,
-            "approver_id": approver_id,
+            "case_version": str(payload.get("version", "1")),
+            "submission_id": payload.get("submission_id", ""),
+            "submission_version": payload.get("submission_version", ""),
             "permissions": sorted(set(permissions)),
-            "payload_hash": payload_hash(payload),
-            "issued_at": issued_at,
-            "expires_at": issued_at + self.ttl_seconds,
-            "nonce": secrets.token_urlsafe(16),
+            "package_hash": payload_hash(payload),
+            "iat": issued_at,
+            "exp": issued_at + self.ttl_seconds,
+            "jti": str(uuid.uuid4()),
             "one_time_use": True,
         }
-        token = self._encode(claims)
+        token = jwt.encode(claims, self.secret, algorithm="HS256")
         self.repository.register_approval(
-            claims["token_id"], case_id, approver_id, claims["payload_hash"], claims["expires_at"]
+            claims["jti"], case_id, approver_id, claims["package_hash"], claims["exp"]
         )
         return {"token": token, "claims": claims}
 
     def verify_and_consume(self, token: str, *, case_id: str, approver_id: str, payload: Dict[str, Any], permission: str) -> Dict[str, Any]:
-        claims = self._decode(token)
-        if claims.get("case_id") != case_id or claims.get("approver_id") != approver_id:
+        try:
+            # Enforce allowlist of algorithms and explicitly forbid "none"
+            claims = jwt.decode(
+                token, 
+                self.secret, 
+                algorithms=["HS256"], 
+                issuer="shb_copilot", 
+                audience="underwriting_engine"
+            )
+        except jwt.ExpiredSignatureError:
+            raise ApprovalError("approval expired")
+        except jwt.InvalidTokenError as exc:
+            raise ApprovalError(f"invalid or malformed approval token: {exc}")
+
+        if claims.get("case_id") != case_id or claims.get("sub") != approver_id:
             raise ApprovalError("approval does not belong to this case/approver")
         if permission not in claims.get("permissions", []):
             raise ApprovalError("approval does not grant the requested action")
-        if int(claims.get("expires_at", 0)) < int(time.time()):
-            raise ApprovalError("approval expired")
-        if claims.get("payload_hash") != payload_hash(payload):
+        if claims.get("package_hash") != payload_hash(payload):
             raise ApprovalError("payload changed after approval")
-        record = self.repository.approval(str(claims.get("token_id")))
-        if not record or record["status"] != "issued" or record["payload_hash"] != claims["payload_hash"]:
+        
+        jti = claims.get("jti")
+        record = self.repository.approval(str(jti))
+        if not record or record["status"] != "issued" or record["payload_hash"] != claims["package_hash"]:
             raise ApprovalError("approval is invalid or already consumed")
-        if not self.repository.consume_approval(claims["token_id"]):
+        
+        if not self.repository.consume_approval(jti):
             raise ApprovalError("approval was already consumed")
+        
         return claims
-
-    def _encode(self, claims: Dict[str, Any]) -> str:
-        body = base64.urlsafe_b64encode(json.dumps(claims, separators=(",", ":")).encode()).decode().rstrip("=")
-        signature = hmac.new(self.secret.encode(), body.encode(), hashlib.sha256).hexdigest()
-        return f"{body}.{signature}"
-
-    def _decode(self, token: str) -> Dict[str, Any]:
-        try:
-            body, signature = token.split(".", 1)
-            expected = hmac.new(self.secret.encode(), body.encode(), hashlib.sha256).hexdigest()
-            if not hmac.compare_digest(signature, expected):
-                raise ApprovalError("invalid approval signature")
-            return json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)).decode())
-        except ApprovalError:
-            raise
-        except Exception as exc:
-            raise ApprovalError("malformed approval token") from exc

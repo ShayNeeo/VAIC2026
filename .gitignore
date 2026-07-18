@@ -36,6 +36,12 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+build/
+.dart_tool/
+.wrangler/
+.opencode-state/
+assets/fonts/
+android/local.properties
 
 # Dependency directories
 node_modules/
@@ -160,7 +166,6 @@ problem-statetement-to-solution.jpg
 __pycache__/
 *.py[cod]
 .pytest_cache/
-/tmp_test/
 .coverage
 htmlcov/
 .venv/
@@ -175,17 +180,12 @@ data/rag_mcp/
 # Hundreds of page-render PNGs/PDFs and Office lock files (~$*.docx); regenerate from tools/, don't commit.
 outputs/
 
-# Inter TTF fonts are large (regenerated via tools/fetch_fonts.sh)
-assets/fonts/*.ttf
+# --- Temp testing directories ---
+tmp_test*/
+tmp_test_custom_cache/
+tmp_test_no_cache/
+tmp_test_out.txt
+tmp_test_run_*/
+.local_checkpoints/
+.gemini/
 
-# Local tooling / state
-.dart_tool/
-.opencode-state/
-.wrangler/
-
-# Binary deliverables not tracked
-*.odt
-*.docx
-
-# Flutter local machine config (generated)
-android/local.properties

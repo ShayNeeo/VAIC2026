@@ -1,0 +1,46 @@
+{
+  "data_label": "SYNTHETIC DEMO DATA",
+  "data_origin": "SYNTHETIC_REALISTIC",
+  "source": "docs/SHB_Corporate_Sales_MVP_Data_Blueprint_V3_Proposal.docx section 9.13 Form F-01, Table 200 (MVP hero value row given verbatim)",
+  "note": "Each field carries value/source/observed_at/confidence/confirmed per the blueprint's own F-01 provenance requirement (section 9.13 paragraph before the table).",
+  "form_id": "F-01",
+  "case_id": "CORP-DEMO-001",
+  "snapshot": {
+    "employee": {
+      "value": {"employee_id": "RM-999", "role": "Corporate RM", "branch_id": "BR-HN-01", "permission_scopes": ["case:read", "case:draft", "case:approve"]},
+      "source": "SSO/IAM mock",
+      "confidence": 1.0,
+      "confirmed": true
+    },
+    "workspace": {
+      "value": {"active_customer_id": "COMP-ABC", "active_case_id": "CORP-DEMO-001", "screen": "sales-case", "selected_product_ids": []},
+      "source": "UI session",
+      "confidence": 1.0,
+      "confirmed": true
+    },
+    "current_work": {
+      "value": {"current_task": "discovery", "due_at": "2026-07-18", "previous_artifact_ids": []},
+      "source": "CRM/task mock",
+      "confidence": 0.95,
+      "confirmed": false
+    },
+    "conversation": {
+      "value": {"last_user_message": "Yêu cầu bán hàng doanh nghiệp cho COMP-ABC", "last_confirmed_intent": null, "answered_slots": []},
+      "source": "Conversation state",
+      "confidence": 0.8,
+      "confirmed": false
+    },
+    "freshness": {
+      "value": {"source_updated_at": "2026-07-18T08:00:00+07:00", "loaded_at": "2026-07-18T08:00:05+07:00", "stale_after_minutes": 5, "is_stale": false},
+      "source": "Context service",
+      "confidence": 1.0,
+      "confirmed": true
+    },
+    "permission": {
+      "value": {"customer_scope_allowed": true, "document_scope_allowed": true},
+      "source": "IAM policy",
+      "confidence": 1.0,
+      "confirmed": true
+    }
+  }
+}

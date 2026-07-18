@@ -1,0 +1,68 @@
+{
+  "dataset_version": "v3.2026.07.18",
+  "data_label": "SYNTHETIC BANKING DOCUMENTS - V3 LEGAL KNOWLEDGE",
+  "data_origin": "SYNTHETIC_REALISTIC",
+  "note": "These are synthetic banking policy documents for the SHB Corporate Sales Copilot hackathon demo. They contain realistic Vietnamese banking policy text with exact quotes referenced in V3 eligibility rules. Each document simulates a real SHB internal policy or product guide.",
+  "documents": [
+    {
+      "document_id": "SYNTH-DOC-KYC-001",
+      "document_version": "1.0",
+      "title": "Quy định KYC doanh nghiệp - SHB Corporate Banking",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "active": true,
+      "section": "2.1",
+      "segments": ["CORPORATE", "SME"],
+      "access_scope": {"branches": ["*"]},
+      "text": "CHƯƠNG 2: YÊU CẦU HỒ SƠ PHÁP LÝ DOANH NGHIỆP\n\nĐiều 2.1 - Tài liệu đăng ký kinh doanh bắt buộc\n\nDoanh nghiệp phải cung cấp Giấy chứng nhận đăng ký doanh nghiệp hợp lệ, còn hiệu lực, được cấp bởi cơ quan có thẩm quyền. Hồ sơ doanh nghiệp phải có đăng ký kinh doanh hợp lệ. Giấy tờ phải được công chứng hoặc chứng thực trong vòng 06 tháng tính đến ngày nộp hồ sơ.\n\nĐiều 2.2 - Tài liệu về đại diện pháp nhân\n\nNgười đại diện theo pháp luật phải cung cấp bản sao CCCD/CMND còn hiệu lực và quyết định bổ nhiệm (nếu không phải chủ doanh nghiệp).\n\nĐiều 4.3 - Xác minh chủ sở hữu hưởng lợi (UBO)\n\nTheo quy định phòng chống rửa tiền, hồ sơ cấp tín dụng phải có thông tin chủ sở hữu hưởng lợi đã xác minh. Trạng thái UBO phải là 'complete' hoặc 'verified'. Doanh nghiệp phải khai báo tất cả cá nhân sở hữu từ 25% vốn trở lên.\n\nĐiều 5.1 - Lưu trữ và cập nhật hồ sơ\n\nHồ sơ KYC được lưu trữ tối thiểu 05 năm kể từ ngày chấm dứt quan hệ với khách hàng. Cập nhật định kỳ mỗi 02 năm hoặc khi có thay đổi thông tin quan trọng."
+    },
+    {
+      "document_id": "SYNTH-DOC-CREDIT-001",
+      "document_version": "1.0",
+      "title": "Chính sách cấp tín dụng vốn lưu động - SHB Corporate Credit",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "active": true,
+      "section": "5",
+      "segments": ["CORPORATE", "SME"],
+      "access_scope": {"branches": ["*"]},
+      "text": "CHƯƠNG 5: TIÊU CHÍ XÉT DUYỆT TÍN DỤNG VỐN LƯU ĐỘNG\n\nĐiều 5.1 - Yêu cầu về lịch sử hoạt động\n\nDoanh nghiệp phải có lịch sử hoạt động kinh doanh liên tục tối thiểu 02 năm. Doanh nghiệp hoạt động liên tục tối thiểu 2 năm. Thời gian hoạt động được tính từ ngày cấp phép kinh doanh lần đầu hoặc ngày đăng ký thực tế tùy theo hình thức tổ chức doanh nghiệp.\n\nĐiều 5.2 - Yêu cầu về báo cáo tài chính\n\nHồ sơ tín dụng phải có báo cáo tài chính năm gần nhất. Báo cáo tài chính phải được kiểm toán độc lập đối với doanh nghiệp có vốn trên 50 tỷ. Báo cáo tài chính gần nhất không được cũ hơn 12 tháng tính đến thời điểm nộp hồ sơ. Đối với doanh nghiệp dưới 02 năm hoạt động, có thể chấp nhận báo cáo tài chính giữa kỳ.\n\nĐiều 5.3 - Điều kiện không có nợ xấu\n\nKhách hàng không được có lịch sử nợ xấu (nhóm 3, 4, 5) trong 12 tháng gần nhất. Không có nợ xấu trong 12 tháng gần nhất theo nguồn được phép. Thông tin nợ xấu được tra cứu từ Trung tâm Thông tin Tín dụng Quốc gia (CIC) và các nguồn thông tin tín dụng được Ngân hàng Nhà nước chấp thuận. Nợ xấu được định nghĩa theo Thông tư 11/2021/TT-NHNN và các văn bản pháp luật liên quan.\n\nĐiều 5.4 - Hạn mức và điều kiện giải ngân\n\nHạn mức tín dụng vốn lưu động được xác định dựa trên nhu cầu vốn luân chuyển thực tế, vòng quay tài sản ngắn hạn và năng lực tài chính của doanh nghiệp. Việc giải ngân phải có đủ hồ sơ chứng minh mục đích sử dụng vốn và được kiểm soát sau giải ngân định kỳ."
+    },
+    {
+      "document_id": "SYNTH-DOC-PRODUCT-003",
+      "document_version": "1.0",
+      "title": "Hướng dẫn dịch vụ Chi lương doanh nghiệp - SHB Payroll Service",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "active": true,
+      "section": "3.1",
+      "segments": ["CORPORATE", "SME"],
+      "access_scope": {"branches": ["*"]},
+      "text": "CHƯƠNG 3: ĐIỀU KIỆN VÀ ĐỐI TƯỢNG SỬ DỤNG DỊCH VỤ CHI LƯƠNG\n\nĐiều 3.1 - Điều kiện về quy mô doanh nghiệp\n\nDoanh nghiệp cần có tối thiểu 10 nhân sự tham gia dịch vụ chi lương. Điều kiện này nhằm đảm bảo hiệu quả kinh tế của dịch vụ thanh toán hàng loạt. Doanh nghiệp có dưới 10 nhân viên được khuyến nghị sử dụng dịch vụ chuyển khoản thông thường.\n\nĐiều 3.2 - Yêu cầu tài liệu đầu vào\n\nDanh sách nhân viên phải bao gồm: họ tên, số CCCD/CMND, số tài khoản hoặc thông tin để mở tài khoản, mức lương. Định dạng file chấp nhận: Excel (.xlsx), CSV hoặc XML theo chuẩn ngân hàng.\n\nĐiều 3.3 - Thời hạn xử lý\n\nLệnh chi lương được xử lý trong ngày làm việc T+0 nếu nộp trước 16:00. Lệnh nộp sau 16:00 sẽ được xử lý vào ngày làm việc T+1. Ngân hàng không chịu trách nhiệm về trường hợp bất khả kháng gây chậm xử lý."
+    },
+    {
+      "document_id": "SYNTH-DOC-PRODUCT-005",
+      "document_version": "1.0",
+      "title": "Hướng dẫn dịch vụ Quản lý dòng tiền tập trung - SHB Cash Management",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "active": true,
+      "section": "3.1",
+      "segments": ["CORPORATE"],
+      "access_scope": {"branches": ["*"]},
+      "text": "CHƯƠNG 3: ĐIỀU KIỆN VÀ ĐỐI TƯỢNG SỬ DỤNG DỊCH VỤ CASH MANAGEMENT\n\nĐiều 3.1 - Điều kiện về quy mô và cơ cấu tổ chức\n\nDoanh nghiệp sử dụng dịch vụ Cash Management cần có từ 2 tài khoản trở lên hoặc có từ 2 đơn vị thành viên trở lên (chi nhánh, công ty con, đơn vị trực thuộc). Điều kiện tối thiểu 02 tài khoản hoặc đơn vị thành viên là tiêu chí cơ bản để đảm bảo dịch vụ Cash Pooling và Sweep có ý nghĩa thực tế.\n\nĐiều 3.2 - Phạm vi dịch vụ\n\nDịch vụ Cash Management bao gồm: quản lý số dư đa tài khoản theo thời gian thực, tự động điều chuyển dòng tiền (Auto Sweeping), lập lịch thanh toán tự động, báo cáo dòng tiền tổng hợp và dự báo dòng tiền ngắn hạn.\n\nĐiều 3.3 - Yêu cầu kỹ thuật\n\nKết nối API đòi hỏi doanh nghiệp chỉ định đầu mối kỹ thuật chịu trách nhiệm tích hợp và vận hành. Thỏa thuận mức dịch vụ (SLA) được ký kết trước khi triển khai."
+    },
+    {
+      "document_id": "SYNTH-DOC-PRODUCT-004",
+      "document_version": "1.0",
+      "title": "Hướng dẫn dịch vụ Chi hộ nhà cung cấp - SHB Bulk Payment",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "active": true,
+      "section": "4.1",
+      "segments": ["CORPORATE", "SME"],
+      "access_scope": {"branches": ["*"]},
+      "text": "CHƯƠNG 4: ĐIỀU KIỆN SỬ DỤNG DỊCH VỤ CHI HỘ NHÀ CUNG CẤP\n\nĐiều 4.1 - Điều kiện đăng ký dịch vụ\n\nDoanh nghiệp muốn sử dụng dịch vụ Chi hộ nhà cung cấp phải có Đăng ký kinh doanh hợp lệ và ký kết Hợp đồng khung với SHB. Doanh nghiệp phải cam kết sử dụng dịch vụ tối thiểu 06 tháng và duy trì số dư tài khoản đủ để thực hiện các lệnh thanh toán theo lịch.\n\nĐiều 4.2 - Giới hạn giao dịch\n\nMỗi lệnh chi hộ tối đa 500 bút toán. Tổng hạn mức một ngày phụ thuộc vào hạn mức tín dụng và số dư tài khoản của doanh nghiệp. Giao dịch vượt hạn mức phải được cấp có thẩm quyền phê duyệt thủ công.\n\nĐiều 4.3 - Quy trình đối soát\n\nNgân hàng cung cấp báo cáo đối soát chi tiết mỗi ngày làm việc. Doanh nghiệp có 03 ngày làm việc để phản hồi các bút toán phát sinh bất thường."
+    }
+  ]
+}

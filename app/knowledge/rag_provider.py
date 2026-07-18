@@ -16,13 +16,31 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from threading import RLock
-from typing import Any, Callable, Coroutine, Generic, Optional, TypeVar
+from typing import Any, Callable, Coroutine, Generic, Optional, TypeVar, List
+
+from pydantic import BaseModel, Field
 
 from app.observability.runtime import metrics
+from app.metadata.models import MetadataEnvelope
 
 T = TypeVar("T")
 
 VALID_MODES = ("local", "mcp", "hybrid")
+
+class Citation(BaseModel):
+    document_id: str
+    version: str
+    location: str
+    quote: str
+    claim_id: str
+
+class GroundingPack(BaseModel):
+    query: str
+    citations: List[Citation] = Field(default_factory=list)
+    permission_context: Optional[dict] = None
+    source_constraints: Optional[dict] = None
+    fallback_used: bool = False
+    meta: Optional[MetadataEnvelope] = None
 
 # Exceptions treated as *transient/recoverable* -- safe to trigger a hybrid
 # fallback to the local index. Deliberately narrow: a network-layer failure

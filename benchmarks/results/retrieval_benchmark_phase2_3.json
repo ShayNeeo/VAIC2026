@@ -1,0 +1,79 @@
+{
+  "benchmark_version": "phase2-retrieval-v1",
+  "query_count": 33,
+  "generated_at": "2026-07-18T08:26:57.435799+00:00",
+  "results": {
+    "A_legacy_linear_sum": {
+      "recall_at_1": 0.5833,
+      "recall_at_3": 0.9389,
+      "recall_at_5": 0.9667,
+      "mrr": 0.7833,
+      "ndcg_at_5": 0.8306,
+      "forbidden_source_retrieval_rate": 0.0303,
+      "no_result_correct_rate": 0.3333
+    },
+    "B_bm25_only": {
+      "recall_at_1": 0.5611,
+      "recall_at_3": 0.95,
+      "recall_at_5": 0.9667,
+      "mrr": 0.7833,
+      "ndcg_at_5": 0.8272,
+      "forbidden_source_retrieval_rate": 0.0303,
+      "no_result_correct_rate": 0.3333
+    },
+    "C_dense_only": {
+      "recall_at_1": 0.5833,
+      "recall_at_3": 0.9556,
+      "recall_at_5": 0.9667,
+      "mrr": 0.7833,
+      "ndcg_at_5": 0.8347,
+      "forbidden_source_retrieval_rate": 0.0303,
+      "no_result_correct_rate": 0.3333
+    },
+    "E_rrf_with_policy_filter": {
+      "recall_at_1": 0.65,
+      "recall_at_3": 0.9556,
+      "recall_at_5": 0.9667,
+      "mrr": 0.8167,
+      "ndcg_at_5": 0.8567,
+      "forbidden_source_retrieval_rate": 0.0303,
+      "no_result_correct_rate": 0.3333
+    },
+    "F_rrf_plus_query_expansion": {
+      "recall_at_1": 0.65,
+      "recall_at_3": 0.9556,
+      "recall_at_5": 0.9667,
+      "mrr": 0.8167,
+      "ndcg_at_5": 0.8567,
+      "forbidden_source_retrieval_rate": 0.0606,
+      "no_result_correct_rate": 0.3333
+    },
+    "G_rrf_plus_heuristic_rerank": {
+      "recall_at_1": 0.5167,
+      "recall_at_3": 0.8722,
+      "recall_at_5": 0.9333,
+      "mrr": 0.7194,
+      "ndcg_at_5": 0.774,
+      "forbidden_source_retrieval_rate": 0.0303,
+      "no_result_correct_rate": 0.3333
+    },
+    "H_rrf_plus_mmr": {
+      "recall_at_1": 0.65,
+      "recall_at_3": 0.6889,
+      "recall_at_5": 0.7333,
+      "mrr": 0.69,
+      "ndcg_at_5": 0.704,
+      "forbidden_source_retrieval_rate": 0.0303,
+      "no_result_correct_rate": 0.3333
+    },
+    "I_full_phase3": {
+      "recall_at_1": 0.5167,
+      "recall_at_3": 0.7222,
+      "recall_at_5": 0.9,
+      "mrr": 0.6667,
+      "ndcg_at_5": 0.7274,
+      "forbidden_source_retrieval_rate": 0.0606,
+      "no_result_correct_rate": 0.3333
+    }
+  }
+}

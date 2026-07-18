@@ -5,6 +5,12 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
+def test_workspace_contains_login_and_verified_role_controls():
+    html = TestClient(app).get("/").text
+    for marker in ("loginScreen", "loginEmployee", "loginPassword", "roleBadge", "logoutButton"):
+        assert marker in html
+
+
 def test_workspace_exposes_a_clear_decision_reading_order():
     response = TestClient(app).get("/")
     assert response.status_code == 200
@@ -33,6 +39,6 @@ def test_workspace_contains_four_guided_cases_and_expected_outputs():
         "Case 4 · Yêu cầu không an toàn",
         "Output kỳ vọng của case mẫu",
         "Bổ sung hồ sơ UBO và BCTC",
-        "RM phê duyệt tạo case/task",
+        "RM phê duyệt payload cụ thể",
     ):
         assert label in html

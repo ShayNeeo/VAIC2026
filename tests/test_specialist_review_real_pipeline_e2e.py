@@ -266,3 +266,9 @@ def test_ubo_block_flows_through_real_pipeline_to_legal_clearance_approval_and_e
         "payload_approved",
         "actions_executed",
     ]
+
+    # Verify AI Log generation (per user request)
+    ai_logs = client.get(f"/api/v2/sales-cases/{case_id}/ai-log", headers=rm_headers())
+    assert ai_logs.status_code == 200, ai_logs.text
+    ai_log_body = ai_logs.json()
+    assert len(ai_log_body["entries"]) > 0, "AI Decision Log must not be empty after full pipeline execution"

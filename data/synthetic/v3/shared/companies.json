@@ -1,0 +1,85 @@
+{
+  "registry_version": "v3.2026.07.18",
+  "data_label": "SYNTHETIC DEMO DATA",
+  "data_origin": "SYNTHETIC_REALISTIC",
+  "source": "docs/SHB_Corporate_Sales_MVP_Data_Blueprint_V3_Proposal.docx section 9.12 Table 196 (hero case COMP-ABC, values given verbatim in the document) plus two regression companies added to cover a clean-pass path and a hard-block path, per section 9.10's '10 synthetic companies / 3 hồ sơ: một hero case + hai regression cases' requirement.",
+  "note": "customer_id values (COMP-ABC, COMP-XYZ, COMP-MP) intentionally reuse the identifiers already recognized by this repo's existing IAM/demo persona scope (managed_customer_ids in app/integrations/enterprise.py), so this V3 pack can be exercised against the running app without an identity collision. operating_years for COMP-ABC is NOT stated anywhere in the blueprint text; it is marked ASSUMPTION per section 20.3's explicit labeling convention, since RULE-CREDIT-OPERATING-YEARS style checks need a value and the document only implies the company is established ('nhiều nhà cung cấp và dòng tiền phân tán').",
+  "companies": [
+    {
+      "customer_id": "COMP-ABC",
+      "role_in_dataset": "hero_case",
+      "legal_name": "Công ty CP ABC Việt Nam",
+      "industry": "manufacturing",
+      "sub_industry": "consumer_goods",
+      "segment": "large_corporate",
+      "employees_count": 500,
+      "annual_revenue_vnd": 120000000000,
+      "operating_years": {"value": 8, "data_origin": "ASSUMPTION", "note": "Not stated in blueprint; company is described as established with distributed cash flow and multiple suppliers, which implies a multi-year operating history but no explicit figure. Chosen to comfortably pass SYNTH-RULE-WC-YEARS-001 (>=2) so the working-capital block in this dataset traces only to the UBO/BCTC gap the blueprint actually specifies."},
+      "account_or_unit_count": 6,
+      "branch_or_unit_note": "6 tài khoản tại 3 đơn vị (per blueprint Table 196)",
+      "monthly_supplier_payments_count": 1200,
+      "cash_flow_status": "distributed",
+      "erp_system": "file_export",
+      "has_bad_debt_12m": false,
+      "documents": {
+        "business_registration": {"status": "verified", "present": true},
+        "financial_statements": {"status": "missing", "present": false, "note": "BCTC năm gần nhất chưa có, per blueprint section 3.1/9.12"},
+        "ubo_declaration": {"status": "missing", "present": false, "note": "UBO chưa có, per blueprint section 3.1/9.12"}
+      },
+      "ubo_status": "missing",
+      "stated_needs": ["payroll", "supplier_payment", "cash_management", "working_capital"],
+      "funding_need": {"amount_vnd": 20000000000, "tenor_months": 6, "purpose": "seasonal_working_capital"},
+      "expected_branch_status": {"transaction_services": "ready_to_prepare", "credit": "pending_information"}
+    },
+    {
+      "customer_id": "COMP-XYZ",
+      "role_in_dataset": "regression_clean_pass",
+      "legal_name": "Công ty TNHH Bán lẻ XYZ",
+      "industry": "retail",
+      "sub_industry": "retail_chain",
+      "segment": "small_enterprise",
+      "employees_count": 25,
+      "annual_revenue_vnd": 8000000000,
+      "operating_years": {"value": 4, "data_origin": "SYNTHETIC_REALISTIC"},
+      "account_or_unit_count": 1,
+      "branch_or_unit_note": "1 cửa hàng chính, chưa có nhu cầu cash management đa tài khoản",
+      "monthly_supplier_payments_count": 40,
+      "cash_flow_status": "stable",
+      "erp_system": "none",
+      "has_bad_debt_12m": false,
+      "documents": {
+        "business_registration": {"status": "verified", "present": true}
+      },
+      "ubo_status": "not_applicable",
+      "stated_needs": ["payroll"],
+      "funding_need": null,
+      "expected_branch_status": {"transaction_services": "ready_to_prepare", "credit": "not_requested"}
+    },
+    {
+      "customer_id": "COMP-MP",
+      "role_in_dataset": "regression_hard_block",
+      "legal_name": "Công ty TNHH MP",
+      "industry": "wholesale_distribution",
+      "sub_industry": "distribution_network_business",
+      "segment": "medium_enterprise",
+      "employees_count": 80,
+      "annual_revenue_vnd": 35000000000,
+      "operating_years": {"value": 5, "data_origin": "SYNTHETIC_REALISTIC"},
+      "account_or_unit_count": 2,
+      "branch_or_unit_note": "2 tài khoản, 1 đơn vị phân phối",
+      "monthly_supplier_payments_count": 300,
+      "cash_flow_status": "distributed",
+      "erp_system": "file_export",
+      "has_bad_debt_12m": true,
+      "documents": {
+        "business_registration": {"status": "verified", "present": true},
+        "financial_statements": {"status": "verified", "present": true},
+        "ubo_declaration": {"status": "verified", "present": true}
+      },
+      "ubo_status": "verified",
+      "stated_needs": ["working_capital"],
+      "funding_need": {"amount_vnd": 10000000000, "tenor_months": 6, "purpose": "inventory_purchase"},
+      "expected_branch_status": {"transaction_services": "not_requested", "credit": "failed"}
+    }
+  ]
+}
