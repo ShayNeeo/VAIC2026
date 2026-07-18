@@ -389,47 +389,6 @@ class V2WorkflowEngine:
         state.workflow.current_node = "await_approval" if decision.outcome == "approve" else "await_information"
         return self._touch(state)
 
-    def clear_specialist_block(self, state: SharedCaseState) -> SharedCaseState:
-        """A human specialist (Legal/Product) has resolved every reason the
-        risk gate put this case into PENDING_REVIEW -- see
-        app/api/v2/employee_router.py's specialist-reviews endpoint, which
-        only calls this once ALL of RiskGateDecision.required_reviewer_roles
-        have a matching 'cleared' review for the current case version.
-
-        Deliberately does NOT re-run evaluate_eligibility/validate_evidence:
-        those are deterministic and would just re-derive the exact same
-        blocking verdict from the exact same underlying documents, since a
-        specialist's judgment is not new input data those engines consume --
-        it is a human override of their verdict, which is a decision this
-        method (and its caller) makes explicitly and audibly, never silently
-        inside the deterministic pipeline."""
-        if state.status != CaseStatus.PENDING_REVIEW:
-            raise ValueError(f"cannot clear specialist block from {state.status.value}")
-        if state.operations_result is None:
-            state.operations_result = self.operations.prepare(
-                organization=state.context.employee.organization_unit,
-                customer_id=str(state.context.customer.customer_id),
-                case_id=state.case_id,
-                customer_name=str(state.context.customer.attributes.get("name", state.context.customer.customer_id)),
-                product_result=state.product_result or {},
-                eligibility_result=state.eligibility_result or {},
-                available_documents=[
-                    {"document_type": item.document_type, "status": item.status.value, "document_id": item.document_id}
-                    for item in state.context.documents
-                ],
-                execution_plan=state.execution_plan,
-                next_best_questions=state.next_best_questions,
-                next_best_actions=state.next_best_actions,
-                evidence_ids=[item.claim_id for item in state.evidences],
-            )
-            self._complete_task(state, "operations", state.operations_result)
-        payload = state.operations_result.get("action_payload") or state.operations_result.get("crm_case_draft") or {}
-        state.status = transition(state.status, CaseStatus.PENDING_APPROVAL)
-        state.approval = Approval(status=ApprovalStatus.PENDING, payload_hash=_hash(payload))
-        state.workflow.current_node = "await_approval"
-        self._event(state, "SpecialistReview", "specialist_review_cleared_case", {})
-        return self._touch(state)
-
     def _apply_risk_gate(self, state: SharedCaseState) -> RiskGateDecision:
         decision = self.risk_gate.evaluate(
             eligibility_result=state.eligibility_result or {},
@@ -494,7 +453,6 @@ class V2WorkflowEngine:
                         location=source["location"], quote=source["quote"],
                         is_valid=result.is_valid,
                         validation_score=1.0 if result.exact_match else 0.0,
-                        human_review_allowed=result.status == ValidationStatus.INVALID,
                     )
                 )
 
@@ -520,7 +478,6 @@ class V2WorkflowEngine:
                         location=rule["source_location"], quote=rule["source_quote"],
                         is_valid=result.is_valid,
                         validation_score=1.0 if result.exact_match else 0.0,
-                        human_review_allowed=result.status == ValidationStatus.INVALID,
                     )
                 )
 

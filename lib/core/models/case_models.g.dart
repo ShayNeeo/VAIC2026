@@ -161,8 +161,8 @@ Map<String, dynamic> _$$OpportunityCardImplToJson(
 
 const _$OpportunityStatusEnumMap = {
   OpportunityStatus.ready: 'ready',
-  OpportunityStatus.needInfo: 'need_info',
-  OpportunityStatus.reviewRequired: 'review_required',
+  OpportunityStatus.needInfo: 'needInfo',
+  OpportunityStatus.reviewRequired: 'reviewRequired',
   OpportunityStatus.blocked: 'blocked',
   OpportunityStatus.aiCta: 'aiCta',
 };

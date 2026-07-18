@@ -112,8 +112,7 @@
       "source_document_id": "SYN-KYC-POLICY",
       "source_version": "2026.1",
       "source_location": "Điều 8",
-      "source_quote": "Hồ sơ cấp tín dụng phải có thông tin chủ sở hữu hưởng lợi đã xác minh.",
-      "human_review_allowed": true
+      "source_quote": "Hồ sơ cấp tín dụng phải có thông tin chủ sở hữu hưởng lợi đã xác minh."
     },
     {
       "rule_id": "RULE-CREDIT-BAD-DEBT-001",

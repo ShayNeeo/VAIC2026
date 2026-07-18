@@ -93,7 +93,6 @@ class EligibilityEngine:
             source_version=rule.source_version,
             source_location=rule.source_location,
             source_quote=rule.source_quote,
-            human_review_allowed=rule.human_review_allowed,
         )
 
     @staticmethod
