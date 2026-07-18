@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:rm_workspace_core/main.dart';
+import 'package:rm_workspace_core/core/controllers/employee_workspace_controller.dart';
 import 'package:rm_workspace_core/core/rm_workspace_core.dart';
 
 void main() {
@@ -14,6 +15,7 @@ void main() {
         providers: [
           ChangeNotifierProvider(create: (_) => CaseController()),
           ChangeNotifierProvider(create: (_) => CaseDetailController()),
+          ChangeNotifierProvider(create: (_) => EmployeeWorkspaceController()),
         ],
         child: const RMWorkspaceApp(),
       ),
