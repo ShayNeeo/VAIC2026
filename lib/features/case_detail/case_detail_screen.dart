@@ -419,7 +419,19 @@ class _EvidenceItem extends StatelessWidget {
   const _EvidenceItem({required this.doc, required this.section, required this.date, required this.owner, required this.tier});
 
   @override
-  Widget build(BuildContext context) => Padding(
+  Widget build(BuildContext context) {
+    final syntheticPolicy = tier.startsWith('SYNTHETIC_DEMO_DATA');
+    if (syntheticPolicy) {
+      return ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(left: 23, right: 4, bottom: 8),
+        leading: const Icon(Icons.policy_outlined, size: 17, color: AppColors.statusBlocked),
+        title: Text(doc, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.ink)),
+        subtitle: Text('$section · hiệu lực $date\n$tier', style: const TextStyle(fontSize: 9, color: AppColors.subtle)),
+        children: [Align(alignment: Alignment.centerLeft, child: Text('Trích dẫn: “$owner”', style: const TextStyle(fontSize: 10, color: AppColors.ink2, height: 1.4)))],
+      );
+    }
+    return Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Icon(Icons.verified_outlined, size: 15, color: AppColors.statusReady),
@@ -430,6 +442,7 @@ class _EvidenceItem extends StatelessWidget {
           ])),
         ]),
       );
+  }
 }
 
 /* ----------------------------- SHARED BITS ----------------------------- */

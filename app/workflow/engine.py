@@ -14,6 +14,7 @@ from app.intent.slot_resolver import SlotResolver
 from app.knowledge.legal_service import LegalKnowledgeService
 from app.knowledge.service import ProductKnowledgeService
 from app.operations.service import OperationsService
+from app.observability.runtime import metrics
 from app.product.service import ProductService
 from app.safety.evidence_validator import ValidationStatus, validate_claim
 from app.schemas.v2.shared_case_state import (
@@ -256,6 +257,7 @@ class V2WorkflowEngine:
                 product_ids,
                 customer=state.context.customer.attributes,
                 documents=documents,
+                branch=str(state.context.employee.access_scope.get("branch", "*")),
             )
             self._complete_task(state, "eligibility", state.eligibility_result)
             self._legal_evidence(state)
@@ -278,6 +280,18 @@ class V2WorkflowEngine:
                         for product in state.eligibility_result.get("products", [])
                         for rule in product.get("rules", [])
                     ],
+                    "policies": [
+                        {
+                            "policy_id": policy.get("policy_id"),
+                            "version": policy.get("document_version"),
+                            "claim_id": policy.get("claim_id"),
+                            "evidence_valid": policy.get("evidence_valid"),
+                        }
+                        for product in state.eligibility_result.get("products", [])
+                        for policy in product.get("related_policies", [])
+                    ],
+                    "policy_count": sum(len(product.get("related_policies", [])) for product in state.eligibility_result.get("products", [])),
+                    "retrieval_mode": self.legal_knowledge.rag_health().get("mode"),
                 },
                 sources=[
                     {
@@ -426,6 +440,11 @@ class V2WorkflowEngine:
         payload = state.operations_result.get("action_payload") or state.operations_result.get("crm_case_draft") or {}
         state.status = transition(state.status, CaseStatus.PENDING_APPROVAL)
         state.approval = Approval(status=ApprovalStatus.PENDING, payload_hash=_hash(payload))
+        state.risk_gate_result = {
+            **(state.risk_gate_result or {}),
+            "specialist_clearance": True,
+            "specialist_clearance_scope": "current_case_version",
+        }
         state.workflow.current_node = "await_approval"
         self._event(state, "SpecialistReview", "specialist_review_cleared_case", {})
         return self._touch(state)
@@ -503,26 +522,38 @@ class V2WorkflowEngine:
         self.legal_knowledge.ensure_index()
         index = self.legal_knowledge.index
         for product in state.eligibility_result.get("products", []):
-            for rule in product.get("rules", []):
-                claim_id = f"ELIG-{product['product_id']}-{rule['rule_id']}"
+            invalid = 0
+            for policy in product.get("related_policies", []):
+                claim_id = policy["claim_id"]
                 result = validate_claim(
                     claim_id=claim_id,
-                    source_document_id=rule["source_document_id"],
-                    source_version=rule["source_version"],
-                    quote=rule["source_quote"],
+                    source_document_id=policy["document_id"],
+                    source_version=policy["document_version"],
+                    quote=policy["source_quote"],
                     index=index,
                 )
+                policy["evidence_valid"] = result.is_valid
+                invalid += int(not result.is_valid)
                 state.evidences.append(
                     Evidence(
                         claim_id=claim_id, module="Eligibility",
-                        claim=f"{rule['rule_id']} kết luận {rule['status']} cho {product['product_id']}.",
-                        source_document_id=rule["source_document_id"], source_version=rule["source_version"],
-                        location=rule["source_location"], quote=rule["source_quote"],
+                        claim=f"Chính sách {policy['policy_id']} liên quan tới {product['product_id']} ({policy['decision_effect']}).",
+                        source_document_id=policy["document_id"], source_version=policy["document_version"],
+                        location=policy["section"], quote=policy["source_quote"],
                         is_valid=result.is_valid,
                         validation_score=1.0 if result.exact_match else 0.0,
                         human_review_allowed=result.status == ValidationStatus.INVALID,
                     )
                 )
+            metrics.increment("legal.policy_retrieved", len(product.get("related_policies", [])))
+            metrics.increment("legal.policy_missing_evidence", invalid)
+            if invalid:
+                product["status"] = "pending_review"
+                product["legal_summary"]["conclusion"] = "Cần chuyên viên Legal/Compliance xem xét vì policy evidence chưa hợp lệ."
+                product["legal_summary"]["warnings"] = list(dict.fromkeys([*product["legal_summary"].get("warnings", []), "POLICY_EVIDENCE_UNAVAILABLE"]))
+        statuses = {item.get("status") for item in state.eligibility_result.get("products", [])}
+        if "pending_review" in statuses:
+            state.eligibility_result["overall_status"] = "pending_review"
 
     @staticmethod
     def _event(state: SharedCaseState, actor: str, action: str, payload: Dict[str, Any]) -> None:

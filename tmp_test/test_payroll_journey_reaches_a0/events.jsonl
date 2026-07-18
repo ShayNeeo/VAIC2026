@@ -1,3 +1,0 @@
-{"at": "2026-07-18T05:46:33.727150+00:00", "event_code": "sales_case_draft_created", "case_id": "CASE-266FADB67DEC", "employee_id": "RM-999"}
-{"at": "2026-07-18T05:46:33.765339+00:00", "event_code": "case_documents_uploaded", "case_id": "CASE-266FADB67DEC", "count": 1}
-{"at": "2026-07-18T05:46:33.856145+00:00", "event_code": "intake_extraction_completed", "case_id": "CASE-266FADB67DEC", "fields": 15}

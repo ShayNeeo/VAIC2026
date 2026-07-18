@@ -1,2 +1,0 @@
-{"at": "2026-07-18T05:46:32.667119+00:00", "event_code": "case_created", "case_id": "CASE-15762E784E78", "trace_id": "TRACE-67FD352BCCCE431283B07FCA6E9527DA", "status": "pending_approval"}
-{"at": "2026-07-18T05:46:32.700297+00:00", "event_code": "case_message_added", "case_id": "CASE-15762E784E78", "trace_id": "TRACE-67FD352BCCCE431283B07FCA6E9527DA", "mode": "replace"}

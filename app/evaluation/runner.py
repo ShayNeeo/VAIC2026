@@ -37,6 +37,7 @@ def run_evaluation(
         "intent_total": 0, "intent_correct": 0, "intent_product_correct": 0, "intent_product_total": 0,
         "retrieval_total": 0, "retrieval_correct": 0, "oos_total": 0, "oos_correct": 0,
         "eligibility_total": 0, "eligibility_correct": 0, "unsafe_pass": 0,
+        "policy_true_positive": 0, "policy_false_positive": 0, "policy_false_negative": 0,
     }
     failures = []
     for case in dataset["cases"]:
@@ -82,6 +83,17 @@ def run_evaluation(
             counters["eligibility_correct"] += int(ok)
             if expected != "passed" and actual == "passed":
                 counters["unsafe_pass"] += 1
+            expected_policy = {
+                "PROD-PAYROLL": "SYN-B2B-PAYROLL-001",
+                "PROD-CASH-MGMT": "SYN-B2B-CASH-001",
+                "PROD-BULK-PAYMENT": "SYN-B2B-BULK-001",
+                "PROD-WORKING-CAPITAL": "SYN-B2B-CREDIT-001",
+            }[case["product"]]
+            expected_policies = {"SYN-B2B-KYC-001", expected_policy}
+            actual_policies = {item["policy_id"] for item in result["products"][0]["related_policies"]}
+            counters["policy_true_positive"] += len(expected_policies & actual_policies)
+            counters["policy_false_positive"] += len(actual_policies - expected_policies)
+            counters["policy_false_negative"] += len(expected_policies - actual_policies)
             if not ok:
                 failures.append({"id": case["id"], "expected": expected, "actual": actual})
     def rate(correct: int, total: int) -> float:
@@ -98,6 +110,8 @@ def run_evaluation(
             "oos_precision": rate(counters["oos_correct"], counters["oos_total"]),
             "eligibility_accuracy": rate(counters["eligibility_correct"], counters["eligibility_total"]),
             "unsafe_approval_rate": rate(counters["unsafe_pass"], counters["eligibility_total"]),
+            "relevant_policy_precision": rate(counters["policy_true_positive"], counters["policy_true_positive"] + counters["policy_false_positive"]),
+            "relevant_policy_recall": rate(counters["policy_true_positive"], counters["policy_true_positive"] + counters["policy_false_negative"]),
         },
         "counters": counters,
         "failures": failures,

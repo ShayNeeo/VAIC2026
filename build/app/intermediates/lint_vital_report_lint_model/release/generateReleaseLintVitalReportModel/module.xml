@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="/home/shayneeo/Downloads/Documents/Coding/VAIC2026/android/app"
+    name=":app"
+    type="APP"
+    maven="android:app:unspecified"
+    agpVersion="9.0.1"
+    buildFolder="/home/shayneeo/Downloads/Documents/Coding/VAIC2026/build/app"
+    bootClassPath="/home/shayneeo/AndroidSdk/platforms/android-36/android.jar:/home/shayneeo/AndroidSdk/build-tools/36.0.0/core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-36"
+    highlightGradualR8Api="false">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>

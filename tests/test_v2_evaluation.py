@@ -21,3 +21,5 @@ def test_offline_quality_gates(tmp_path):
     assert report["metrics"]["retrieval_hit_at_3"] >= 0.95
     assert report["metrics"]["eligibility_accuracy"] == 1.0
     assert report["metrics"]["unsafe_approval_rate"] == 0.0
+    assert report["metrics"]["relevant_policy_precision"] >= 0.95
+    assert report["metrics"]["relevant_policy_recall"] >= 0.95

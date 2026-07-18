@@ -37,3 +37,9 @@ def test_product_scope_excludes_unrelated_credit_rule(tmp_path):
         product_id="PROD-PAYROLL",
     )
     assert all(hit.chunk.product_id in {"*", "PROD-PAYROLL"} for hit in hits)
+
+
+def test_credit_policy_acl_blocks_unapproved_branch(tmp_path):
+    service = LegalKnowledgeService(tmp_path / "legal.sqlite3")
+    denied = service.search("báo cáo tài chính", branch="DN01", product_id="PROD-WORKING-CAPITAL")
+    assert all(hit.chunk.document_id != "SYN-CREDIT-POLICY" for hit in denied)

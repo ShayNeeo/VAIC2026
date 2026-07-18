@@ -3,11 +3,11 @@
   "owner":{"business_owner":"MVP Legal Owner","data_steward":"MVP Legal Steward","technical_owner":"AI Engineering"},
   "purpose":{"allowed_uses":["development","automated_test","offline_demo","legal_explanation"],"prohibited_uses":["production_legal_opinion","production_credit_decision"]},
   "decision_role":"EVALUATION_ONLY",
-  "access":{"method":"FILE","endpoint_or_location":"data/synthetic/v2/eligibility_rules.json","authentication":"repository access","sandbox_available":true},
+  "access":{"method":"FILE","endpoint_or_location":"data/synthetic/v2/b2b_policies.json","authentication":"repository access","sandbox_available":true},
   "governance":{"legal_basis_or_license":"Project-owned synthetic content","sensitivity":"INTERNAL","retention":"repository lifecycle","residency":"local development workspace","cross_border":false,"approved":true,"approval_reference":"MVP-SYNTHETIC-DATA-ONLY"},
   "freshness":{"update_cadence":"manual versioned release","max_age_seconds":31536000,"stale_behavior":"BLOCK_DECISION"},
   "identifiers":{"primary_key":"rule_id","join_keys":["source_document_id","source_version"]},
   "quality":{"required_checks":["schema","effective_date","quote","acl","lineage"],"publish_gate":"all deterministic checks pass"},
-  "lineage":{"ingestion_job":"app.knowledge.legal_service.LegalKnowledgeService","raw_location":"data/synthetic/v2/eligibility_rules.json","gold_location":"data/vector_db/v2_legal.sqlite3","consumer_artifacts":["LegalKnowledgeService","EligibilityEngine"]},
+  "lineage":{"ingestion_job":"app.knowledge.legal_service.LegalKnowledgeService","raw_location":"data/synthetic/v2/b2b_policies.json","gold_location":"data/vector_db/v2_legal.sqlite3","consumer_artifacts":["LegalKnowledgeService","B2BPolicyRegistry","EligibilityEngine"]},
   "lifecycle_status":"ACTIVE","risks_and_notes":["Synthetic explanation corpus only; legal outcome remains deterministic"]
 }

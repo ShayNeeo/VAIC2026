@@ -1,2 +1,0 @@
-{"at": "2026-07-18T05:46:31.807196+00:00", "event_code": "case_created", "case_id": "CASE-A431E4828E6B", "trace_id": "TRACE-9E5C76DC0759463C8DC741BD1C54B791", "status": "pending_approval"}
-{"at": "2026-07-18T05:46:31.831581+00:00", "event_code": "payload_approved", "case_id": "CASE-A431E4828E6B", "trace_id": "TRACE-9E5C76DC0759463C8DC741BD1C54B791", "payload_hash": "sha256:a898f7b98c444cd7351a0e49462fde12832d7efa28e01b575051aeb4642011eb"}

@@ -1,1 +1,0 @@
-{"case_id": "BENCH-A01", "category": "simple_product_query", "mode": "natural", "status": "ok", "latency_ms": 1.0, "error_type": null, "error_message": null, "actual_route": "simple", "final_status": null, "product_ids": [], "missing_information": [], "legal_flags": [], "evidences": [], "action_readiness": null, "abstained": false}
