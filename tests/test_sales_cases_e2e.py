@@ -121,11 +121,18 @@ def test_payroll_journey_reaches_approval_executes_mock_and_exposes_ai_log(tmp_p
     assert analysis["case"]["status"] == "pending_approval"
     assert analysis["case"]["execution_plan"]["plan_version"] == 2
     assert analysis["case"]["operations_result"]["external_side_effects"] == []
+    assert analysis["case"]["credit_result"] is not None
+    assert analysis["case"]["insurance_result"] is not None
+    assert analysis["case"]["synthesis_result"] is not None
+    assert {item["agent_type"] for item in analysis["case"]["expert_findings"]} == {
+        "ProductExpert", "CreditExpert", "InsuranceExpert"
+    }
 
     ai_log = http.get(f"/api/v2/sales-cases/{case_id}/ai-log", headers=HEADERS)
     assert ai_log.status_code == 200
     assert {item["component"] for item in ai_log.json()["entries"]} >= {
-        "RequirementExtractor", "ProductExpert", "EligibilityEngine", "EvidenceValidator", "OperationsComposer"
+        "RequirementExtractor", "ProductExpert", "CreditExpert", "InsuranceExpert",
+        "EligibilityEngine", "PlannerCoordinator", "EvidenceValidator", "OperationsComposer"
     }
     assert ai_log.json()["summary"]["raw_pii_logged"] is False
 

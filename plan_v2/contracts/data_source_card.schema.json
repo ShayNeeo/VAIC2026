@@ -27,12 +27,12 @@
     "name": {"type": "string", "minLength": 1},
     "domain": {
       "type": "string",
-      "enum": ["employee", "workspace", "customer", "document", "product", "legal", "credit", "kyc_aml", "market", "operations", "evaluation"]
+      "enum": ["employee", "workspace", "customer", "document", "product", "legal", "credit", "insurance", "kyc_aml", "market", "operations", "evaluation"]
     },
     "tier": {"type": "string", "enum": ["A_INTERNAL", "A_OFFICIAL", "B_LICENSED", "C_OPEN", "D_DERIVED", "E_SYNTHETIC"]},
     "provider": {"type": ["string", "null"]},
-    "dataset_version": {"type": "string"},
-    "effective_from": {"type": "string", "format": "date"},
+    "dataset_version": {"type": ["string", "null"]},
+    "effective_from": {"type": ["string", "null"], "format": "date"},
     "effective_to": {"type": ["string", "null"], "format": "date"},
     "owner": {
       "type": "object",

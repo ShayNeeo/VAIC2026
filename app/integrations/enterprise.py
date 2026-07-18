@@ -110,6 +110,9 @@ _EMPLOYEE_COPILOT_DEMO_PERSONAS: list[tuple[str, str, str, list[str], dict]] = [
     ("SPEC-CREDIT-001", "Specialist", "Credit Risk & Underwriting",
      ["case:read", "credit:analyze_file", "credit:review_structure", "credit:manage_knowledge"],
      {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
+    ("SPEC-INSURANCE-001", "Specialist", "Corporate Insurance Advisory",
+     ["case:read", "insurance:analyze_coverage", "insurance:review_coverage", "insurance:manage_knowledge"],
+     {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
     ("MGR-HN-01", "Manager", "Branch HN Management",
      ["team:view_workload", "case:read"],
      {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
@@ -174,6 +177,8 @@ def map_enterprise_role_to_role_type(role: str, organization_unit: str) -> str:
             return "product_specialist"
         if "credit" in unit_lower or "underwriting" in unit_lower:
             return "credit_specialist"
+        if "insurance" in unit_lower:
+            return "insurance_specialist"
         # Unknown specialist units get no specialist capability by default.
         return "auditor"
     if role_lower == "datasteward":

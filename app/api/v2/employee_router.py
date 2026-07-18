@@ -41,6 +41,7 @@ from app.integrations.enterprise import (
 from app.integrations.errors import ContextError, UpstreamTimeoutError, UpstreamUnavailableError
 from app.knowledge.legal_service import LegalKnowledgeService
 from app.knowledge.credit_service import CreditKnowledgeService
+from app.knowledge.insurance_service import InsuranceKnowledgeService
 from app.knowledge.models import KnowledgeChunk
 from app.knowledge.retrieval_contracts import AuthorityTier, VerificationStatus
 from app.knowledge.service import ProductKnowledgeService
@@ -998,8 +999,8 @@ def put_operational_readiness(
 # domain's Agent knowledge base) -------------------------------------------
 # A specialist may only ever read/feed/update knowledge for their OWN
 # domain's Agent -- Product Specialist -> ProductExpertAgent's knowledge,
-# Legal Specialist -> LegalComplianceAgent's, Credit Specialist ->
-# CreditExpertAgent's -- enforced by DOMAIN_BY_ROLE (never a body/query
+# Credit Specialist -> CreditExpertAgent's, Insurance Specialist ->
+# InsuranceExpertAgent's -- enforced by DOMAIN_BY_ROLE (never a body/query
 # parameter). Reuses the existing KnowledgeChunk/PersistentHybridIndex
 # storage each of the three domain services already indexes into; this is
 # not a new knowledge store.
@@ -1009,13 +1010,14 @@ _AGENT_COMPONENT_BY_DOMAIN = {
     "product": {"ProductExpert", "ProductExpertAgent"},
     "legal": {"LegalExpert", "LegalComplianceAgent"},
     "credit": {"CreditExpert", "CreditExpertAgent"},
+    "insurance": {"InsuranceExpert", "InsuranceExpertAgent"},
 }
 # V2WorkflowEngine._product_evidence()/_legal_evidence() (app/workflow/engine.py)
 # tag Evidence.module as "Product"/"Eligibility" -- "Eligibility" because
 # that node evaluates product eligibility, not a "Legal" label -- and there
 # Credit evidence is carried by typed ExpertFinding.evidence_refs rather
 # than the legacy state.evidences list.
-_EVIDENCE_MODULE_BY_DOMAIN = {"product": "product", "legal": "eligibility", "credit": None}
+_EVIDENCE_MODULE_BY_DOMAIN = {"product": "product", "legal": "eligibility", "credit": None, "insurance": None}
 
 
 def _domain_for(identity: VerifiedIdentity) -> AgentDomain:
@@ -1034,7 +1036,9 @@ def _knowledge_service_for(domain: AgentDomain):
         return ProductKnowledgeService()
     if domain == "legal":
         return LegalKnowledgeService()
-    return CreditKnowledgeService()
+    if domain == "credit":
+        return CreditKnowledgeService()
+    return InsuranceKnowledgeService()
 
 
 def _to_knowledge_record(chunk: KnowledgeChunk, domain: AgentDomain) -> KnowledgeEntryRecord:
@@ -1168,7 +1172,12 @@ def get_agent_activity(
     chunks = service.index.list_chunks()
     active_count = sum(1 for c in chunks if not c.is_superseded and not c.is_quarantined)
 
-    result_field = {"product": "product_result", "legal": "eligibility_result", "credit": "credit_result"}[domain]
+    result_field = {
+        "product": "product_result",
+        "legal": "eligibility_result",
+        "credit": "credit_result",
+        "insurance": "insurance_result",
+    }[domain]
     components = _AGENT_COMPONENT_BY_DOMAIN[domain]
 
     stored_cases = _repo().list_cases_for_customers(identity.customer_scope)
@@ -1193,17 +1202,26 @@ def get_agent_activity(
                 "missing_information_count": len(agent_result.get("missing_information", [])),
                 "analysis_confidence": agent_result.get("analysis_confidence"),
             }
+        elif domain == "insurance" and agent_result:
+            agent_summary = {
+                "status": agent_result.get("status"),
+                "insurance_product_ids": agent_result.get("insurance_product_ids", []),
+                "coverage_check_count": len(agent_result.get("coverage_checks", [])),
+                "hard_block_count": len(agent_result.get("hard_blocks", [])),
+                "missing_information_count": len(agent_result.get("missing_information", [])),
+            }
         evidence_module = _EVIDENCE_MODULE_BY_DOMAIN[domain]
         domain_evidence = (
             [ev for ev in state_value.evidences if ev.module.lower() == evidence_module]
             if evidence_module is not None else []
         )
         expert_evidence_count = 0
-        if domain == "credit":
+        expert_type = {"credit": "CreditExpert", "insurance": "InsuranceExpert"}.get(domain)
+        if expert_type:
             expert_evidence_count = sum(
                 len(finding.evidence_refs)
                 for finding in state_value.expert_findings
-                if finding.agent_type.value == "CreditExpert"
+                if finding.agent_type.value == expert_type
             )
         last_ai_log = next(
             (e for e in reversed(state_value.ai_decision_log) if e.get("component") in components), None,

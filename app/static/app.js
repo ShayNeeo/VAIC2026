@@ -174,12 +174,12 @@ async function confirmProfile(){
   catch(error){toast(`<b>${esc(error.code)}:</b> ${esc(error.message)}`,"error")}
 }
 async function runAnalysis(){
-  $("runAnalysis").disabled=true;$("runAnalysis").textContent="Đang chạy Product RAG + Rule Engine…";
+  $("runAnalysis").disabled=true;$("runAnalysis").textContent="Đang chạy Product + Credit + Insurance Experts…";
   try{const data=await api(`/api/v2/sales-cases/${ui.caseId}/run-analysis`,{method:"POST",body:JSON.stringify({expected_version:ui.intakeVersion})});ui.intakeVersion=data.intake_version;ui.stateVersion=data.state_version;ui.runtime=data.case;renderRuntime(data.case);await loadControlLogs();await loadCases();toast(`Phân tích hoàn tất an toàn: ${esc(statusLabels[data.case.status]||data.case.status)}.`)}
   catch(error){toast(`<b>${esc(error.code)}:</b> ${esc(error.message)}`,"error")}
   finally{$("runAnalysis").disabled=false;$("runAnalysis").textContent="Chạy lại phân tích end-to-end →"}
 }
-function renderRuntime(state){ui.runtime=state;ui.stateVersion=ui.stateVersion||state.state_version;$("resultsPanel").classList.remove("hidden");renderIntent(state.intent_result);renderProducts(state.product_result);renderEligibility(state.eligibility_result);renderPlan(state.execution_plan);renderOperations(state.operations_result);renderNextAction(state);renderEvidence(state.evidences||[]);renderAiLog(state.ai_decision_log||[]);updateSummary();document.querySelector("#resultsPanel").scrollIntoView({behavior:"smooth",block:"start"})}
+function renderRuntime(state){ui.runtime=state;ui.stateVersion=ui.stateVersion||state.state_version;$("resultsPanel").classList.remove("hidden");renderIntent(state.intent_result);renderProducts(state.product_result);renderEligibility(state.eligibility_result);renderExpertResults(state);renderCoordinator(state);renderPlan(state.execution_plan);renderOperations(state.operations_result);renderNextAction(state);renderEvidence(state.evidences||[]);renderAiLog(state.ai_decision_log||[]);updateSummary();document.querySelector("#resultsPanel").scrollIntoView({behavior:"smooth",block:"start"})}
 function renderIntent(intent){if(!intent)return $("intentResult").innerHTML='<p class="muted">Chưa đủ dữ liệu để kết luận.</p>';const intents=[intent.primary_intent,...(intent.sub_intents||[])];$("intentResult").innerHTML=`<div class="primary-insight">${esc(intent.user_goal)}</div><div class="chips">${intents.map(x=>`<span class="chip">${esc(intentLabels[x]||x)}</span>`).join("")}</div><p class="muted">Độ tin cậy: <b>${Math.round((intent.overall_confidence||0)*100)}%</b><br>Hành vi: ${esc(intent.recommended_action)}</p>`}
 const baselineMapping = {
   "payroll_premium": "Payroll Premium Package",
@@ -189,6 +189,32 @@ const baselineMapping = {
 };
 function renderProducts(result){const items=result?.recommendations||[];$("productResult").innerHTML=items.length?items.map(item=>`<div class="product-card"><strong>${esc(item.name || baselineMapping[item.product_id] || item.product_id)}</strong><span class="score">Match ${Math.round((item.match_score||0)*100)}/100</span><p>${esc(item.matching_reason)}</p><span class="chip blue">${esc(item.product_id)}</span></div>`).join(""):'<p class="muted">Không có sản phẩm đủ grounded. Hệ thống không tự bịa catalog.</p>'}
 function renderEligibility(result){const items=result?.products||[];const label={passed:"Đạt rule",pending_information:"Thiếu dữ liệu",pending_review:"Cần review",failed:"Không đạt"};$("eligibilityResult").innerHTML=items.length?items.map(product=>`<div class="eligibility-card"><b>${esc(baselineMapping[product.product_id] || product.product_id)} · ${esc(label[product.status]||product.status)}</b>${(product.rules||[]).map(rule=>{const tone=rule.status==="passed"?"pass":rule.status==="failed"?"fail":"wait";return `<div class="rule ${tone}"><i>${tone==="pass"?"✓":tone==="fail"?"×":"!"}</i><span>${esc(rule.rule_id)}<br><small>${esc(label[rule.status]||rule.status)}</small></span></div>`}).join("")}</div>`).join(""):'<p class="muted">Chưa chạy điều kiện vì intent hoặc sản phẩm chưa rõ.</p>'}
+function expertFinding(state, agentType){return (state.expert_findings||[]).find(item=>item.agent_type===agentType)}
+function agentMeta(finding){if(!finding)return "";const run=finding.agent_run||{};return `<div class="expert-meta"><span class="chip">${esc(run.mode||"unknown")}</span><span class="chip blue">${(finding.evidence_refs||[]).length} nguồn</span><span class="chip">${Math.round((finding.confidence?.display_confidence||0)*100)}% tin cậy</span></div><small class="muted">Tool: ${esc((run.tools_called||[]).join(", ")||"không gọi")}</small>`}
+function listItems(items, emptyText){return items?.length?`<ul class="expert-facts">${items.slice(0,5).map(item=>`<li>${esc(typeof item==="string"?item:(item.code||item.field||item.requirement||item.description||JSON.stringify(item)))}</li>`).join("")}</ul>`:`<p class="muted">${esc(emptyText)}</p>`}
+function renderExpertResults(state){
+  const productFinding=expertFinding(state,"ProductExpert");
+  const creditFinding=expertFinding(state,"CreditExpert");
+  const insuranceFinding=expertFinding(state,"InsuranceExpert");
+  const productCount=state.product_result?.recommendations?.length||0;
+  $("productExpertOutput").innerHTML=productFinding?`<p><b>Kết luận:</b> ${esc(productFinding.conclusion)}</p><p>${productCount} sản phẩm được xếp hạng có nguồn.</p>${agentMeta(productFinding)}`:'<p class="muted">Product Expert chưa chạy hoặc case chỉ dùng luồng tra cứu đơn giản.</p>';
+  const credit=state.credit_result;
+  $("creditExpertOutput").innerHTML=credit?`<p><b>Trạng thái:</b> ${esc(credit.status)}</p><p>${esc(credit.conclusion)}</p><b>Thông tin còn thiếu</b>${listItems(credit.missing_information,"Không có trường thiếu được ghi nhận.")}<b>Hard block</b>${listItems(credit.hard_blocks,"Không phát hiện hard block tín dụng.")}${agentMeta(creditFinding)}`:'<p class="muted">Case hiện chưa có kết quả Credit Expert.</p>';
+  const insurance=state.insurance_result;
+  $("insuranceExpertOutput").innerHTML=insurance?`<p><b>Trạng thái:</b> ${esc(insurance.status)}</p><p>${esc(insurance.conclusion)}</p><b>Kiểm tra coverage</b>${listItems(insurance.coverage_checks,"Không có yêu cầu bảo hiểm áp dụng cho phương án hiện tại.")}<b>Thông tin còn thiếu</b>${listItems(insurance.missing_information,"Không có trường thiếu được ghi nhận.")}${agentMeta(insuranceFinding)}`:'<p class="muted">Case hiện chưa có kết quả Insurance Expert.</p>';
+  const session=state.collaboration_session;
+  const badge=$("collaborationStatus");
+  badge.textContent=session?.status?.toUpperCase()||"CHƯA CHẠY";
+  badge.className=`status-pill ${session?.status==="converged"?"green":session?"amber":"neutral"}`;
+}
+function renderCoordinator(state){
+  const synthesis=state.synthesis_result;
+  if(!synthesis)return $("coordinatorResult").innerHTML='<p class="muted">Coordinator chưa tổng hợp vì workflow chưa chạy đủ ba Expert.</p>';
+  const primary=synthesis.primary_solution;
+  const missing=synthesis.missing_information||[];
+  const reviews=synthesis.human_review_requirements||[];
+  $("coordinatorResult").innerHTML=`<div class="coordinator-summary"><div><h3>Phương án chính</h3>${primary?`<p><b>${esc(primary.name||primary.product_name||primary.product_id||"Phương án được chọn")}</b></p><p>${esc(primary.matching_reason||primary.reason||"Được tổng hợp từ các finding đã kiểm chứng.")}</p>`:'<p class="muted">Chưa chọn phương án chính.</p>'}<p>Phương án thay thế: <b>${(synthesis.alternative_solutions||[]).length}</b> · Ứng viên bị chặn: <b>${(synthesis.blocked_candidates||[]).length}</b></p></div><div><h3>Điểm cần RM xử lý</h3>${listItems(missing,"Không có thông tin thiếu ở bước tổng hợp.")}${listItems(reviews,"Không có yêu cầu human review bổ sung.")}<p class="muted">Nguồn finding: ${(synthesis.source_finding_ids||[]).length} · Policy ${esc(synthesis.synthesis_policy_version)}</p></div></div>`;
+}
 function renderPlan(plan){$("planVersion").textContent=plan?`v${plan.plan_version}`:"v—";$("executionPlan").innerHTML=plan?.steps?.map(step=>`<div class="plan-step ${esc(step.status)}"><b>${esc(step.title)}</b><span>${esc(step.owner)} · ${esc(step.status)}</span><small>${esc(step.reason||step.stop_condition||"")}</small></div>`).join("")||'<p class="muted">Planner chưa tạo kế hoạch vì nhu cầu cần làm rõ.</p>'}
 function renderOperations(op){if(!op)return $("operationsResult").innerHTML='<p class="muted">Chưa tạo operations draft.</p>';const checklist=op.required_document_checklist||[];$("operationsResult").innerHTML=`<div class="operations-grid"><div class="op-block"><h3>Checklist hồ sơ</h3>${checklist.map(item=>`<div class="check-item"><i>${item.current_status==="verified"?"✓":"!"}</i><span>${esc(item.display_name)}<br><small>${esc((item.source_rule_ids||[]).join(", ")||"product prerequisite")}</small></span><b>${item.current_status==="verified"?"Đã có":"Còn thiếu"}</b></div>`).join("")||'<p class="muted">Không có hồ sơ bổ sung.</p>'}</div><div class="op-block"><h3>Đề xuất nháp · chưa gửi</h3><div class="draft-box"><b>${esc(op.proposal_draft?.title||"")}</b>\n\n${(op.proposal_draft?.solutions||[]).map(x=>`• ${x.name}: ${x.matching_reason}`).join("\n")}\n\n${esc(op.proposal_draft?.disclaimer||"")}</div></div><div class="op-block"><h3>Phản hồi khách hàng · chưa gửi</h3><div class="draft-box">${esc(op.customer_message_draft?.body||"")}</div></div><div class="op-block"><h3>Action draft</h3><div class="draft-box">${esc(JSON.stringify(op.action_payload||{},null,2))}</div></div></div>`}
 function nextCopy(status){const map={draft:["Nạp hồ sơ","Tải lên tài liệu để hệ thống có nguồn."],files_uploaded:["Đọc hồ sơ","Chạy phân loại và trích xuất."],profile_review_required:["RM xác nhận context","Xử lý xung đột rồi xác nhận snapshot."],profile_confirmed:["Chạy phân tích","Tìm sản phẩm và kiểm tra rule."],clarification_required:["Làm rõ nhu cầu","Nêu mục tiêu, pain point và kết quả mong muốn."],pending_information:["Bổ sung hồ sơ còn thiếu","Chỉ resume phần bị ảnh hưởng sau khi có evidence."],pending_review:["Chuyển chuyên viên kiểm tra","Không cho tự phê duyệt khi evidence/rule chưa an toàn."],pending_approval:["Kiểm tra và phê duyệt payload","RM duyệt hành động, không phải duyệt cấp sản phẩm."],completed:["Hoàn tất phân tích","Xem AI log và lịch sử audit để kiểm tra."],rejected:["Case đã dừng","Tạo case mới nếu cần."]};const value=map[status]||["Tiếp tục theo workflow","Xem bước đang được tô đỏ."];return {title:value[0],reason:value[1]}}
@@ -275,7 +301,7 @@ async function loadEmployeeContext() {
     const role = data.authorization_context?.roles?.[0];
     routeWorkspace(role);
 
-    const roleLabel = { relationship_manager:"RM", legal_specialist:"Legal Specialist", product_specialist:"Product Specialist", credit_specialist:"Credit Specialist", manager:"Manager" }[role] || role;
+    const roleLabel = { relationship_manager:"RM", legal_specialist:"Legal/Compliance Reviewer", product_specialist:"Product Specialist", credit_specialist:"Credit Specialist", insurance_specialist:"Insurance Specialist", manager:"Manager" }[role] || role;
     $("roleBadge").textContent = `Role: ${roleLabel}`;
     toast(`SSO <b>${esc(empId)}</b> · Role: <b>${esc(roleLabel)}</b>`);
   } catch (error) {
@@ -361,13 +387,14 @@ function logout() {
 async function loadNextBestWorkQueue() {
   try {
     const data = await api("/api/v2/me/work-queue");
+    const queue = Array.isArray(data) ? data : (data?.queue || []);
     const container = $("nbwQueueList");
-    if (!data || !data.queue || !data.queue.length) {
+    if (!queue.length) {
       container.innerHTML = '<p class="muted">Không có nhiệm vụ ưu tiên nào.</p>';
       return;
     }
 
-    container.innerHTML = data.queue.map(item => {
+    container.innerHTML = queue.map(item => {
       const priorityClass = item.priority_score >= 80 ? "high" : (item.priority_score >= 50 ? "medium" : "low");
       const bandLabel = item.priority_band === 0 ? "P0 Regulatory" : (item.priority_band === 1 ? "P1 SLA" : (item.priority_band === 2 ? "P2 Customer" : "P3 Normal"));
       
@@ -388,13 +415,14 @@ async function loadNextBestWorkQueue() {
 async function loadSpecialistQueue() {
   try {
     const data = await api("/api/v2/me/work-queue");
+    const queue = Array.isArray(data) ? data : (data?.queue || []);
     const container = $("specQueueList");
-    if (!data || !data.queue || !data.queue.length) {
+    if (!queue.length) {
       container.innerHTML = '<p class="muted">Không có hồ sơ chờ xử lý.</p>';
       return;
     }
 
-    container.innerHTML = data.queue.map(item => `
+    container.innerHTML = queue.map(item => `
       <div class="nbw-item medium" onclick="viewSpecialistTask('${item.work_item_id}')">
         <h4>${esc(item.title)}</h4>
         <p>Khách hàng: <b>${esc(item.customer_id)}</b> · Trạng thái: <code>${esc(item.status)}</code></p>
@@ -406,12 +434,12 @@ async function loadSpecialistQueue() {
 }
 
 // Agent Knowledge Console: lets a department Specialist feed/update/retire
-// the knowledge their own domain's Agent (Product/Legal/Operations)
+// the knowledge their own domain's Agent (Product/Credit/Insurance)
 // retrieves, and see a metadata summary of what that Agent has been doing
 // on cases in their scope. Backed by app/api/v2/knowledge_router.py
 // (/api/v2/me/agent-knowledge). Domain is decided server-side from the
 // specialist's role -- never sent from this UI.
-const akDomainLabel = {product: "Product Agent", legal: "Legal Agent", operations: "Operations Agent"};
+const akDomainLabel = {product: "Product Agent", legal: "Legal/Compliance Rules", credit: "Credit Agent", insurance: "Insurance Agent"};
 
 async function loadAgentKnowledgeConsole() {
   const dateField = $("akEffectiveFrom");

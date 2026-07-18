@@ -1,9 +1,9 @@
 """Agent Knowledge Console contracts: lets a department Specialist feed,
-update and retire the knowledge their own domain Agent (Product/Legal/
-Credit) retrieves, and see what that Agent has been doing on cases in
+update and retire the knowledge their own domain Agent (Product/Credit/
+Insurance) retrieves, and see what that Agent has been doing on cases in
 their scope. Reuses the existing KnowledgeChunk/PersistentHybridIndex
 storage (app/knowledge/index.py) and the existing three domain services
-(ProductKnowledgeService/LegalKnowledgeService/OperationsKnowledgeService)
+(ProductKnowledgeService/CreditKnowledgeService/InsuranceKnowledgeService)
 -- this module only adds the request/response shapes and the
 role<->domain mapping; it does not introduce a new storage layer.
 """
@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.v2.employee import RoleType
 
-AgentDomain = Literal["product", "legal", "credit"]
+AgentDomain = Literal["product", "legal", "credit", "insurance"]
 
 # The one place role->domain->capability is decided. A specialist may only
 # ever feed knowledge to their own domain's Agent -- never another
@@ -28,18 +28,21 @@ DOMAIN_BY_ROLE: Dict[RoleType, AgentDomain] = {
     RoleType.PRODUCT_SPECIALIST: "product",
     RoleType.LEGAL_SPECIALIST: "legal",
     RoleType.CREDIT_SPECIALIST: "credit",
+    RoleType.INSURANCE_SPECIALIST: "insurance",
 }
 
 MANAGE_CAPABILITY_BY_DOMAIN: Dict[AgentDomain, str] = {
     "product": "product:manage_knowledge",
     "legal": "legal:manage_knowledge",
     "credit": "credit:manage_knowledge",
+    "insurance": "insurance:manage_knowledge",
 }
 
 _DEFAULT_CHUNK_TYPE: Dict[AgentDomain, str] = {
     "product": "product_overview",
     "legal": "legal_rule",
     "credit": "credit_policy_article",
+    "insurance": "insurance_policy_article",
 }
 
 

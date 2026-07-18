@@ -176,6 +176,9 @@ def init_employee_db() -> None:
             ("SPEC-CREDIT-001", "credit_specialist", "Credit Risk & Underwriting", 
              json.dumps(["case:read", "credit:analyze_file", "credit:review_structure"]), 
              json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"])),
+            ("SPEC-INSURANCE-001", "insurance_specialist", "Corporate Insurance Advisory",
+             json.dumps(["case:read", "insurance:analyze_coverage", "insurance:review_coverage", "insurance:manage_knowledge"]),
+             json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"])),
             ("MGR-HN-01", "manager", "Branch HN Management", 
              json.dumps(["team:view_workload", "case:read"]), 
              json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"]))
@@ -206,6 +209,10 @@ def init_employee_db() -> None:
         cursor.execute(
             "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
             ("SPEC-CREDIT-001", 1, 0, json.dumps(["ui_preferences"]), "v1", datetime.utcnow().isoformat())
+        )
+        cursor.execute(
+            "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+            ("SPEC-INSURANCE-001", 1, 0, json.dumps(["ui_preferences"]), "v1", datetime.utcnow().isoformat())
         )
         cursor.execute(
             "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
@@ -256,6 +263,12 @@ def init_employee_db() -> None:
              0.95, 0.8, 0.7, 0.85, 0.8, 1.0, 0.6,
              datetime.utcnow().isoformat(), datetime.utcnow().isoformat(),
              json.dumps([]), "credit_specialist", "COMP-MP"),
+
+            # Insurance Specialist Task (Assigned to Insurance Expert owner)
+            ("TASK-501", "SPEC-INSURANCE-001", "Rà soát yêu cầu bảo hiểm cho hồ sơ Minh Phát", "pending",
+             0.75, 0.5, 0.6, 0.7, 0.5, 1.0, 0.4,
+             datetime.utcnow().isoformat(), datetime.utcnow().isoformat(),
+             json.dumps([]), "insurance_specialist", "COMP-MP"),
 
             # Task blocked by dependency (Should be filtered out)
             ("TASK-105", "RM-999", "Thực thi giải ngân tài chính Minh Phát", "pending",
@@ -313,6 +326,40 @@ def init_employee_db() -> None:
         (
             "SPEC-CREDIT-001", 1, 0, json.dumps(["ui_preferences"]),
             "v1", datetime.utcnow().isoformat(),
+        ),
+    )
+    cursor.execute(
+        """
+        INSERT INTO employees (employee_id, role, organization_unit, permissions, customer_scope)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(employee_id) DO UPDATE SET
+            role = excluded.role,
+            organization_unit = excluded.organization_unit,
+            permissions = excluded.permissions,
+            customer_scope = excluded.customer_scope
+        """,
+        (
+            "SPEC-INSURANCE-001", "insurance_specialist", "Corporate Insurance Advisory",
+            json.dumps(["case:read", "insurance:analyze_coverage", "insurance:review_coverage", "insurance:manage_knowledge"]),
+            json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"]),
+        ),
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            "SPEC-INSURANCE-001", 1, 0, json.dumps(["ui_preferences"]),
+            "v1", datetime.utcnow().isoformat(),
+        ),
+    )
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO employee_work_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            "TASK-501", "SPEC-INSURANCE-001", "Rà soát yêu cầu bảo hiểm cho hồ sơ Minh Phát", "pending",
+            0.75, 0.5, 0.6, 0.7, 0.5, 1.0, 0.4,
+            datetime.utcnow().isoformat(), datetime.utcnow().isoformat(),
+            json.dumps([]), "insurance_specialist", "COMP-MP",
         ),
     )
     cursor.execute(

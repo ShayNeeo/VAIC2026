@@ -226,7 +226,10 @@ def test_data_source_card_valid_example_accepted_by_both():
     card = DataSourceCard.model_validate(VALID_DATA_SOURCE_CARD)
     assert card.is_usable_for_serving() is True
     validate_instance(copy.deepcopy(VALID_DATA_SOURCE_CARD), "data_source_card.schema.json")
-    validate_instance(_dump(card), "data_source_card.schema.json")
+    # exclude_none: dataset_version/effective_from are optional-and-omittable
+    # in the JSON schema (type: "string", not nullable) -- Pydantic's default
+    # None must not round-trip as a literal null.
+    validate_instance(card.model_dump(mode="json", exclude_none=True), "data_source_card.schema.json")
 
 
 def test_data_source_card_missing_owner_rejected_by_both():

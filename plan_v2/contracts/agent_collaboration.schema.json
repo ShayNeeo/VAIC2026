@@ -12,7 +12,7 @@
   ],
   "$defs": {
     "agentType": {
-      "enum": ["PlannerCoordinator", "ProductExpert", "LegalExpert", "CreditExpert", "EvidenceValidator"]
+      "enum": ["PlannerCoordinator", "ProductExpert", "LegalExpert", "CreditExpert", "InsuranceExpert", "EvidenceValidator"]
     },
     "artifactRef": {
       "type": "object",

@@ -183,6 +183,33 @@
     .ak-chip.quarantined { background: var(--danger-bg); color: var(--danger); }
     .ak-entry-actions { margin-top: 6px; display:flex; gap:6px; }
     .ak-case-row { border-bottom: 1px solid var(--line); padding: 6px 0; font-size: 12px; }
+
+    /* Backend-matched Expert Agent result cards */
+    .expert-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .expert-card {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      background: #fff;
+      min-width: 0;
+    }
+    .expert-card.product { border-top: 4px solid var(--blue); }
+    .expert-card.credit { border-top: 4px solid var(--amber); }
+    .expert-card.insurance { border-top: 4px solid var(--green); }
+    .expert-card h3 { margin: 4px 0 8px; color: var(--navy); }
+    .expert-card p { margin: 6px 0; font-size: 12px; line-height: 1.5; }
+    .expert-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+    .expert-facts { margin: 8px 0 0; padding-left: 17px; color: var(--muted); font-size: 11px; }
+    .coordinator-summary { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; }
+    .coordinator-summary > div { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+    @media (max-width: 1100px) {
+      .expert-grid, .coordinator-summary { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -194,9 +221,9 @@
       <label>Employee ID
         <select id="loginEmployee" style="width:100%;margin-top:6px;">
           <option value="RM-999">RM-999 · Relationship Manager</option>
-          <option value="SPEC-LEGAL-001">SPEC-LEGAL-001 · Legal Specialist</option>
           <option value="SPEC-PROD-001">SPEC-PROD-001 · Product Specialist</option>
           <option value="SPEC-CREDIT-001">SPEC-CREDIT-001 · Credit Specialist</option>
+          <option value="SPEC-INSURANCE-001">SPEC-INSURANCE-001 · Insurance Specialist</option>
           <option value="MGR-HN-01">MGR-HN-01 · Sales Manager</option>
         </select>
       </label>
@@ -216,9 +243,9 @@
       <label>Identity đã xác thực
         <select id="employee" disabled>
           <option value="RM-999">RM-999 (Relationship Manager)</option>
-          <option value="SPEC-LEGAL-001">SPEC-LEGAL-001 (Legal Specialist)</option>
           <option value="SPEC-PROD-001">SPEC-PROD-001 (Product Specialist)</option>
           <option value="SPEC-CREDIT-001">SPEC-CREDIT-001 (Credit Specialist)</option>
+          <option value="SPEC-INSURANCE-001">SPEC-INSURANCE-001 (Insurance Specialist)</option>
           <option value="MGR-HN-01">MGR-HN-01 (Sales Manager)</option>
           <option value="EXPIRED_TOKEN">Simulate Expired Token (401)</option>
           <option value="IAM_ERROR">Simulate IAM Service Outage (503)</option>
@@ -397,6 +424,21 @@
             <article class="decision-card"><span class="card-number">2</span><h2>Sản phẩm nào phù hợp?</h2><div id="productResult"></div></article>
             <article class="decision-card"><span class="card-number">3</span><h2>Đạt, không đạt hay còn thiếu?</h2><div id="eligibilityResult"></div></article>
           </div>
+          <section class="panel" id="expertResultsPanel">
+            <div class="panel-title">
+              <div><span class="eyebrow">LANGGRAPH EXPERT OUTPUTS</span><h2>Ba chuyên gia AI đã kết luận gì?</h2><p class="muted">Mỗi Agent chỉ dùng dữ liệu và tool đúng chuyên môn; Legal/Eligibility bên trên là rule deterministic.</p></div>
+              <span id="collaborationStatus" class="status-pill neutral">CHƯA CHẠY</span>
+            </div>
+            <div class="expert-grid">
+              <article class="expert-card product"><span class="eyebrow">PRODUCT EXPERT</span><h3>Sản phẩm phù hợp</h3><div id="productExpertOutput"><p class="muted">Chưa có kết quả.</p></div></article>
+              <article class="expert-card credit"><span class="eyebrow">CREDIT EXPERT</span><h3>Khả năng trả nợ & cấu trúc tín dụng</h3><div id="creditExpertOutput"><p class="muted">Chưa có kết quả.</p></div></article>
+              <article class="expert-card insurance"><span class="eyebrow">INSURANCE EXPERT</span><h3>Mức sẵn sàng bảo hiểm</h3><div id="insuranceExpertOutput"><p class="muted">Chưa có kết quả.</p></div></article>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-title"><div><span class="eyebrow">PLANNER COORDINATOR</span><h2>Tổng hợp phương án cuối</h2><p class="muted">Coordinator tổng hợp nhưng không được ghi đè hard rule, evidence hoặc approval gate.</p></div></div>
+            <div id="coordinatorResult"><p class="muted">Chưa có kết quả tổng hợp.</p></div>
+          </section>
           <section class="panel"><div class="panel-title"><div><span class="eyebrow">PLANNER</span><h2>Kế hoạch xử lý liên kết</h2></div><span id="planVersion" class="status-pill neutral">v—</span></div><div id="executionPlan" class="plan-list"></div></section>
           <section class="panel"><div class="panel-title"><div><span class="eyebrow">OPERATIONS DRAFT</span><h2>Hồ sơ, checklist và đề xuất nháp</h2></div></div><div id="operationsResult"></div></section>
         </section>

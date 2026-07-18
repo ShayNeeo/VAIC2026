@@ -4,7 +4,7 @@
 
 Nâng cấp V2 từ workflow tuần tự có LLM hỗ trợ thành một hệ thống cộng tác có kiểm soát, trong đó:
 
-1. `ProductExpert`, `LegalExpert` và `OperationsExpert` có thể tự phân tích nhiệm vụ chuyên môn từ context được giao, dùng tool đúng domain và trả về kết quả có cấu trúc.
+1. `ProductExpert`, `CreditExpert` và `InsuranceExpert` có thể tự phân tích nhiệm vụ chuyên môn từ context được giao, dùng tool đúng domain và trả về kết quả có cấu trúc.
 2. Expert Agent có thể yêu cầu Agent khác hỗ trợ, nhưng không gọi trực tiếp tool hoặc sửa kết quả thuộc domain khác.
 3. `PlannerCoordinator` tạo kế hoạch ban đầu, quản lý vòng cộng tác, giải quyết dependency và tổng hợp phương án cuối.
 4. Rule engine, Evidence Validator, Risk Gate và Approval Gate vẫn là lớp deterministic, không bị LLM hoặc Coordinator ghi đè.
@@ -41,10 +41,18 @@ Chỉ tiêu bổ sung:
 ### 2.1. Giả định
 
 - Context và intent đầu vào đã đi qua V2 Context/Intent/Confidence modules.
-- Product, Legal và Operations có kho dữ liệu riêng, Source Card riêng và tool profile riêng.
+- Product, Credit và Insurance có kho dữ liệu riêng, Source Card riêng và tool profile riêng.
 - Dữ liệu hiện tại là `SYNTHETIC DEMO DATA`; chưa phải chính sách SHB thật.
 - LLM provider được chọn qua port/config; workflow không phụ thuộc trực tiếp một nhà cung cấp.
 - Mọi write action vẫn nằm ngoài Expert Agent và chỉ do `ActionExecutor` thực hiện sau approval.
+
+### 2.1.1. Quyết định runtime thống nhất (18/07/2026)
+
+- Ba Expert Agent chạy trong LangGraph là `ProductExpert`, `CreditExpert`, `InsuranceExpert`.
+- Legal/Eligibility là bước deterministic dùng Rule Engine và Legal RAG; không được trình bày trên UI như một LLM Expert độc lập.
+- Operations là deterministic composer chạy sau Coordinator synthesis; không phải Expert Agent và không có quyền tự thực thi.
+- Ba Specialist Workspace tương ứng trực tiếp với ba Expert runtime: Product, Credit, Insurance. Legal/Compliance reviewer vẫn là vai trò kiểm soát nội bộ cho risk gate, không thay đổi kết quả Agent và không được tính vào ba Agent.
+- Mọi đoạn cũ trong tài liệu còn mô tả `LegalExpert` hoặc `OperationsExpert` là worker runtime được xem là superseded bởi quyết định này và contract JSON hiện hành.
 
 ### 2.2. Trong phạm vi
 

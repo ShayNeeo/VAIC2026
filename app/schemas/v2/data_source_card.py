@@ -7,6 +7,7 @@ model is what a source must satisfy before ingestion/retrieval code may use it.
 
 from __future__ import annotations
 
+from datetime import date
 from enum import Enum
 from typing import List, Optional
 
@@ -23,6 +24,7 @@ class DataDomain(str, Enum):
     PRODUCT = "product"
     LEGAL = "legal"
     CREDIT = "credit"
+    INSURANCE = "insurance"
     KYC_AML = "kyc_aml"
     MARKET = "market"
     OPERATIONS = "operations"
@@ -169,6 +171,9 @@ class DataSourceCard(BaseModel):
     domain: DataDomain
     tier: DataTier
     provider: Optional[str] = None
+    dataset_version: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
     owner: Owner
     purpose: Purpose
     decision_role: DecisionRole

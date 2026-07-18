@@ -1,6 +1,6 @@
 """HTTP-driven tests for the Agent Knowledge Console (app/api/v2/employee_router.py
 knowledge_router): lets a department Specialist feed/update/retire the
-knowledge their own domain's Agent (Product/Legal/Credit) retrieves,
+knowledge their own domain's Agent (Product/Credit/Insurance) retrieves,
 and see a metadata summary of what that Agent has been doing on cases in
 their scope. Same isolation pattern as test_v2_specialist_review.py --
 real HTTP calls via fastapi.testclient.TestClient against the real app,
@@ -54,6 +54,7 @@ RM = auth_headers("demo-rm-999")
 LEGAL = auth_headers("demo-spec-legal-001")
 PRODUCT = auth_headers("demo-spec-prod-001")
 CREDIT = auth_headers("demo-spec-credit-001")
+INSURANCE = auth_headers("demo-spec-insurance-001")
 MANAGER = auth_headers("demo-mgr-hn-01")
 
 
@@ -160,6 +161,20 @@ def test_credit_specialist_can_feed_credit_policy_knowledge(client):
     assert resp.status_code == 201, resp.text
     assert resp.json()["domain"] == "credit"
     assert resp.json()["chunk_type"] == "credit_policy_article"
+
+
+def test_insurance_specialist_can_feed_insurance_policy_knowledge(client):
+    resp = client.post(
+        "/api/v2/me/agent-knowledge",
+        json=_create_body(
+            product_id="PROD-INSURANCE-GENERAL", section_path="bao-hiem-tai-san-dam-bao",
+            text="Tai san dam bao phai co bao hiem con hieu luc va SHB la ben thu huong.",
+        ),
+        headers=INSURANCE,
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["domain"] == "insurance"
+    assert resp.json()["chunk_type"] == "insurance_policy_article"
 
 
 def test_create_rejects_short_text(client):
@@ -278,3 +293,32 @@ def test_credit_activity_reads_credit_agent_result(client):
     assert case_item["agent_summary"]["status"] == "needs_information"
     assert case_item["agent_summary"]["missing_information_count"] == 1
     assert case_item["last_ai_log_event"]["component"] == "CreditExpert"
+
+
+def test_insurance_activity_reads_insurance_agent_result(client):
+    payload = deepcopy(MINIMAL_SHARED_CASE_STATE)
+    payload["context"] = deepcopy(FULL_CONTEXT_SNAPSHOT)
+    payload["context"]["customer"]["customer_id"] = "COMP-MP"
+    payload["case_id"] = "CASE-ACT-INSURANCE-1"
+    payload["trace_id"] = "TRACE-CASE-ACT-INSURANCE-1"
+    payload["status"] = "pending_information"
+    state = SharedCaseState.model_validate(payload)
+    state.insurance_result = {
+        "status": "needs_information",
+        "insurance_product_ids": ["PROD-INSURANCE-GENERAL"],
+        "coverage_checks": [{"requirement": "property_insurance", "status": "unknown"}],
+        "hard_blocks": [],
+        "missing_information": ["has_property_insurance"],
+    }
+    state.ai_decision_log = [
+        {"component": "InsuranceExpert", "event": "expert_finding_committed", "output_summary": {}}
+    ]
+    _repo().save_case(state, expected_version=0)
+
+    resp = client.get("/api/v2/me/agent-knowledge/activity", headers=INSURANCE)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["domain"] == "insurance"
+    case_item = next(item for item in resp.json()["cases"] if item["case_id"] == "CASE-ACT-INSURANCE-1")
+    assert case_item["agent_summary"]["coverage_check_count"] == 1
+    assert case_item["agent_summary"]["missing_information_count"] == 1
+    assert case_item["last_ai_log_event"]["component"] == "InsuranceExpert"

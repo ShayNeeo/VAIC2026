@@ -44,6 +44,12 @@ ROLE_CAPABILITIES: Dict[RoleType, Set[str]] = {
         "credit:review_structure",
         "credit:manage_knowledge"
     },
+    RoleType.INSURANCE_SPECIALIST: {
+        "case:read",
+        "insurance:analyze_coverage",
+        "insurance:review_coverage",
+        "insurance:manage_knowledge"
+    },
     RoleType.MANAGER: {
         "case:read",
         "team:view_workload",
