@@ -32,7 +32,7 @@ _cors_origins = [
     o.strip()
     for o in os.getenv(
         "CORS_ALLOW_ORIGINS",
-        "https://vaic.w9.nu,https://vaic-frontend.pages.dev",
+        "https://vaic.w9.nu,https://vaic-api.w9.nu,https://rm-workspace.pages.dev,https://vaic-frontend.pages.dev",
     ).split(",")
     if o.strip()
 ]
