@@ -15,8 +15,10 @@ Map<String, int> _branchStatusCounts(String status) {
   return switch (status) {
     'pending_information' => {'ready': 0, 'need_info': 1, 'review_required': 0, 'blocked': 0},
     'pending_review' => {'ready': 0, 'need_info': 0, 'review_required': 1, 'blocked': 0},
-    'blocked' || 'failed' => {'ready': 0, 'need_info': 0, 'review_required': 0, 'blocked': 1},
-    'completed' || 'rejected' => {'ready': 1, 'need_info': 0, 'review_required': 0, 'blocked': 0},
+    'blocked' => {'ready': 0, 'need_info': 0, 'review_required': 0, 'blocked': 1},
+    'failed' => {'ready': 0, 'need_info': 0, 'review_required': 0, 'blocked': 1},
+    'completed' => {'ready': 1, 'need_info': 0, 'review_required': 0, 'blocked': 0},
+    'rejected' => {'ready': 1, 'need_info': 0, 'review_required': 0, 'blocked': 0},
     _ => {'ready': 1, 'need_info': 0, 'review_required': 0, 'blocked': 0},
   };
 }
@@ -82,7 +84,8 @@ List<OpportunityCard> _projectOpportunities(Map<String, dynamic> raw) {
     final m = t as Map<String, dynamic>;
     final taskStatus = (m['status'] ?? 'pending').toString();
     final oppStatus = switch (taskStatus) {
-      'blocked' || 'failed' => OpportunityStatus.blocked,
+      'blocked' => OpportunityStatus.blocked,
+      'failed' => OpportunityStatus.blocked,
       'completed' => OpportunityStatus.ready,
       'pending' => OpportunityStatus.needInfo,
       _ => OpportunityStatus.reviewRequired,
