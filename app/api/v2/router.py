@@ -36,6 +36,7 @@ from app.schemas.v2.shared_case_state import (
 from app.safety.input_guardrails_v2 import screen_input
 from app.storage.repository import StateConflictError, StoredCase, StoredIntake, V2Repository
 from app.workflow.engine import V2WorkflowEngine
+from app.workflow.impact import CONTEXT_CORRECTION_POLICIES
 
 
 class CreateCaseBody(BaseModel):
@@ -173,13 +174,36 @@ def create_router(
     assembler: ContextAssembler | None = None,
     event_logger: JsonEventLogger | None = None,
 ) -> APIRouter:
-    repo = repository or V2Repository(settings.V2_DB_PATH)
+    def repo() -> V2Repository:
+        """Constructed fresh on every call (unless an explicit `repository`
+        was injected into create_router(), which always wins outright) so
+        settings.V2_DB_PATH is read live -- mirrors
+        app/storage/employee_db.py's get_db_connection() and
+        app/api/v2/employee_router.py's _repo(). The previous version built
+        a single V2Repository once at create_router()-call time (i.e. once
+        per process, at module import: `router = create_router()` at the
+        bottom of this file), so any monkeypatch.setattr(settings,
+        "V2_DB_PATH", ...) a test performed afterward was silently ignored
+        for every /api/v2/cases and /api/v2/sales-cases endpoint -- a test
+        using an isolated DB would see CASE_NOT_FOUND for a case it just
+        wrote, or worse, would write into the real data/state/v2.sqlite3
+        the live demo app reads. See
+        docs/SPECIALIST_REVIEW_IMPLEMENTATION_REPORT.md sections 8/11.5."""
+        return repository or V2Repository(settings.V2_DB_PATH)
+
     workflow = engine or V2WorkflowEngine()
     context_assembler = assembler or _default_assembler()
     logger = event_logger or JsonEventLogger(settings.AUDIT_LOG_PATH)
-    approval = ApprovalServiceV2(repo)
-    executor = ActionExecutorV2(repo, approval)
-    intake = IntakeService(repo)
+
+    def approval_service() -> ApprovalServiceV2:
+        return ApprovalServiceV2(repo())
+
+    def executor_service() -> ActionExecutorV2:
+        return ActionExecutorV2(repo(), approval_service())
+
+    def intake_service() -> IntakeService:
+        return IntakeService(repo())
+
     router = APIRouter(prefix="/api/v2", tags=["v2"])
 
     def assemble(employee_id: str, session_id: str, documents=(), trace_id: str | None = None) -> ContextSnapshot:
@@ -197,7 +221,7 @@ def create_router(
             raise HTTPException(status_code=503, detail={"code": "CONTEXT_UNAVAILABLE", "message": str(exc)}) from exc
 
     def owned(case_id: str, employee_id: str) -> StoredCase:
-        stored = repo.get_case(case_id)
+        stored = repo().get_case(case_id)
         if stored is None:
             raise HTTPException(status_code=404, detail={"code": "CASE_NOT_FOUND"})
         if stored.state.context.employee.employee_id != employee_id:
@@ -206,7 +230,7 @@ def create_router(
         return stored
 
     def intake_owned(case_id: str, employee_id: str) -> StoredIntake:
-        stored = repo.get_intake(case_id)
+        stored = repo().get_intake(case_id)
         if stored is None:
             raise HTTPException(status_code=404, detail={"code": "SALES_CASE_NOT_FOUND"})
         if stored.session.employee_id != employee_id:
@@ -259,7 +283,7 @@ def create_router(
 
     def persist(state_value: SharedCaseState, expected_version: Optional[int] = None) -> StoredCase:
         try:
-            return repo.save_case(state_value, expected_version=expected_version)
+            return repo().save_case(state_value, expected_version=expected_version)
         except StateConflictError as exc:
             metrics.increment("api.optimistic_conflict")
             raise HTTPException(status_code=409, detail={"code": "STATE_VERSION_CONFLICT", "message": str(exc)}) from exc
@@ -340,7 +364,7 @@ def create_router(
         require_permission(x_employee_id, "case:create")
         replay_key = f"sales-case-draft:{x_employee_id}:{idempotency_key}" if idempotency_key else None
         if replay_key:
-            replay = repo.get_idempotent_result(replay_key)
+            replay = repo().get_idempotent_result(replay_key)
             if replay is not None:
                 return {**replay, "idempotent_replay": True}
         safety = screen_input("\n".join(filter(None, [body.need_text, body.rm_note or ""])))
@@ -349,7 +373,7 @@ def create_router(
         context = assemble(x_employee_id, x_session_id)
         manual = body.model_dump(mode="json")
         manual["need_text"] = safety.sanitized_text.split("\n", 1)[0]
-        stored = intake.create(
+        stored = intake_service().create(
             employee_id=x_employee_id,
             session_id=x_session_id,
             customer_id=context.customer.customer_id,
@@ -357,7 +381,7 @@ def create_router(
             crm_attributes=context.customer.attributes,
         )
         result = intake_payload(stored)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=stored.session.case_id,
             trace_id=f"TRACE-{uuid.uuid4().hex.upper()}", actor=x_employee_id,
             action="sales_case_draft_created", payload={"intake_id": stored.session.intake_id},
@@ -365,16 +389,16 @@ def create_router(
         logger.emit("sales_case_draft_created", case_id=stored.session.case_id, employee_id=x_employee_id)
         metrics.increment("intake.created")
         if replay_key:
-            result = repo.save_idempotent_result(replay_key, "create_sales_case", "draft", result)
+            result = repo().save_idempotent_result(replay_key, "create_sales_case", "draft", result)
         response.headers["ETag"] = str(stored.version)
         return result
 
     @router.get("/sales-cases")
     def list_sales_cases(x_employee_id: str = Header(...)) -> List[Dict[str, Any]]:
         require_permission(x_employee_id, "case:read")
-        runtime = {item.state.case_id: item for item in repo.list_cases(x_employee_id)}
+        runtime = {item.state.case_id: item for item in repo().list_cases(x_employee_id)}
         result: List[Dict[str, Any]] = []
-        for item in repo.list_intakes(x_employee_id):
+        for item in repo().list_intakes(x_employee_id):
             state_item = runtime.get(item.session.case_id)
             result.append(
                 {
@@ -399,7 +423,7 @@ def create_router(
         for file in files:
             data = await file.read(settings.MAX_UPLOAD_BYTES + 1)
             try:
-                stored, document, deduplicated = intake.add_document(
+                stored, document, deduplicated = intake_service().add_document(
                     stored,
                     filename=file.filename or "upload",
                     mime_type=file.content_type or "application/octet-stream",
@@ -407,7 +431,7 @@ def create_router(
                 )
             except IntakeValidationError as exc:
                 raise intake_error(exc) from exc
-            receipts.append({**intake.public_document(document), "deduplicated": deduplicated})
+            receipts.append({**intake_service().public_document(document), "deduplicated": deduplicated})
         response.headers["ETag"] = str(stored.version)
         logger.emit("case_documents_uploaded", case_id=stored.session.case_id, count=len(receipts))
         metrics.increment("intake.documents_uploaded", len(receipts))
@@ -417,8 +441,8 @@ def create_router(
     def get_sales_case_documents(case_id: str, x_employee_id: str = Header(...)) -> Dict[str, Any]:
         require_permission(x_employee_id, "case:read")
         stored = intake_owned(case_id, x_employee_id)
-        documents = repo.list_intake_documents(stored.session.intake_id)
-        return {"case_id": stored.session.case_id, "documents": [intake.public_document(item) for item in documents]}
+        documents = repo().list_intake_documents(stored.session.intake_id)
+        return {"case_id": stored.session.case_id, "documents": [intake_service().public_document(item) for item in documents]}
 
     @router.post("/sales-cases/{case_id}/process-documents")
     def process_sales_case_documents(
@@ -429,7 +453,7 @@ def create_router(
         require_permission(x_employee_id, "case:write")
         stored = intake_owned(case_id, x_employee_id)
         try:
-            stored = intake.process(stored)
+            stored = intake_service().process(stored)
         except IntakeValidationError as exc:
             raise intake_error(exc) from exc
         response.headers["ETag"] = str(stored.version)
@@ -437,19 +461,19 @@ def create_router(
         metrics.increment("intake.processed")
         return {
             **intake_payload(stored),
-            "processing": {"mode": "synchronous_mvp", "jobs": repo.processing_jobs(stored.session.intake_id)},
+            "processing": {"mode": "synchronous_mvp", "jobs": repo().processing_jobs(stored.session.intake_id)},
         }
 
     @router.get("/sales-cases/{case_id}/processing-status")
     def sales_case_processing_status(case_id: str, x_employee_id: str = Header(...)) -> Dict[str, Any]:
         require_permission(x_employee_id, "case:read")
         stored = intake_owned(case_id, x_employee_id)
-        documents = repo.list_intake_documents(stored.session.intake_id)
+        documents = repo().list_intake_documents(stored.session.intake_id)
         return {
             "case_id": stored.session.case_id,
             "overall_status": stored.session.status.value,
-            "jobs": repo.processing_jobs(stored.session.intake_id),
-            "documents": [intake.public_document(item) for item in documents],
+            "jobs": repo().processing_jobs(stored.session.intake_id),
+            "documents": [intake_service().public_document(item) for item in documents],
             "retry_after_ms": 0,
         }
 
@@ -479,7 +503,7 @@ def create_router(
         if stored.version != body.expected_version:
             raise HTTPException(status_code=409, detail={"code": "STATE_VERSION_CONFLICT"})
         try:
-            stored = intake.patch_profile(stored, changes=body.changes, employee_id=x_employee_id)
+            stored = intake_service().patch_profile(stored, changes=body.changes, employee_id=x_employee_id)
         except IntakeValidationError as exc:
             raise intake_error(exc) from exc
         response.headers["ETag"] = str(stored.version)
@@ -500,12 +524,12 @@ def create_router(
         if stored.version != body.expected_version:
             raise HTTPException(status_code=409, detail={"code": "STATE_VERSION_CONFLICT"})
         try:
-            stored = intake.confirm(stored, employee_id=x_employee_id, attestation=body.attestation)
+            stored = intake_service().confirm(stored, employee_id=x_employee_id, attestation=body.attestation)
         except IntakeValidationError as exc:
             raise intake_error(exc) from exc
         profile = stored.session.profile
         assert profile is not None
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id,
             trace_id=f"TRACE-{uuid.uuid4().hex.upper()}", actor=x_employee_id,
             action="customer_profile_confirmed", payload={"snapshot_hash": profile.snapshot_hash, "revision": profile.revision},
@@ -529,7 +553,7 @@ def create_router(
             raise HTTPException(status_code=409, detail={"code": "PROFILE_NOT_CONFIRMED"})
         grant = iam_grant(x_employee_id)
         branch = str(grant["access_scope"].get("branch") or "DENY")
-        intake_documents = repo.list_intake_documents(session_value.intake_id)
+        intake_documents = repo().list_intake_documents(session_value.intake_id)
         workspace_documents = [
             WorkspaceDocument(
                 document_id=item.document_id,
@@ -552,7 +576,7 @@ def create_router(
             attributes["cash_flow_status"] = profile.cash_flow_profile["current_status"]
         context.customer = context.customer.model_copy(update={"attributes": attributes, "stale": False})
         now = datetime.now(timezone.utc)
-        existing = repo.get_case(case_id)
+        existing = repo().get_case(case_id)
         if existing is None:
             state_value = SharedCaseState(
                 case_id=case_id,
@@ -589,8 +613,8 @@ def create_router(
         session_value.audit_events.append(
             {"actor": "Planner", "action": audit_action, "at": now.isoformat(), "payload": {"state_version": stored_case.version}}
         )
-        stored_intake = repo.save_intake(session_value, expected_version=stored_intake.version)
-        repo.append_audit(
+        stored_intake = repo().save_intake(session_value, expected_version=stored_intake.version)
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=stored_case.state.trace_id,
             actor="Planner", action=audit_action, payload={"snapshot_hash": profile.snapshot_hash, "status": stored_case.state.status.value},
         )
@@ -601,14 +625,14 @@ def create_router(
     @router.get("/sales-cases/{case_id}/trace")
     def get_sales_case_trace(case_id: str, x_employee_id: str = Header(...)) -> Dict[str, Any]:
         stored_intake = intake_owned(case_id, x_employee_id)
-        runtime = repo.get_case(case_id)
+        runtime = repo().get_case(case_id)
         runtime_events = runtime.state.audit_events if runtime else []
         return {
             "case_id": case_id,
             "trace_id": runtime.state.trace_id if runtime else None,
             "timeline": [*stored_intake.session.audit_events, *runtime_events],
-            "audit_chain_valid": repo.verify_audit_chain(case_id),
-            "persistent_events": repo.audit_events(case_id),
+            "audit_chain_valid": repo().verify_audit_chain(case_id),
+            "persistent_events": repo().audit_events(case_id),
             "execution_plan": runtime.state.execution_plan if runtime else None,
         }
 
@@ -678,7 +702,7 @@ def create_router(
         current_hash = payload_hash(frozen)
         if body.payload_hash and body.payload_hash != current_hash:
             raise HTTPException(status_code=409, detail={"code": "PAYLOAD_CHANGED"})
-        issued = approval.issue(
+        issued = approval_service().issue(
             case_id=case_id, approver_id=x_employee_id,
             permissions=["create_crm_case"], payload=frozen,
         )
@@ -690,7 +714,7 @@ def create_router(
             expires_at=datetime.fromtimestamp(claims["expires_at"], tz=timezone.utc),
         )
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="payload_approved", payload={"payload_hash": claims["payload_hash"]},
         )
@@ -715,7 +739,7 @@ def create_router(
         state_value.status = CaseStatus.REJECTED
         state_value.approval.status = ApprovalStatus.REJECTED
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="case_rejected", payload={"reason": body.reason},
         )
@@ -736,7 +760,7 @@ def create_router(
         state_value = stored.state
         frozen = action_payload(state_value)
         try:
-            result = executor.execute(
+            result = executor_service().execute(
                 state_value, approver_id=x_employee_id, token=x_approval_token,
                 idempotency_key=body.idempotency_key, payload=frozen,
             )
@@ -748,7 +772,7 @@ def create_router(
             {"actor": "ActionExecutor", "action": "actions_executed", "at": datetime.now(timezone.utc).isoformat(), "payload": {"opportunity_id": result["opportunity_id"]}}
         )
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor="ActionExecutor", action="actions_executed",
             payload={"opportunity_id": result["opportunity_id"], "task_ids": result["task_ids"], "idempotent_replay": result["idempotent_replay"]},
@@ -762,8 +786,8 @@ def create_router(
         intake_owned(case_id, x_employee_id)
         return {
             "case_id": case_id,
-            "events": repo.audit_events(case_id),
-            "chain_valid": repo.verify_audit_chain(case_id),
+            "events": repo().audit_events(case_id),
+            "chain_valid": repo().verify_audit_chain(case_id),
         }
 
     @router.get("/sales-cases/{case_id}/ai-log")
@@ -817,7 +841,7 @@ def create_router(
         )
         state_value = await workflow.run(state_value)
         stored = persist(state_value, expected_version=0)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=trace_id,
             actor=x_employee_id, action="case_created", payload={"status": state_value.status.value, "message_id": state_value.request.message_id},
         )
@@ -830,7 +854,7 @@ def create_router(
 
     @router.get("/cases")
     def list_cases(x_employee_id: str = Header(...)) -> List[Dict[str, Any]]:
-        return [response_payload(item) for item in repo.list_cases(x_employee_id)]
+        return [response_payload(item) for item in repo().list_cases(x_employee_id)]
 
     @router.get("/cases/{case_id}")
     def get_case(case_id: str, response: Response, x_employee_id: str = Header(...)) -> Dict[str, Any]:
@@ -845,8 +869,8 @@ def create_router(
         return {
             "trace_id": stored.state.trace_id,
             "timeline": stored.state.audit_events,
-            "audit_chain_valid": repo.verify_audit_chain(case_id),
-            "persistent_events": repo.audit_events(case_id),
+            "audit_chain_valid": repo().verify_audit_chain(case_id),
+            "persistent_events": repo().audit_events(case_id),
         }
 
     @router.post("/cases/{case_id}/messages")
@@ -875,7 +899,7 @@ def create_router(
         except ValueError as exc:
             raise HTTPException(status_code=409, detail={"code": "CASE_MESSAGE_REJECTED", "message": str(exc)}) from exc
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="case_message_added",
             payload={"message_id": state_value.request.message_id, "mode": body.mode},
@@ -913,7 +937,7 @@ def create_router(
         except ValueError as exc:
             raise HTTPException(status_code=409, detail={"code": "CASE_DOCUMENT_REJECTED", "message": str(exc)}) from exc
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="case_documents_registered",
             payload={"changes": changes, "resume_nodes": state_value.workflow.resume_from_nodes},
@@ -932,10 +956,7 @@ def create_router(
         stored = owned(case_id, x_employee_id)
         if stored.version != body.expected_state_version:
             raise HTTPException(status_code=409, detail={"code": "STATE_VERSION_CONFLICT"})
-        allowed_fields = {
-            "employees_count", "annual_revenue", "cash_flow_status", "account_or_unit_count",
-            "operating_years", "has_bad_debt_12m", "ubo_status", "name",
-        }
+        allowed_fields = CONTEXT_CORRECTION_POLICIES.keys()
         prefix = "customer.attributes."
         if not body.field.startswith(prefix) or body.field[len(prefix):] not in allowed_fields:
             raise HTTPException(status_code=422, detail={"code": "CONTEXT_FIELD_NOT_CORRECTABLE"})
@@ -973,7 +994,7 @@ def create_router(
         except ValueError as exc:
             raise HTTPException(status_code=409, detail={"code": "CONTEXT_CORRECTION_REJECTED", "message": str(exc)}) from exc
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="context_corrected",
             payload={"field": body.field, "old_value_hash": hashlib.sha256(str(old_value).encode()).hexdigest(), "reason": body.reason},
@@ -999,7 +1020,7 @@ def create_router(
             return {**response_payload(stored), "deduplicated": True}
         state_value = workflow.resume(state_value, changes=changes)
         updated = persist(state_value, expected_version=body.expected_state_version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="case_resumed", payload={"changes": changes, "resume_nodes": state_value.workflow.resume_from_nodes},
         )
@@ -1035,7 +1056,7 @@ def create_router(
         if state_value.status != CaseStatus.PENDING_APPROVAL:
             raise HTTPException(status_code=409, detail={"code": "CASE_NOT_READY_FOR_APPROVAL"})
         payload = action_payload(state_value)
-        issued = approval.issue(
+        issued = approval_service().issue(
             case_id=case_id, approver_id=x_employee_id, permissions=["create_crm_case"], payload=payload
         )
         claims = issued["claims"]
@@ -1044,7 +1065,7 @@ def create_router(
             payload_hash=claims["payload_hash"], expires_at=datetime.fromtimestamp(claims["expires_at"], tz=timezone.utc),
         )
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="payload_approved", payload={"payload_hash": claims["payload_hash"], "token_id": claims["token_id"]},
         )
@@ -1067,7 +1088,7 @@ def create_router(
         state_value = stored.state
         payload = action_payload(state_value)
         try:
-            result = executor.execute(
+            result = executor_service().execute(
                 state_value, approver_id=x_employee_id, token=x_approval_token,
                 idempotency_key=body.idempotency_key, payload=payload,
             )
@@ -1078,7 +1099,7 @@ def create_router(
         state_value.approval.status = ApprovalStatus.CONSUMED
         state_value.audit_events.append({"actor": "ActionExecutor", "action": "actions_executed", "at": datetime.now(timezone.utc).isoformat(), "payload": {"crm_case_id": result["crm_case_id"]}})
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor="ActionExecutor", action="actions_executed", payload={"crm_case_id": result["crm_case_id"], "idempotent_replay": result["idempotent_replay"]},
         )
@@ -1096,7 +1117,7 @@ def create_router(
         state_value.status = CaseStatus.REJECTED
         state_value.approval.status = ApprovalStatus.REJECTED
         updated = persist(state_value, expected_version=stored.version)
-        repo.append_audit(
+        repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
             actor=x_employee_id, action="case_rejected", payload={"reason": body.reason},
         )
@@ -1251,7 +1272,7 @@ def create_router(
 
     @router.get("/health")
     def v2_health() -> Dict[str, Any]:
-        storage = repo.health()
+        storage = repo().health()
         product_knowledge = ProductKnowledgeService()
         legal_knowledge = LegalKnowledgeService()
         product_knowledge.ensure_index()
@@ -1280,7 +1301,7 @@ def create_router(
     def v2_ready(response: Response) -> Dict[str, Any]:
         """Readiness probe: 200 when storage + at least local retrieval work,
         503 when nothing usable is available. See docs/RAG_PROVIDER_AND_FALLBACK.md."""
-        storage = repo.health()
+        storage = repo().health()
         product_knowledge = ProductKnowledgeService()
         legal_knowledge = LegalKnowledgeService()
         product_rag_health = product_knowledge.rag_health()

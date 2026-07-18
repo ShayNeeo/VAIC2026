@@ -38,6 +38,18 @@ class EligibilityRule(BaseModel):
     source_version: str
     source_location: str
     source_quote: str
+    # Policy flag, not a technical property of the rule: may a human
+    # specialist override a FAILED verdict on this specific rule after
+    # independent verification (see app/workflow/risk_gate.py's
+    # required_reviewer_roles/human_review_allowed and
+    # app/api/v2/employee_router.py's specialist-reviews endpoint)? Defaults
+    # False -- a rule is only overridable if a human explicitly marked it so
+    # in this registry, never by default. Absolute/factual rules (minimum
+    # document presence, numeric thresholds, bad-debt history) must stay
+    # False; a rule whose failure can genuinely be a documentation/judgment
+    # ambiguity a specialist can resolve through independent verification
+    # (e.g. RULE-CREDIT-UBO-001) may be set True.
+    human_review_allowed: bool = False
 
 
 class RuleEvaluation(BaseModel):
@@ -55,6 +67,7 @@ class RuleEvaluation(BaseModel):
     source_version: str
     source_location: str
     source_quote: str
+    human_review_allowed: bool = False
 
 
 class ProductEligibility(BaseModel):

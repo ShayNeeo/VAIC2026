@@ -65,6 +65,9 @@ class Settings(BaseModel):
     V2_DB_PATH: str = os.getenv("V2_DB_PATH", "./data/state/v2.sqlite3")
     AUDIT_LOG_PATH: str = os.getenv("AUDIT_LOG_PATH", "./data/logs/audit.jsonl")
     APP_ENV: str = os.getenv("APP_ENV", "development")
+    DEMO_AUTH_ENABLED: bool = os.getenv(
+        "DEMO_AUTH_ENABLED", "true" if os.getenv("APP_ENV", "development") == "development" else "false"
+    ).lower() == "true"
     
     # App Settings
     HOST: str = os.getenv("HOST", "0.0.0.0")

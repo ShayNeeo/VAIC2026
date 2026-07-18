@@ -79,6 +79,7 @@ class Evidence(BaseModel):
     location: str
     quote: str
     is_valid: bool
+    human_review_allowed: bool = False
     validation_score: Optional[Score] = None
 
 

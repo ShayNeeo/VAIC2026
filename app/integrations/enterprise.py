@@ -110,3 +110,63 @@ class SQLiteSSOAdapter(EnterpriseSQLiteBase):
                 "role": row["role"],
                 "organization_unit": row["organization_unit"],
             }
+
+
+_EMPLOYEE_COPILOT_DEMO_PERSONAS: list[tuple[str, str, str, list[str], dict]] = [
+    ("SPEC-LEGAL-001", "Specialist", "Legal & Compliance",
+     ["case:read", "case:verify_evidence", "legal:check_issue", "legal:block_non_eligible"],
+     {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
+    ("SPEC-PROD-001", "Specialist", "Product",
+     ["case:read", "product:recommend", "product:verify_fit"],
+     {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
+    ("SPEC-OPS-001", "Specialist", "Operations",
+     ["case:read", "task:update", "ops:update_implementation"],
+     {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
+    ("MGR-HN-01", "Manager", "Branch HN Management",
+     ["team:view_workload", "case:read"],
+     {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
+]
+
+
+def ensure_employee_copilot_demo_personas(db_path: Path | str | None = None) -> None:
+    path = Path(db_path) if db_path is not None else (
+        Path(__file__).resolve().parents[2] / "data" / "mock_database" / "enterprise_core.sqlite3"
+    )
+    conn = sqlite3.connect(path)
+    try:
+        cursor = conn.cursor()
+        for employee_id, role, org_unit, permissions, access_scope in _EMPLOYEE_COPILOT_DEMO_PERSONAS:
+            cursor.execute(
+                "INSERT OR IGNORE INTO employees (employee_id, role, organization_unit) VALUES (?, ?, ?)",
+                (employee_id, role, org_unit),
+            )
+            cursor.execute(
+                """
+                INSERT INTO permissions (employee_id, permissions, access_scope) VALUES (?, ?, ?)
+                ON CONFLICT(employee_id) DO UPDATE SET permissions = excluded.permissions
+                """,
+                (employee_id, json.dumps(permissions), json.dumps(access_scope)),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def map_enterprise_role_to_role_type(role: str, organization_unit: str) -> str:
+    role_lower = role.lower()
+    unit_lower = organization_unit.lower()
+    if role_lower == "rm":
+        return "relationship_manager"
+    if role_lower == "manager":
+        return "manager"
+    if role_lower == "specialist":
+        if "legal" in unit_lower:
+            return "legal_specialist"
+        if "product" in unit_lower:
+            return "product_specialist"
+        if "operations" in unit_lower or "credit" in unit_lower:
+            return "operations_specialist"
+        return "operations_specialist"
+    if role_lower == "datasteward":
+        return "auditor"
+    return "auditor"
