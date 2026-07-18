@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'models/case_models.dart';
 import 'models/v2_projection.dart';
+import 'models/employee_models.dart';
 
 part 'api_client.freezed.dart';
 part 'api_client.g.dart';
@@ -128,6 +129,99 @@ class ApiClient {
       () => _client.get(uri, headers: _headers),
       (data) => ProductSearchResult.fromJson(data),
     );
+  }
+
+  // --- Role-Aware Employee Copilot (/api/v2/me/*, /api/v2/recommendations/*) ---
+  // setAuthToken('demo-rm-999' | 'demo-spec-legal-001' | 'demo-spec-prod-001'
+  //   | 'demo-spec-ops-001' | 'demo-mgr-hn-01') before calling any of these --
+  // the backend maps that Bearer token to a verified identity server-side via
+  // SSOPort/IAMPort (see docs/ROLE_AWARE_P0_FIX_IMPLEMENTATION_REPORT.md).
+  // Not wired into the existing case-queue screens, which still target the
+  // removed /api/v1 API (see EmployeeWorkspaceScreen for a real, separate
+  // consumer of these endpoints).
+
+  Future<EmployeeContext> getMyContext() async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/context');
+    return _request(() => _client.get(uri, headers: _headers), EmployeeContext.fromJson);
+  }
+
+  Future<List<WorkQueueItem>> getMyWorkQueue() async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/work-queue');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body);
+      if (data is List) return data.map((e) => WorkQueueItem.fromJson(e as Map<String, dynamic>)).toList();
+      return [];
+    }
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  Future<Map<String, dynamic>> patchMyPreferences(Map<String, dynamic> prefs) async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/preferences');
+    final response = await _client
+        .patch(uri, headers: _headers, body: jsonEncode(prefs))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  Future<Map<String, dynamic>> getMyPersonalization() async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/personalization');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  Future<void> setPersonalizationEnabled(bool enabled) async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/personalization/${enabled ? 'enable' : 'disable'}');
+    final response = await _client.post(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getMyHabits() async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/habits');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body);
+      if (data is List) return data.cast<Map<String, dynamic>>();
+      return [];
+    }
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  Future<void> deleteHabit(String habitId) async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/habits/$habitId');
+    final response = await _client.delete(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+    }
+  }
+
+  /// feedback: 'accepted' | 'edited' | 'rejected' | 'not_applicable'
+  Future<void> submitRecommendationFeedback(String recommendationId, String feedback,
+      {Map<String, dynamic>? original, Map<String, dynamic>? edited}) async {
+    final uri = Uri.parse('$baseUrl/api/v2/recommendations/$recommendationId/feedback');
+    final response = await _client
+        .post(uri, headers: _headers, body: jsonEncode({'feedback': feedback, 'original': original, 'edited': edited}))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+    }
+  }
+
+  Future<Map<String, dynamic>> getTeamWorkload() async {
+    final uri = Uri.parse('$baseUrl/api/v2/me/team/workload');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
   }
 
   void dispose() => _client.close();
