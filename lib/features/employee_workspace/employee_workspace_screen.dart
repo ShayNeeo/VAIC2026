@@ -298,37 +298,6 @@ class _InformationSection extends StatelessWidget {
   }
 }
 
-class _IdentityCard extends StatelessWidget {
-  final EmployeeContext ctx;
-  const _IdentityCard({required this.ctx});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(ctx.employeeId, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            const SizedBox(height: 4),
-            Text('Vai trò: ${ctx.authorizationContext.primaryRole}'),
-            Text('Phạm vi khách hàng: ${ctx.authorizationContext.customerScope.join(", ")}'),
-            if (ctx.personalizationContext.personalizationDegraded)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Chip(
-                  label: const Text('Personalization đang ở chế độ mặc định (store lỗi)'),
-                  backgroundColor: AppColors.statusNeedInfo100,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _WorkQueueSection extends StatelessWidget {
   final EmployeeWorkspaceController controller;
   const _WorkQueueSection({required this.controller});
