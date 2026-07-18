@@ -1,5 +1,0 @@
-com.shb.rm_workspace_core
-drawable launch_background
-mipmap ic_launcher
-style LaunchTheme
-style NormalTheme

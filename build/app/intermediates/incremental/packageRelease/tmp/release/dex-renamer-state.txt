@@ -1,4 +1,0 @@
-#Sat Jul 18 09:39:20 ICT 2026
-base.0=/home/shayneeo/Downloads/Documents/Coding/VAIC2026/build/app/intermediates/dex/release/minifyReleaseWithR8/classes.dex
-path.0=classes.dex
-renamed.0=classes.dex

@@ -186,3 +186,6 @@ assets/fonts/*.ttf
 # Binary deliverables not tracked
 *.odt
 *.docx
+
+# Flutter local machine config (generated)
+android/local.properties
