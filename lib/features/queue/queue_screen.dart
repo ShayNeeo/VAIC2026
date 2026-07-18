@@ -59,6 +59,15 @@ class _QueueScreenState extends State<QueueScreen> {
             );
           },
         ),
+        // Entry point to the Role-Aware Employee Copilot workspace
+        // (real /api/v2/me/* calls -- separate from the case-queue mock
+        // data above, which still targets the removed /api/v1 API). See
+        // docs/ROLE_AWARE_P0_FIX_IMPLEMENTATION_REPORT.md.
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => context.push('/employee-workspace'),
+          icon: const Icon(Icons.badge_outlined),
+          label: const Text('Employee Copilot'),
+        ),
       ),
     );
   }

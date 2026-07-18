@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'core/rm_workspace_core.dart';
+import 'core/controllers/employee_workspace_controller.dart';
 import 'design/design.dart';
 import 'features/queue/queue_screen.dart';
 import 'features/case_detail/case_detail_screen.dart';
 import 'features/approval/approval_screen.dart';
+import 'features/employee_workspace/employee_workspace_screen.dart';
 
 void main() {
   runApp(
@@ -13,6 +15,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => CaseController()),
         ChangeNotifierProvider(create: (_) => CaseDetailController()),
+        ChangeNotifierProvider(create: (_) => EmployeeWorkspaceController()),
       ],
       child: const RMWorkspaceApp(),
     ),
@@ -57,6 +60,11 @@ final GoRouter _router = GoRouter(
         final caseId = state.pathParameters['caseId']!;
         return ApprovalScreen(caseId: caseId);
       },
+    ),
+    GoRoute(
+      path: '/employee-workspace',
+      name: 'employee-workspace',
+      builder: (context, state) => const EmployeeWorkspaceScreen(),
     ),
   ],
 );
