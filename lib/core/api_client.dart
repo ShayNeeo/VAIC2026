@@ -239,6 +239,111 @@ class ApiClient {
     throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
   }
 
+  // --- v2 Sales-Case workflow (README §4) -------------------------------
+  // POST /api/v2/sales-cases -> create intake (draft)
+  Future<Map<String, dynamic>> createSalesCase(Map<String, dynamic> body) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases');
+    final response = await _client
+        .post(uri, headers: _headers, body: jsonEncode(body))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // GET /api/v2/sales-cases -> live intake list
+  Future<List<Map<String, dynamic>>> listSalesCases() async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body);
+      if (data is List) return [for (final e in data) e as Map<String, dynamic>];
+      return [];
+    }
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // POST /api/v2/sales-cases/{id}/documents
+  Future<Map<String, dynamic>> uploadDocuments(String caseId, Map<String, dynamic> body) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/documents');
+    final response = await _client.post(uri, headers: _headers, body: jsonEncode(body)).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // POST /api/v2/sales-cases/{id}/process-documents
+  Future<Map<String, dynamic>> processDocuments(String caseId, {List<String> docIds = const []}) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/process-documents');
+    final response = await _client
+        .post(uri, headers: _headers, body: jsonEncode({'document_ids': docIds}))
+        .timeout(const Duration(seconds: 60));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // GET /api/v2/sales-cases/{id}/processing-status
+  Future<Map<String, dynamic>> processingStatus(String caseId) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/processing-status');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // GET /api/v2/sales-cases/{id}/extracted-profile
+  Future<Map<String, dynamic>> extractedProfile(String caseId) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/extracted-profile');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // PATCH /api/v2/sales-cases/{id}/extracted-profile
+  Future<Map<String, dynamic>> patchProfile(String caseId, int expectedVersion, List<Map<String, dynamic>> changes) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/extracted-profile');
+    final response = await _client
+        .patch(uri, headers: _headers, body: jsonEncode({'expected_version': expectedVersion, 'changes': changes}))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // POST /api/v2/sales-cases/{id}/confirm-profile
+  Future<Map<String, dynamic>> confirmProfile(String caseId, int expectedVersion) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/confirm-profile');
+    final response = await _client
+        .post(uri, headers: _headers, body: jsonEncode({'expected_version': expectedVersion, 'attestation': true}))
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // POST /api/v2/sales-cases/{id}/run-analysis
+  Future<Map<String, dynamic>> runAnalysis(String caseId, int expectedVersion) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/run-analysis');
+    final response = await _client
+        .post(uri, headers: _headers, body: jsonEncode({'expected_version': expectedVersion}))
+        .timeout(const Duration(seconds: 90));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // GET /api/v2/sales-cases/{id}/review-context (specialist)
+  Future<Map<String, dynamic>> reviewContext(String caseId) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/review-context');
+    final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
+  // POST /api/v2/sales-cases/{id}/specialist-reviews
+  Future<Map<String, dynamic>> submitSpecialistReview(String caseId, Map<String, dynamic> body) async {
+    final uri = Uri.parse('$baseUrl/api/v2/sales-cases/$caseId/specialist-reviews');
+    final response = await _client.post(uri, headers: _headers, body: jsonEncode(body)).timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 200 && response.statusCode < 300) return jsonDecode(response.body) as Map<String, dynamic>;
+    throw ApiException(statusCode: response.statusCode, message: _parseError(response.body));
+  }
+
   void dispose() => _client.close();
 }
 

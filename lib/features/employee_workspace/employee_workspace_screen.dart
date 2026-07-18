@@ -30,7 +30,7 @@ class _EmployeeWorkspaceScreenState extends State<EmployeeWorkspaceScreen> {
       builder: (context, controller, _) => Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: AppColors.navy900,
+          backgroundColor: AppColors.ink900,
           foregroundColor: Colors.white,
           title: const Text('Employee Copilot'),
           actions: [
@@ -72,7 +72,7 @@ class _ErrorView extends StatelessWidget {
     return ListView(
       children: [
         const SizedBox(height: 80),
-        const Icon(Icons.error_outline, size: 48, color: AppColors.statusBlocked),
+        const Icon(Icons.error_outline, size: 48, color: AppColors.block),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -140,14 +140,14 @@ class _WelcomeHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.navy900, AppColors.navy700]),
+        gradient: const LinearGradient(colors: [AppColors.ink900, AppColors.ink700]),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 27,
-            backgroundColor: AppColors.orange,
+            backgroundColor: AppColors.violet,
             child: Text(ctx.employeeId.substring(0, 1), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
           ),
           const SizedBox(width: 14),
@@ -163,7 +163,7 @@ class _WelcomeHeader extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.verified_user_outlined, color: AppColors.statusReady, size: 26),
+          const Icon(Icons.verified_user_outlined, color: AppColors.ready, size: 26),
         ],
       ),
     );
@@ -191,9 +191,9 @@ class _TodaySummary extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                SizedBox(width: width, child: _MetricCard(icon: Icons.priority_high_rounded, label: 'Ưu tiên cao', value: '$critical', color: AppColors.statusBlocked)),
-                SizedBox(width: width, child: _MetricCard(icon: Icons.pending_actions_outlined, label: 'Việc đang chờ', value: '${controller.workQueue.length}', color: AppColors.statusNeedInfo)),
-                SizedBox(width: width, child: _MetricCard(icon: Icons.business_outlined, label: 'Khách hàng', value: '${ctx.authorizationContext.customerScope.length}', color: AppColors.blue)),
+                SizedBox(width: width, child: _MetricCard(icon: Icons.priority_high_rounded, label: 'Ưu tiên cao', value: '$critical', color: AppColors.block)),
+                SizedBox(width: width, child: _MetricCard(icon: Icons.pending_actions_outlined, label: 'Việc đang chờ', value: '${controller.workQueue.length}', color: AppColors.needInfo)),
+                SizedBox(width: width, child: _MetricCard(icon: Icons.business_outlined, label: 'Khách hàng', value: '${ctx.authorizationContext.customerScope.length}', color: AppColors.cyan)),
               ],
             );
           },
@@ -241,7 +241,7 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: AppColors.navy700, size: 22),
+        Icon(icon, color: AppColors.ink700, size: 22),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -273,20 +273,20 @@ class _InformationSection extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
-                leading: const CircleAvatar(backgroundColor: AppColors.blue100, child: Icon(Icons.business_outlined, color: AppColors.navy700)),
+                leading: CircleAvatar(backgroundColor: AppColors.cyan.withValues(alpha: 0.18), child: Icon(Icons.business_outlined, color: AppColors.ink700)),
                 title: const Text('Khách hàng được phân công', style: TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text(ctx.authorizationContext.customerScope.isEmpty ? 'Chưa có phạm vi' : ctx.authorizationContext.customerScope.join(' · ')),
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const CircleAvatar(backgroundColor: AppColors.statusReady100, child: Icon(Icons.verified_outlined, color: AppColors.statusReady)),
+                leading: const CircleAvatar(backgroundColor: AppColors.readyBg, child: Icon(Icons.verified_outlined, color: AppColors.ready)),
                 title: const Text('Danh tính đã xác minh', style: TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: const Text('Role và permission được lấy từ SSO/IAM'),
-                trailing: ctx.authorizationContext.identityVerified ? const Icon(Icons.check_circle, color: AppColors.statusReady) : const Icon(Icons.warning_amber, color: AppColors.statusNeedInfo),
+                trailing: ctx.authorizationContext.identityVerified ? const Icon(Icons.check_circle, color: AppColors.ready) : const Icon(Icons.warning_amber, color: AppColors.needInfo),
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const CircleAvatar(backgroundColor: AppColors.orange100, child: Icon(Icons.lock_outline, color: AppColors.orange700)),
+                leading: const CircleAvatar(backgroundColor: AppColors.ink700, child: Icon(Icons.lock_outline, color: AppColors.violet)),
                 title: const Text('Quyền đang có', style: TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text('${ctx.authorizationContext.permissions.length} quyền được cấp'),
               ),
@@ -330,11 +330,11 @@ class _WorkItemCard extends StatelessWidget {
   Color get _priorityColor {
     switch (item.priority) {
       case 'high':
-        return AppColors.statusBlocked;
+        return AppColors.block;
       case 'medium':
-        return AppColors.statusNeedInfo;
+        return AppColors.needInfo;
       default:
-        return AppColors.statusAiCta;
+        return AppColors.review;
     }
   }
 
@@ -356,7 +356,7 @@ class _WorkItemCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
-                Icon(item.requiresApproval ? Icons.lock_outline : Icons.play_circle_outline, color: item.requiresApproval ? AppColors.statusNeedInfo : AppColors.navy700),
+                Icon(item.requiresApproval ? Icons.lock_outline : Icons.play_circle_outline, color: item.requiresApproval ? AppColors.needInfo : AppColors.ink700),
               ],
             ),
             if (item.reasons.isNotEmpty) ...[
@@ -365,7 +365,7 @@ class _WorkItemCard extends StatelessWidget {
             ],
             if (item.recommendedAction.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text('Làm ngay: ${item.recommendedAction}', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy700)),
+              Text('Làm ngay: ${item.recommendedAction}', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink700)),
             ],
             const SizedBox(height: 12),
             Align(
