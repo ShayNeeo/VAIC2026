@@ -25,6 +25,12 @@ from app.workflow.planner import PlannerService
 from app.workflow.risk_gate import RiskGateDecision, RiskGuardrailGate
 from app.workflow.router import ComplexityRouter
 from app.workflow.state_machine import transition
+from app.safety.domain_guardrails import (
+    validate_product_agent_output,
+    validate_legal_agent_output,
+    validate_operations_agent_output,
+    GuardrailViolation,
+)
 
 
 def _hash(value: Any) -> str:
@@ -213,6 +219,20 @@ class V2WorkflowEngine:
                 requested_product_ids=requested,
                 customer_attributes=state.context.customer.attributes,
             )
+            # Enforce P0.4 Domain Guardrails: Product Agent
+            try:
+                # Allowed catalog IDs: mock for MVP + SYNTH for V3 tests
+                validate_product_agent_output(
+                    state.product_result.get("recommendations", []), 
+                    allowed_catalog_ids=[
+                        "PROD-PAYROLL", "PROD-CASH-MGMT", "PROD-WORKING-CAPITAL", "PROD-BULK-PAYMENT",
+                        "SYNTH-PROD-PAYROLL", "SYNTH-PROD-CASH-MGMT", "SYNTH-PROD-WORKING-CAPITAL", "SYNTH-PROD-BULK-PAYMENT",
+                    ]
+                )
+            except GuardrailViolation as e:
+                self._event(state, "ProductAgent", "guardrail_violation", {"reason": str(e)})
+                raise
+                
             self._complete_task(state, "product", state.product_result)
             self._product_evidence(state)
             recommendations = state.product_result.get("recommendations", [])
@@ -254,9 +274,16 @@ class V2WorkflowEngine:
             ]
             state.eligibility_result = self.eligibility.evaluate(
                 product_ids,
-                customer=state.context.customer.attributes,
+                customer={**state.context.customer.attributes, **(state.customer_business_snapshot or {})},
                 documents=documents,
             )
+            # Enforce P0.4 Domain Guardrails: Legal Agent
+            try:
+                validate_legal_agent_output(state.eligibility_result)
+            except GuardrailViolation as e:
+                self._event(state, "LegalAgent", "guardrail_violation", {"reason": str(e)})
+                raise
+                
             self._complete_task(state, "eligibility", state.eligibility_result)
             self._legal_evidence(state)
             self._ai_log(
@@ -359,6 +386,13 @@ class V2WorkflowEngine:
                 next_best_actions=state.next_best_actions,
                 evidence_ids=[item.claim_id for item in state.evidences],
             )
+            # Enforce P0.4 Domain Guardrails: Operations Agent
+            try:
+                validate_operations_agent_output(state.operations_result)
+            except GuardrailViolation as e:
+                self._event(state, "OperationsAgent", "guardrail_violation", {"reason": str(e)})
+                raise
+                
             self._complete_task(state, "operations", state.operations_result)
             self._ai_log(
                 state,
