@@ -38,6 +38,18 @@ from app.integrations.enterprise import (
     ensure_employee_copilot_demo_personas,
     map_enterprise_role_to_role_type,
 )
+from app.integrations.pg import (
+    PostgresIAMAdapter,
+    PostgresSSOAdapter,
+)
+
+
+def _employee_iam_adapter(fail_for=None):
+    return PostgresIAMAdapter(fail_for=fail_for) if settings.DATABASE_URL else SQLiteIAMAdapter(fail_for=fail_for)
+
+
+def _employee_sso_adapter(fail_for=None):
+    return PostgresSSOAdapter(fail_for=fail_for) if settings.DATABASE_URL else SQLiteSSOAdapter(fail_for=fail_for)
 from app.integrations.errors import ContextError, UpstreamTimeoutError, UpstreamUnavailableError
 from app.knowledge.legal_service import LegalKnowledgeService
 from app.knowledge.credit_service import CreditKnowledgeService
@@ -220,8 +232,8 @@ def require_verified_identity(
     fail_for = {"IAM_ERROR"}
     try:
         employee = EmployeeContextService(
-            SQLiteSSOAdapter(fail_for=fail_for),
-            SQLiteIAMAdapter(fail_for=fail_for),
+            _employee_sso_adapter(fail_for=fail_for),
+            _employee_iam_adapter(fail_for=fail_for),
         ).get(raw_credential, correlation_id=correlation_id)
     except UpstreamUnavailableError:
         metrics.increment("security.authorization_denied")
