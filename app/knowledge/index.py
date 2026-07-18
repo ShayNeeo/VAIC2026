@@ -322,6 +322,14 @@ class PersistentHybridIndex:
             effective_threshold = threshold
         else:
             effective_threshold = 0.30 if self.provider.dimension == 768 else 0.40
+            # When the caller already narrowed to specific product_ids (intent
+            # resolution did the ACL/scoping), relax the score floor so a
+            # bundle query ("payroll + collections + cash mgmt + working
+            # capital") surfaces every member instead of diluting each below
+            # the global threshold. The product_ids filter bounds precision:
+            # this only restores recall the intent layer already earned.
+            if product_ids:
+                effective_threshold = 0.20
 
         hits: List[RetrievalHit] = []
         with self._connect() as connection:
