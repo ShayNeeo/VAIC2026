@@ -36,6 +36,12 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+build/
+.dart_tool/
+.wrangler/
+.opencode-state/
+assets/fonts/
+android/local.properties
 
 # Dependency directories
 node_modules/

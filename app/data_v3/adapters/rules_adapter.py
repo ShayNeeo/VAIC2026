@@ -66,6 +66,8 @@ def load_v3_rules(path: str) -> List[EligibilityRule]:
                 operator=item["operator"],
                 expected=item["expected"],
                 failure_code=_V3_FAILURE_CODES.get(rule_id, on_unknown),
+                policy_id=item["source_document_id"],
+                section_id=item["source_section"],
                 source_document_id=item["source_document_id"],
                 source_version=item["version"],
                 source_location=f"{item['source_document_id']} section {item['source_section']}",
@@ -88,6 +90,8 @@ class V3RuleRegistry(RuleRegistry):
     V3 rule files use a different schema (blueprint shape) and a dedicated
     source_card path. Governance gate is enforced at the V3 data layer.
     """
+
+    is_v3 = True
 
     def __init__(self, path: str | Path):
         payload = json.loads(Path(path).read_text(encoding="utf-8"))

@@ -34,10 +34,13 @@ class EligibilityRule(BaseModel):
     operator: str
     expected: Any
     failure_code: str
+    policy_id: str = ""
+    section_id: str = ""
     source_document_id: str
     source_version: str
     source_location: str
     source_quote: str
+    access_scope: Optional[dict] = None
     # Policy flag, not a technical property of the rule: may a human
     # specialist override a FAILED verdict on this specific rule after
     # independent verification (see app/workflow/risk_gate.py's
