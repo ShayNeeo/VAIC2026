@@ -58,7 +58,7 @@ Pain point: quy trinh hien tai thu cong, kho doi soat va mat thoi gian.
 SYNTHETIC DEMO DATA.`],
   payment: ["03_payment_process.txt", `QUY TRINH THANH TOAN NHA CUNG CAP VA THU HO
 Cong ty co 120 nha cung cap va 350 dai ly. Hien tai doi soat thu cong.
-Mong muon chi ho theo lo, thu ho theo tai khoan dinh danh va ket noi API ERP.
+Quy trinh mong muon: chi ho theo lo, thu ho theo tai khoan dinh danh va ket noi API ERP.
 SYNTHETIC DEMO DATA.`],
   financial: ["04_financial_statements.txt", `BAO CAO TAI CHINH
 Cong ty Co phan Thiet bi Minh Phat
@@ -180,8 +180,14 @@ async function runAnalysis(){
 }
 function renderRuntime(state){ui.runtime=state;ui.stateVersion=ui.stateVersion||state.state_version;$("resultsPanel").classList.remove("hidden");renderIntent(state.intent_result);renderProducts(state.product_result);renderEligibility(state.eligibility_result);renderPlan(state.execution_plan);renderOperations(state.operations_result);renderNextAction(state);renderEvidence(state.evidences||[]);renderAiLog(state.ai_decision_log||[]);updateSummary();document.querySelector("#resultsPanel").scrollIntoView({behavior:"smooth",block:"start"})}
 function renderIntent(intent){if(!intent)return $("intentResult").innerHTML='<p class="muted">Chưa đủ dữ liệu để kết luận.</p>';const intents=[intent.primary_intent,...(intent.sub_intents||[])];$("intentResult").innerHTML=`<div class="primary-insight">${esc(intent.user_goal)}</div><div class="chips">${intents.map(x=>`<span class="chip">${esc(intentLabels[x]||x)}</span>`).join("")}</div><p class="muted">Độ tin cậy: <b>${Math.round((intent.overall_confidence||0)*100)}%</b><br>Hành vi: ${esc(intent.recommended_action)}</p>`}
-function renderProducts(result){const items=result?.recommendations||[];$("productResult").innerHTML=items.length?items.map(item=>`<div class="product-card"><strong>${esc(item.name)}</strong><span class="score">Match ${Math.round((item.match_score||0)*100)}/100</span><p>${esc(item.matching_reason)}</p><span class="chip blue">${esc(item.product_id)}</span></div>`).join(""):'<p class="muted">Không có sản phẩm đủ grounded. Hệ thống không tự bịa catalog.</p>'}
-function renderEligibility(result){const items=result?.products||[];const label={passed:"Đạt rule",pending_information:"Thiếu dữ liệu",pending_review:"Cần review",failed:"Không đạt"};$("eligibilityResult").innerHTML=items.length?items.map(product=>`<div class="eligibility-card"><b>${esc(product.product_id)} · ${esc(label[product.status]||product.status)}</b>${(product.rules||[]).map(rule=>{const tone=rule.status==="passed"?"pass":rule.status==="failed"?"fail":"wait";return `<div class="rule ${tone}"><i>${tone==="pass"?"✓":tone==="fail"?"×":"!"}</i><span>${esc(rule.rule_id)}<br><small>${esc(label[rule.status]||rule.status)}</small></span></div>`}).join("")}</div>`).join(""):'<p class="muted">Chưa chạy điều kiện vì intent hoặc sản phẩm chưa rõ.</p>'}
+const baselineMapping = {
+  "payroll_premium": "Payroll Premium Package",
+  "cash_management_sme": "SME Cash Management Bundle",
+  "working_capital_unsecured": "Working Capital Unsecured Loan",
+  "bulk_payment_api": "Bulk Payment API Integration"
+};
+function renderProducts(result){const items=result?.recommendations||[];$("productResult").innerHTML=items.length?items.map(item=>`<div class="product-card"><strong>${esc(item.name || baselineMapping[item.product_id] || item.product_id)}</strong><span class="score">Match ${Math.round((item.match_score||0)*100)}/100</span><p>${esc(item.matching_reason)}</p><span class="chip blue">${esc(item.product_id)}</span></div>`).join(""):'<p class="muted">Không có sản phẩm đủ grounded. Hệ thống không tự bịa catalog.</p>'}
+function renderEligibility(result){const items=result?.products||[];const label={passed:"Đạt rule",pending_information:"Thiếu dữ liệu",pending_review:"Cần review",failed:"Không đạt"};$("eligibilityResult").innerHTML=items.length?items.map(product=>`<div class="eligibility-card"><b>${esc(baselineMapping[product.product_id] || product.product_id)} · ${esc(label[product.status]||product.status)}</b>${(product.rules||[]).map(rule=>{const tone=rule.status==="passed"?"pass":rule.status==="failed"?"fail":"wait";return `<div class="rule ${tone}"><i>${tone==="pass"?"✓":tone==="fail"?"×":"!"}</i><span>${esc(rule.rule_id)}<br><small>${esc(label[rule.status]||rule.status)}</small></span></div>`}).join("")}</div>`).join(""):'<p class="muted">Chưa chạy điều kiện vì intent hoặc sản phẩm chưa rõ.</p>'}
 function renderPlan(plan){$("planVersion").textContent=plan?`v${plan.plan_version}`:"v—";$("executionPlan").innerHTML=plan?.steps?.map(step=>`<div class="plan-step ${esc(step.status)}"><b>${esc(step.title)}</b><span>${esc(step.owner)} · ${esc(step.status)}</span><small>${esc(step.reason||step.stop_condition||"")}</small></div>`).join("")||'<p class="muted">Planner chưa tạo kế hoạch vì nhu cầu cần làm rõ.</p>'}
 function renderOperations(op){if(!op)return $("operationsResult").innerHTML='<p class="muted">Chưa tạo operations draft.</p>';const checklist=op.required_document_checklist||[];$("operationsResult").innerHTML=`<div class="operations-grid"><div class="op-block"><h3>Checklist hồ sơ</h3>${checklist.map(item=>`<div class="check-item"><i>${item.current_status==="verified"?"✓":"!"}</i><span>${esc(item.display_name)}<br><small>${esc((item.source_rule_ids||[]).join(", ")||"product prerequisite")}</small></span><b>${item.current_status==="verified"?"Đã có":"Còn thiếu"}</b></div>`).join("")||'<p class="muted">Không có hồ sơ bổ sung.</p>'}</div><div class="op-block"><h3>Đề xuất nháp · chưa gửi</h3><div class="draft-box"><b>${esc(op.proposal_draft?.title||"")}</b>\n\n${(op.proposal_draft?.solutions||[]).map(x=>`• ${x.name}: ${x.matching_reason}`).join("\n")}\n\n${esc(op.proposal_draft?.disclaimer||"")}</div></div><div class="op-block"><h3>Phản hồi khách hàng · chưa gửi</h3><div class="draft-box">${esc(op.customer_message_draft?.body||"")}</div></div><div class="op-block"><h3>Action draft</h3><div class="draft-box">${esc(JSON.stringify(op.action_payload||{},null,2))}</div></div></div>`}
 function nextCopy(status){const map={draft:["Nạp hồ sơ","Tải lên tài liệu để hệ thống có nguồn."],files_uploaded:["Đọc hồ sơ","Chạy phân loại và trích xuất."],profile_review_required:["RM xác nhận context","Xử lý xung đột rồi xác nhận snapshot."],profile_confirmed:["Chạy phân tích","Tìm sản phẩm và kiểm tra rule."],clarification_required:["Làm rõ nhu cầu","Nêu mục tiêu, pain point và kết quả mong muốn."],pending_information:["Bổ sung hồ sơ còn thiếu","Chỉ resume phần bị ảnh hưởng sau khi có evidence."],pending_review:["Chuyển chuyên viên kiểm tra","Không cho tự phê duyệt khi evidence/rule chưa an toàn."],pending_approval:["Kiểm tra và phê duyệt payload","RM duyệt hành động, không phải duyệt cấp sản phẩm."],completed:["Hoàn tất phân tích","Xem AI log và lịch sử audit để kiểm tra."],rejected:["Case đã dừng","Tạo case mới nếu cần."]};const value=map[status]||["Tiếp tục theo workflow","Xem bước đang được tô đỏ."];return {title:value[0],reason:value[1]}}
@@ -194,13 +200,284 @@ function renderAudit(events,valid){$("auditLog").innerHTML=`<div class="notice $
 function renderControlLogs(evidence,ai,audit){renderEvidence(evidence);renderAiLog(ai);renderAudit(audit,true)}
 async function loadControlLogs(){if(!ui.caseId||!ui.runtime)return;try{const [ai,audit]=await Promise.all([api(`/api/v2/sales-cases/${ui.caseId}/ai-log`),api(`/api/v2/sales-cases/${ui.caseId}/audit`)]);renderAiLog(ai.entries||[]);renderAudit(audit.events||[],audit.chain_valid)}catch(error){toast(`Không tải được log: ${esc(error.message)}`,"error")}}
 async function previewApproval(){try{const data=await api(`/api/v2/sales-cases/${ui.caseId}/approval-preview`,{method:"POST"});ui.previewHash=data.payload_hash;$("actionButtons").insertAdjacentHTML("beforeend",`<div class="approval-preview"><b>Payload hash</b><small>${esc(data.payload_hash)}</small><pre>${esc(JSON.stringify(data.payload,null,2))}</pre></div>`);toast("Đã hiển thị đúng payload được khóa cho approval.","warning")}catch(error){toast(esc(error.message),"error")}}
-async function approveAction(){try{if(!ui.previewHash)await previewApproval();const data=await api(`/api/v2/sales-cases/${ui.caseId}/approve`,{method:"POST",body:JSON.stringify({expected_state_version:ui.stateVersion,payload_hash:ui.previewHash})});ui.approvalToken=data.approval_token;ui.stateVersion=data.state_version;$("executeAction").disabled=false;$("approveAction").disabled=true;toast("RM đã duyệt đúng payload hash. Token ngắn hạn không được ghi vào log.")}catch(error){toast(`<b>${esc(error.code)}:</b> ${esc(error.message)}`,"error")}}
+async function approveAction(){
+  try{
+    if(!ui.previewHash)await previewApproval();
+    const data=await api(`/api/v2/sales-cases/${ui.caseId}/approve`,{method:"POST",body:JSON.stringify({expected_state_version:ui.stateVersion,payload_hash:ui.previewHash})});
+    ui.approvalToken=data.approval_token;ui.stateVersion=data.state_version;
+    $("executeAction").disabled=false;$("approveAction").disabled=true;
+    // Log accepted feedback for personalization learning
+    await logPersonalizationFeedback("accepted");
+    toast("RM đã duyệt đúng payload hash. Token ngắn hạn không được ghi vào log.");
+  }catch(error){toast(`<b>${esc(error.code)}:</b> ${esc(error.message)}`,"error")}
+}
 async function executeAction(){try{const data=await api(`/api/v2/sales-cases/${ui.caseId}/execute-actions`,{method:"POST",headers:{"X-Approval-Token":ui.approvalToken},body:JSON.stringify({idempotency_key:`${ui.caseId}:ui-execute-v1`,expected_state_version:ui.stateVersion})});ui.stateVersion=data.state_version;const latest=await api(`/api/v2/cases/${ui.caseId}`);ui.runtime=latest.case;renderRuntime(latest.case);await loadControlLogs();toast(`Đã tạo opportunity ${esc(data.result.opportunity_id)} và các task đồng bộ trên hệ thống CRM.`)}catch(error){toast(`<b>${esc(error.code)}:</b> ${esc(error.message)}`,"error")}}
 async function loadCases(){try{const items=await api("/api/v2/sales-cases");$("caseList").innerHTML=items.length?items.map(item=>`<button class="case-item" data-case="${esc(item.case_id)}"><strong>${esc(item.manual_input?.company_name||item.case_id)}</strong><span>${esc(item.case_id)} · ${esc(statusLabels[item.runtime_status||item.intake_status]||item.runtime_status||item.intake_status)}</span></button>`).join(""):'<p class="muted">Chưa có case.</p>';document.querySelectorAll(".case-item").forEach(button=>button.onclick=()=>openCase(button.dataset.case))}catch(error){toast(`Không tải được danh sách case: ${esc(error.message)}`,"error")}}
 async function openCase(caseId){try{const items=await api("/api/v2/sales-cases");const item=items.find(x=>x.case_id===caseId);if(!item)return;resetRuntime();applyIntake(item);await loadDocuments();if(item.runtime_status){const runtime=await api(`/api/v2/cases/${caseId}`);ui.stateVersion=runtime.state_version;renderRuntime(runtime.case);await loadControlLogs();setStage(5)}else if(item.intake_status==="profile_review_required")setStage(4);else if(item.intake_status==="profile_confirmed")setStage(5);else if(item.intake_status==="files_uploaded")setStage(3);else setStage(2);toast(`Đã mở lại ${esc(caseId)} từ SQLite.`)}catch(error){toast(esc(error.message),"error")}}
 
-$("scenario").onchange=e=>selectScenario(e.target.value);$("createCase").onclick=createCase;$("chooseFiles").onclick=()=>$("fileInput").click();$("fileInput").onchange=e=>{ui.pendingFiles.push(...e.target.files);renderPendingFiles()};$("loadMockFiles").onclick=()=>loadMock(false);$("uploadDocuments").onclick=uploadDocuments;$("processDocuments").onclick=processDocuments;$("saveCorrection").onclick=()=>patchProfile($("correctionField").value,parseCorrection($("correctionField").value,$("correctionValue").value));$("confirmProfile").onclick=confirmProfile;$("runAnalysis").onclick=runAnalysis;$("backToInput").onclick=()=>setStage(1);$("addMoreDocuments").onclick=()=>setStage(2);$("refreshCases").onclick=loadCases;$("session").onchange=()=>{resetRuntime();setStage(1);loadCases()};
-const dropzone=$("dropzone");["dragenter","dragover"].forEach(type=>dropzone.addEventListener(type,event=>{event.preventDefault();dropzone.classList.add("drag")}));["dragleave","drop"].forEach(type=>dropzone.addEventListener(type,event=>{event.preventDefault();dropzone.classList.remove("drag")}));dropzone.addEventListener("drop",event=>{ui.pendingFiles.push(...event.dataTransfer.files);renderPendingFiles()});
-document.querySelectorAll(".tab").forEach(button=>button.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===button));["Evidence","Ai","Audit","Json"].forEach(name=>$("tab"+name).classList.toggle("hidden",button.dataset.tab!==name.toLowerCase()))});
+// =====================================================================
+// NEW ROLE-AWARE & WORK OPTIMIZATION COGNITIVE LAYER INTEGRATION
+// =====================================================================
 
-selectScenario("payroll");setStage(1);setIntakeStatus("draft");loadCases();
+async function loadEmployeeContext() {
+  const empId = $("employee").value;
+  
+  // FAIL-CLOSED GATES: If simulator is error/expired
+  if (empId === "EXPIRED_TOKEN" || empId === "IAM_ERROR") {
+    handleFailClosed(empId);
+    return;
+  }
+
+  try {
+    const data = await api("/api/v2/me/context");
+    toast(`SSO: Đăng nhập thành công với ID <b>${esc(empId)}</b>.`);
+    
+    // UI Personalization setup
+    const pCtx = data.personalization_context;
+    $("togglePersonalization").checked = pCtx.enabled;
+    $("prefDefaultTab").value = pCtx.preferences.default_case_view || "evidence";
+    $("prefEmailTemplate").value = pCtx.preferences.preferred_email_template || "formal_corporate";
+    
+    // Apply default view preference
+    const defaultTab = pCtx.preferences.default_case_view || "evidence";
+    const tabBtn = $("tabButton" + defaultTab.charAt(0).toUpperCase() + defaultTab.slice(1));
+    if (tabBtn) tabBtn.click();
+
+    // Route Workspace by Role
+    const role = data.authorization_context.roles[0];
+    routeWorkspace(role);
+  } catch (error) {
+    toast(`Lỗi xác thực hệ thống: ${esc(error.message)}`, "error");
+    hideAllWorkspaces();
+  }
+}
+
+function handleFailClosed(type) {
+  hideAllWorkspaces();
+  if (type === "EXPIRED_TOKEN") {
+    toast("<b>401 Unauthenticated:</b> Phiên làm việc hết hạn. SSO Token Verification Failed. Vui lòng đăng nhập lại.", "error");
+  } else if (type === "IAM_ERROR") {
+    toast("<b>503 Service Unavailable:</b> Cổng IAM của SHB đang bảo trì hoặc mất kết nối. Chặn toàn bộ quyền truy cập dữ liệu để đảm bảo an toàn.", "error");
+  }
+}
+
+function hideAllWorkspaces() {
+  $("rmWorkspace").classList.add("hidden");
+  $("specialistWorkspace").classList.add("hidden");
+  $("managerWorkspace").classList.add("hidden");
+  $("personalizationPanel").classList.add("hidden");
+}
+
+function routeWorkspace(role) {
+  hideAllWorkspaces();
+  $("personalizationPanel").classList.remove("hidden");
+
+  if (role === "relationship_manager") {
+    $("rmWorkspace").classList.remove("hidden");
+    $("workspaceTitle").textContent = "RM Workspace · Personalization Active";
+    loadNextBestWorkQueue();
+  } else if (role.endsWith("_specialist")) {
+    $("specialistWorkspace").classList.remove("hidden");
+    $("workspaceTitle").textContent = `${role.toUpperCase().replaceAll("_", " ")} Workspace`;
+    loadSpecialistQueue();
+  } else if (role === "manager") {
+    $("managerWorkspace").classList.remove("hidden");
+    $("workspaceTitle").textContent = "Manager Console · Aggregate Metrics Only";
+    loadManagerWorkload();
+  }
+}
+
+async function loadNextBestWorkQueue() {
+  try {
+    const data = await api("/api/v2/me/work-queue");
+    const container = $("nbwQueueList");
+    if (!data || !data.queue || !data.queue.length) {
+      container.innerHTML = '<p class="muted">Không có nhiệm vụ ưu tiên nào.</p>';
+      return;
+    }
+
+    container.innerHTML = data.queue.map(item => {
+      const priorityClass = item.priority_score >= 80 ? "high" : (item.priority_score >= 50 ? "medium" : "low");
+      const bandLabel = item.priority_band === 0 ? "P0 Regulatory" : (item.priority_band === 1 ? "P1 SLA" : (item.priority_band === 2 ? "P2 Customer" : "P3 Normal"));
+      
+      return `
+        <div class="nbw-item ${priorityClass}" onclick="toast('Nhiệm vụ: ${esc(item.title)}. Lý do: ${esc(item.reasons.join('; '))}', 'warning')">
+          <span class="nbw-badge ${priorityClass}">${bandLabel} · ${item.priority_score} pts</span>
+          <h4>${esc(item.title)}</h4>
+          <p>Khách hàng: <b>${esc(item.customer_id)}</b> · Đề xuất: <code>${esc(item.recommended_action)}</code></p>
+          <small class="muted" style="display:block; margin-top:4px;">Lý do: ${esc(item.reasons.join(", "))}</small>
+        </div>
+      `;
+    }).join("");
+  } catch (error) {
+    toast(`Lỗi khi tải NBW: ${esc(error.message)}`, "error");
+  }
+}
+
+async function loadSpecialistQueue() {
+  try {
+    const data = await api("/api/v2/me/work-queue");
+    const container = $("specQueueList");
+    if (!data || !data.queue || !data.queue.length) {
+      container.innerHTML = '<p class="muted">Không có hồ sơ chờ xử lý.</p>';
+      return;
+    }
+
+    container.innerHTML = data.queue.map(item => `
+      <div class="nbw-item medium" onclick="viewSpecialistTask('${item.work_item_id}')">
+        <h4>${esc(item.title)}</h4>
+        <p>Khách hàng: <b>${esc(item.customer_id)}</b> · Trạng thái: <code>${esc(item.status)}</code></p>
+      </div>
+    `).join("");
+  } catch (error) {
+    toast(`Lỗi tải Specialist queue: ${esc(error.message)}`, "error");
+  }
+}
+
+async function viewSpecialistTask(taskId) {
+  try {
+    const data = await api("/api/v2/me/work-queue");
+    const item = data.queue.find(x => x.work_item_id === taskId);
+    if (!item) return;
+
+    const excludedList = item.excluded_actions && item.excluded_actions.length 
+      ? item.excluded_actions.map(act => `<li><code>${esc(act)}</code> (Chặn theo chính sách RBAC của Chuyên viên)</li>`).join("")
+      : "<li>Không có hành động bị chặn</li>";
+
+    $("specDetailPanel").innerHTML = `
+      <h2>Chi tiết nhiệm vụ Chuyên viên</h2>
+      <div class="notice success" style="margin-top:10px;">
+        <h3>${esc(item.title)}</h3>
+        <p>Khách hàng: <b>${esc(item.customer_id)}</b></p>
+        <p>Độ ưu tiên: <b>${item.priority_score} điểm</b> (Priority Band: ${item.priority_band})</p>
+      </div>
+      
+      <div class="panel" style="margin-top:15px; padding: 12px;">
+        <h3>Hành động chuyên trách được giao:</h3>
+        <button class="button primary" onclick="toast('Đã thực thi hành động chuyên trách: ${esc(item.recommended_action)} thành công.', 'success')">
+          ${esc(item.recommended_action.toUpperCase())}
+        </button>
+      </div>
+
+      <div class="panel" style="margin-top:15px; padding: 12px; border-top: 3px solid var(--red);">
+        <h3 style="color:var(--danger)">Các hành động bị cấm đối với role này:</h3>
+        <ul>${excludedList}</ul>
+      </div>
+    `;
+  } catch (error) {
+    toast(`Lỗi khi xem chi tiết task: ${esc(error.message)}`, "error");
+  }
+}
+
+async function loadManagerWorkload() {
+  try {
+    const data = await api("/api/v2/me/team/workload");
+    $("mgrBlockedCases").textContent = data.aggregate_metrics.blocked_cases;
+    $("mgrSlaRisks").textContent = data.aggregate_metrics.sla_risks;
+    $("mgrCohortSize").textContent = data.cohort_size;
+
+    const summary = data.aggregate_metrics.ai_recommendation_utilization;
+    const container = $("mgrUtilizationSummary");
+    
+    if (!summary.cohort_minimum_size_met) {
+      container.innerHTML = `
+        <div class="notice danger">
+          <b>RỦI RO BẢO MẬT: Quy mô cohort nhỏ (${data.cohort_size} thành viên).</b><br>
+          Manager Console đã kích hoạt cơ chế ẩn thông tin thói quen để bảo vệ RM. Yêu cầu tối thiểu 5 thành viên để xem báo cáo thống kê.
+        </div>
+      `;
+    } else {
+      const accepted = summary.utilization_summary.accepted || 0;
+      const rejected = summary.utilization_summary.rejected || 0;
+      const total = accepted + rejected;
+      const pct = total > 0 ? Math.round((accepted / total) * 100) : 100;
+      
+      container.innerHTML = `
+        <div class="notice success">
+          Tỷ lệ tương tác AI: <b>${pct}%</b> chấp nhận gợi ý (${accepted} Accepted, ${rejected} Rejected).
+        </div>
+      `;
+    }
+  } catch (error) {
+    toast(`Lỗi tải dữ liệu Manager: ${esc(error.message)}`, "error");
+  }
+}
+
+async function updatePersonalizationSettings() {
+  try {
+    const enabled = $("togglePersonalization").checked;
+    const defaultTab = $("prefDefaultTab").value;
+    const emailTemp = $("prefEmailTemplate").value;
+
+    // Save preferences
+    await api("/api/v2/me/preferences", {
+      method: "POST",
+      body: JSON.stringify({
+        default_case_view: defaultTab,
+        preferred_email_template: emailTemp,
+        show_evidence_expanded: true
+      })
+    });
+
+    // Save consent
+    await api("/api/v2/me/consent", {
+      method: "POST",
+      body: JSON.stringify({
+        personalization_enabled: enabled,
+        activity_learning_enabled: enabled,
+        allowed_event_categories: ["ui_preferences"],
+        consent_version: "v1"
+      })
+    });
+
+    toast("Đã cập nhật tùy chọn cá nhân hóa thành công.", "success");
+    await loadEmployeeContext();
+  } catch (error) {
+    toast(`Lỗi cập nhật tùy chọn: ${esc(error.message)}`, "error");
+  }
+}
+
+async function logPersonalizationFeedback(feedbackType) {
+  try {
+    const data = await api("/api/v2/me/work-queue");
+    if (data.queue && data.queue.length) {
+      const firstTask = data.queue[0];
+      await api("/api/v2/me/habits/confirm", {
+        method: "POST",
+        body: JSON.stringify({
+          recommendation_id: `REC-${firstTask.work_item_id}`,
+          feedback: feedbackType
+        })
+      });
+    }
+  } catch (e) {
+    console.warn("Feedback log skipped: ", e);
+  }
+}
+
+async function deletePersonalizationHabit() {
+  try {
+    const empId = $("employee").value;
+    await api(`/api/v2/me/habits/HABIT-001`, { method: "DELETE" });
+    toast("Đã xóa thói quen cá nhân hóa. Trải nghiệm sẽ quay về cấu hình mặc định.");
+    await loadEmployeeContext();
+  } catch (error) {
+    toast(`Không có thói quen hoạt động để xóa: ${esc(error.message)}`, "warning");
+  }
+}
+
+// Bind SSO switcher event
+$("employee").onchange = loadEmployeeContext;
+
+// Bind Personalization preferences change
+$("togglePersonalization").onchange = updatePersonalizationSettings;
+$("prefDefaultTab").onchange = updatePersonalizationSettings;
+$("prefEmailTemplate").onchange = updatePersonalizationSettings;
+$("btnDeleteHabit").onclick = deletePersonalizationHabit;
+
+// Initial load
+selectScenario("payroll");
+setStage(1);
+setIntakeStatus("draft");
+loadCases();
+loadEmployeeContext();
