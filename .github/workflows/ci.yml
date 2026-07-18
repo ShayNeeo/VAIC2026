@@ -30,7 +30,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install -r requirements-optional.txt || true
+          # Optional stack has pinned langchain/chromadb versions that may conflict
+          # with the resolved requirements.txt set; never let it break CI.
+          pip install -r requirements-optional.txt || echo "requirements-optional.txt skipped (conflict)"
+
+      - name: Ensure state dir exists for sqlite-backed tests
+        run: mkdir -p data/state
 
       - name: Validate config imports cleanly
         run: python -c "from app.config import settings; print('RAG_PROVIDER=', settings.RAG_PROVIDER)"
