@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Dict
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -20,6 +21,27 @@ app = FastAPI(
     title="SHB Corporate Expert Workspace",
     version="2.0.0",
     description="Context-aware controlled workflow MVP using SYNTHETIC DEMO DATA.",
+)
+
+# Allow the deployed Flutter web frontend (vaic.w9.nu) to call this API.
+# Origins are read from CORS_ALLOW_ORIGINS (comma-separated) so preview
+# domains can be added without a code change.
+import os
+
+_cors_origins = [
+    o.strip()
+    for o in os.getenv(
+        "CORS_ALLOW_ORIGINS",
+        "https://vaic.w9.nu,https://vaic-frontend.pages.dev",
+    ).split(",")
+    if o.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 app.include_router(v2_router)
 app.include_router(auth_router, prefix="/api/v2")
