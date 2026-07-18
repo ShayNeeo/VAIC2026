@@ -3,10 +3,10 @@
     "dataset_id": "corporate-sales-single-vs-multi-agent-v1",
     "dataset_version": "2026.07.18-v1",
     "data_label": "SYNTHETIC BENCHMARK DATA",
-    "run_timestamp": "2026-07-18T02:38:21.361635+00:00",
+    "run_timestamp": "2026-07-18T11:02:12.371673+00:00",
     "cache_mode": "warm",
     "case_count": 1,
-    "git_commit": "545525b81b80016d2bca935d0581c772ee4e09e9",
+    "git_commit": "d23daeb767dab9255e9cb913f54c9f3f50bb5bab",
     "working_tree_dirty": true,
     "configuration": {
       "rag_provider": "local",

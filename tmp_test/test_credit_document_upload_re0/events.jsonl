@@ -1,2 +1,2 @@
-{"at": "2026-07-18T02:38:18.528153+00:00", "event_code": "case_created", "case_id": "CASE-96A60F7680B0", "trace_id": "TRACE-CA1E710DEEA047859499518B40DF7ACE", "status": "pending_information"}
-{"at": "2026-07-18T02:38:18.556499+00:00", "event_code": "case_resumed", "case_id": "CASE-96A60F7680B0", "trace_id": "TRACE-CA1E710DEEA047859499518B40DF7ACE", "resume_nodes": ["evaluate_eligibility", "validate_evidence", "prepare_operations"]}
+{"at": "2026-07-18T11:02:10.224678+00:00", "event_code": "case_created", "case_id": "CASE-A8A301785752", "trace_id": "TRACE-9D9E1FD0D50C48489CF9AC3F8C6BA099", "status": "pending_information"}
+{"at": "2026-07-18T11:02:10.236274+00:00", "event_code": "case_resumed", "case_id": "CASE-A8A301785752", "trace_id": "TRACE-9D9E1FD0D50C48489CF9AC3F8C6BA099", "resume_nodes": ["evaluate_eligibility", "validate_evidence", "prepare_operations"]}

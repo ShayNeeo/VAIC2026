@@ -3,9 +3,9 @@
 **SYNTHETIC BENCHMARK DATA** -- no real SHB customer or transaction data.
 
 - Dataset: `corporate-sales-single-vs-multi-agent-v1` v`2026.07.18-v1`, 1 cases
-- Run at: 2026-07-18T02:38:21.361635+00:00
+- Run at: 2026-07-18T11:02:12.371673+00:00
 - Cache mode: `warm`
-- git_commit: `545525b81b80016d2bca935d0581c772ee4e09e9`, working_tree_dirty: `True`
+- git_commit: `d23daeb767dab9255e9cb913f54c9f3f50bb5bab`, working_tree_dirty: `True`
 - RAG_PROVIDER: `local`, intent mode: `deterministic`
 
 ## Routing accuracy: 1.0

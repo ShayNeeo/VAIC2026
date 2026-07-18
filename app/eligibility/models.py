@@ -82,3 +82,32 @@ class ProductEligibility(BaseModel):
     missing_information: List[str]
     evaluated_at: datetime
     registry_version: str
+
+
+class RelatedPolicy(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    policy_id: str
+    title: str
+    policy_type: str
+    document_id: str
+    document_version: str
+    section: str
+    effective_from: date
+    effective_to: Optional[date] = None
+    applicability_reason: str
+    decision_effect: str
+    rule_ids: List[str]
+    summary: str
+    source_quote: str
+    claim_id: str
+    evidence_valid: bool = False
+
+
+class LegalSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    conclusion: str
+    blocking_reasons: List[str]
+    warnings: List[str]
+    required_actions: List[str]
