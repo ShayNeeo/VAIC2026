@@ -1,16 +1,23 @@
 #!/usr/bin/env bash
-# Regenerate Inter TTF fonts into assets/fonts (not tracked in git; too large).
+# Regenerate TTF fonts into assets/fonts (not tracked in git; too large).
+# Heading: Sora | Body/data: IBM Plex Sans
 # Needs: pnpm + fonttools (pipx install fonttools && pipx inject fonttools brotli)
 set -e
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/assets/fonts"
 TMP="$(mktemp -d)"
 cd "$TMP"
-pnpm add inter-ui >/dev/null 2>&1 || true
-SRC="$TMP/node_modules/inter-ui/web"
+pnpm add @fontsource/sora @fontsource/ibm-plex-sans >/dev/null 2>&1 || true
+SORA="$TMP/node_modules/@fontsource/sora/files"
+PLEX="$TMP/node_modules/@fontsource/ibm-plex-sans/files"
 mkdir -p "$OUT"
-for w in Regular Medium SemiBold Bold ExtraBold; do
-  fonttools ttx -o "$OUT/Inter-$w.ttf" "$SRC/Inter-$w.woff2"
+for pair in 400:Regular 500:Medium 600:SemiBold 700:Bold 800:ExtraBold; do
+  num=${pair%:*}; name=${pair#*:}
+  fonttools ttx -o "$OUT/Sora-$name.ttf" "$SORA/sora-latin-$num-normal.woff2"
+done
+for pair in 400:Regular 500:Medium 600:SemiBold 700:Bold; do
+  num=${pair%:*}; name=${pair#*:}
+  fonttools ttx -o "$OUT/IBMPlexSans-$name.ttf" "$PLEX/ibm-plex-sans-latin-$num-normal.woff2"
 done
 rm -rf "$TMP"
 echo "Fonts written to $OUT"
