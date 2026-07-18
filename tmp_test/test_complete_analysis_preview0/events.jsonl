@@ -1,0 +1,3 @@
+{"at": "2026-07-18T05:46:31.316163+00:00", "event_code": "case_created", "case_id": "CASE-406630D666B8", "trace_id": "TRACE-A0B2ACE1AD4A4ADC90980FBEA76922AB", "status": "pending_approval"}
+{"at": "2026-07-18T05:46:31.353605+00:00", "event_code": "payload_approved", "case_id": "CASE-406630D666B8", "trace_id": "TRACE-A0B2ACE1AD4A4ADC90980FBEA76922AB", "payload_hash": "sha256:d2c22a833122a2797ae7a5c4bbfafd3d9f21b4d7ef7f2e7a43ea86c84b149ae6"}
+{"at": "2026-07-18T05:46:31.407641+00:00", "event_code": "actions_executed", "case_id": "CASE-406630D666B8", "trace_id": "TRACE-A0B2ACE1AD4A4ADC90980FBEA76922AB", "crm_case_id": "SHB-CRM-3E5F41FDAD"}

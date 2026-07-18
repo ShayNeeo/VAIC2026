@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "corpus_id": "SHB-CORPORATE-SALES-DEMO-CORPUS",
+  "dataset_version": "2026.07-demo-v2",
+  "generated_at": "2026-07-17T00:00:00+07:00",
+  "data_mode": "SHB_ENTERPRISE_DATA",
+  "canonical_product_id_namespace": "PRD-*",
+  "publish_policy": "ATOMIC_ALL_SOURCES_VALID",
+  "sources": [
+    {
+      "source_card": "data/catalog/source_cards/synthetic_product_reference_pack.json",
+      "adapter": "product_reference_pack",
+      "files": [
+        "data/raw_csv_json/products.csv",
+        "data/raw_csv_json/product_pricing_limits.csv",
+        "data/raw_csv_json/solution_bundles.csv",
+        "data/mock_documents/Bieu_phi_dich_vu_Tai_tro_thuong_mai_XNK.md",
+        "data/mock_documents/Huong_dan_quan_ly_dong_tien_Cash_Management.md",
+        "data/mock_documents/The_le_dich_vu_chi_luong_Corporate_Online.md",
+        "data/mock_documents/Huong_dan_tai_khoan_thanh_toan_doanh_nghiep.md",
+        "data/mock_documents/Huong_dan_dich_vu_thu_ho_khoan_phai_thu.md",
+        "data/mock_documents/Huong_dan_dich_vu_thanh_toan_nha_cung_cap.md"
+      ]
+    },
+    {
+      "source_card": "data/catalog/source_cards/synthetic_legal_reference_pack.json",
+      "adapter": "legal_reference_pack",
+      "files": [
+        "data/raw_csv_json/product_policies.csv",
+        "data/mock_documents/Quy_trinh_KYC_va_Mo_tai_khoan_doanh_nghiep.md",
+        "data/mock_documents/Quy_che_cho_vay_von_luu_dong_KHDN_SHB.md",
+        "data/mock_documents/Huong_dan_bao_lanh_ngan_hang_B2B.md"
+      ]
+    },
+    {
+      "source_card": "data/catalog/source_cards/synthetic_operations_reference_pack.json",
+      "adapter": "operations_reference_pack",
+      "files": [
+        "data/raw_csv_json/sop_workflows.csv",
+        "data/raw_csv_json/checklist_definitions.csv",
+        "data/raw_csv_json/sla_rules.csv",
+        "data/raw_csv_json/email_templates.csv",
+        "data/raw_csv_json/raci_matrix.csv"
+      ]
+    }
+  ]
+}

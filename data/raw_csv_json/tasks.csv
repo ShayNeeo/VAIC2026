@@ -1,0 +1,49 @@
+task_id,case_id,task_type,domain,owner_team,owner_user,dependency_task_id,status,priority,created_at,due_at,completed_at,retry_count,output_ref,escalation_required,human_approval_required,source_id,synthetic_flag
+TASK-00001,CASE-2026-001,product_solution,Product,Product,PROD-01,,in_progress,high,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00002,CASE-2026-001,legal_eligibility,Legal,Legal & Compliance,LEGAL-01,TASK-00001,blocked,high,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,true,false,SRC-PROP-001,true
+TASK-00003,CASE-2026-001,operational_checklist,Operations,Operations,OPS-01,TASK-00002,blocked,high,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00004,CASE-2026-001,evidence_validation,Evidence,Risk Control,RISK-01,TASK-00003,blocked,high,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00005,CASE-2026-002,product_solution,Product,Product,PROD-02,,completed,medium,2026-07-16T09:01:00+07:00,2026-07-17T15:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-002-1,false,false,SRC-PROP-001,true
+TASK-00006,CASE-2026-002,legal_eligibility,Legal,Legal & Compliance,LEGAL-02,TASK-00005,completed,medium,2026-07-16T09:01:00+07:00,2026-07-17T15:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-002-2,false,false,SRC-PROP-001,true
+TASK-00007,CASE-2026-002,operational_checklist,Operations,Operations,OPS-02,TASK-00006,completed,medium,2026-07-16T09:01:00+07:00,2026-07-17T15:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-002-3,false,true,SRC-PROP-001,true
+TASK-00008,CASE-2026-002,evidence_validation,Evidence,Risk Control,RISK-02,TASK-00007,completed,medium,2026-07-16T09:01:00+07:00,2026-07-17T15:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-002-4,false,true,SRC-PROP-001,true
+TASK-00009,CASE-2026-003,product_solution,Product,Product,PROD-03,,in_progress,normal,2026-07-17T09:02:00+07:00,2026-07-19T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00010,CASE-2026-003,legal_eligibility,Legal,Legal & Compliance,LEGAL-03,TASK-00009,queued,normal,2026-07-17T09:02:00+07:00,2026-07-19T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00011,CASE-2026-003,operational_checklist,Operations,Operations,OPS-03,TASK-00010,queued,normal,2026-07-17T09:02:00+07:00,2026-07-19T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00012,CASE-2026-003,evidence_validation,Evidence,Risk Control,RISK-01,TASK-00011,queued,normal,2026-07-17T09:02:00+07:00,2026-07-19T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00013,CASE-2026-004,product_solution,Product,Product,PROD-01,,in_progress,high,2026-07-15T09:03:00+07:00,2026-07-18T12:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00014,CASE-2026-004,legal_eligibility,Legal,Legal & Compliance,LEGAL-01,TASK-00013,escalated,high,2026-07-15T09:03:00+07:00,2026-07-18T12:00:00+07:00,,0,,true,false,SRC-PROP-001,true
+TASK-00015,CASE-2026-004,operational_checklist,Operations,Operations,OPS-04,TASK-00014,queued,high,2026-07-15T09:03:00+07:00,2026-07-18T12:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00016,CASE-2026-004,evidence_validation,Evidence,Risk Control,RISK-02,TASK-00015,queued,high,2026-07-15T09:03:00+07:00,2026-07-18T12:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00017,CASE-2026-005,product_solution,Product,Product,PROD-02,,in_progress,normal,2026-07-16T09:04:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00018,CASE-2026-005,legal_eligibility,Legal,Legal & Compliance,LEGAL-02,TASK-00017,queued,normal,2026-07-16T09:04:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00019,CASE-2026-005,operational_checklist,Operations,Operations,OPS-01,TASK-00018,queued,normal,2026-07-16T09:04:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00020,CASE-2026-005,evidence_validation,Evidence,Risk Control,RISK-01,TASK-00019,pending_approval,normal,2026-07-16T09:04:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00021,CASE-2026-006,product_solution,Product,Product,PROD-03,,completed,high,2026-07-17T09:05:00+07:00,2026-07-17T11:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-006-1,false,false,SRC-PROP-001,true
+TASK-00022,CASE-2026-006,legal_eligibility,Legal,Legal & Compliance,LEGAL-03,TASK-00021,completed,high,2026-07-17T09:05:00+07:00,2026-07-17T11:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-006-2,true,false,SRC-PROP-001,true
+TASK-00023,CASE-2026-006,operational_checklist,Operations,Operations,OPS-02,TASK-00022,completed,high,2026-07-17T09:05:00+07:00,2026-07-17T11:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-006-3,false,true,SRC-PROP-001,true
+TASK-00024,CASE-2026-006,evidence_validation,Evidence,Risk Control,RISK-02,TASK-00023,completed,high,2026-07-17T09:05:00+07:00,2026-07-17T11:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-006-4,false,true,SRC-PROP-001,true
+TASK-00025,CASE-2026-007,product_solution,Product,Product,PROD-01,,in_progress,medium,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00026,CASE-2026-007,legal_eligibility,Legal,Legal & Compliance,LEGAL-01,TASK-00025,in_progress,medium,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00027,CASE-2026-007,operational_checklist,Operations,Operations,OPS-03,TASK-00026,in_progress,medium,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00028,CASE-2026-007,evidence_validation,Evidence,Risk Control,RISK-01,TASK-00027,in_progress,medium,2026-07-15T09:00:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00029,CASE-2026-008,product_solution,Product,Product,PROD-02,,in_progress,high,2026-07-16T09:01:00+07:00,2026-07-18T12:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00030,CASE-2026-008,legal_eligibility,Legal,Legal & Compliance,LEGAL-02,TASK-00029,queued,high,2026-07-16T09:01:00+07:00,2026-07-18T12:00:00+07:00,,0,,true,false,SRC-PROP-001,true
+TASK-00031,CASE-2026-008,operational_checklist,Operations,Operations,OPS-04,TASK-00030,failed,high,2026-07-16T09:01:00+07:00,2026-07-18T12:00:00+07:00,,2,,false,true,SRC-PROP-001,true
+TASK-00032,CASE-2026-008,evidence_validation,Evidence,Risk Control,RISK-02,TASK-00031,queued,high,2026-07-16T09:01:00+07:00,2026-07-18T12:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00033,CASE-2026-009,product_solution,Product,Product,PROD-03,,in_progress,normal,2026-07-17T09:02:00+07:00,2026-07-20T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00034,CASE-2026-009,legal_eligibility,Legal,Legal & Compliance,LEGAL-03,TASK-00033,blocked,normal,2026-07-17T09:02:00+07:00,2026-07-20T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00035,CASE-2026-009,operational_checklist,Operations,Operations,OPS-01,TASK-00034,blocked,normal,2026-07-17T09:02:00+07:00,2026-07-20T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00036,CASE-2026-009,evidence_validation,Evidence,Risk Control,RISK-01,TASK-00035,blocked,normal,2026-07-17T09:02:00+07:00,2026-07-20T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00037,CASE-2026-010,product_solution,Product,Product,PROD-01,,completed,high,2026-07-15T09:03:00+07:00,2026-07-17T10:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-010-1,false,false,SRC-PROP-001,true
+TASK-00038,CASE-2026-010,legal_eligibility,Legal,Legal & Compliance,LEGAL-01,TASK-00037,completed,high,2026-07-15T09:03:00+07:00,2026-07-17T10:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-010-2,true,false,SRC-PROP-001,true
+TASK-00039,CASE-2026-010,operational_checklist,Operations,Operations,OPS-02,TASK-00038,completed,high,2026-07-15T09:03:00+07:00,2026-07-17T10:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-010-3,false,true,SRC-PROP-001,true
+TASK-00040,CASE-2026-010,evidence_validation,Evidence,Risk Control,RISK-02,TASK-00039,completed,high,2026-07-15T09:03:00+07:00,2026-07-17T10:00:00+07:00,2026-07-17T12:00:00+07:00,0,OUT-CASE-2026-010-4,false,true,SRC-PROP-001,true
+TASK-00041,CASE-2026-011,product_solution,Product,Product,PROD-02,,in_progress,normal,2026-07-16T09:04:00+07:00,2026-07-21T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00042,CASE-2026-011,legal_eligibility,Legal,Legal & Compliance,LEGAL-02,TASK-00041,queued,normal,2026-07-16T09:04:00+07:00,2026-07-21T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00043,CASE-2026-011,operational_checklist,Operations,Operations,OPS-03,TASK-00042,queued,normal,2026-07-16T09:04:00+07:00,2026-07-21T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00044,CASE-2026-011,evidence_validation,Evidence,Risk Control,RISK-01,TASK-00043,queued,normal,2026-07-16T09:04:00+07:00,2026-07-21T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00045,CASE-2026-012,product_solution,Product,Product,PROD-03,,in_progress,medium,2026-07-17T09:05:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00046,CASE-2026-012,legal_eligibility,Legal,Legal & Compliance,LEGAL-03,TASK-00045,queued,medium,2026-07-17T09:05:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,false,SRC-PROP-001,true
+TASK-00047,CASE-2026-012,operational_checklist,Operations,Operations,OPS-04,TASK-00046,queued,medium,2026-07-17T09:05:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true
+TASK-00048,CASE-2026-012,evidence_validation,Evidence,Risk Control,RISK-02,TASK-00047,queued,medium,2026-07-17T09:05:00+07:00,2026-07-18T17:00:00+07:00,,0,,false,true,SRC-PROP-001,true

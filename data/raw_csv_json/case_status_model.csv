@@ -1,0 +1,9 @@
+status_code,meaning,allowed_next_statuses,lifecycle_stage,terminal_flag,source_id,synthetic_flag
+new,RM vừa tạo yêu cầu,in_analysis,initial_intake,false,SRC-PROP-001,true
+in_analysis,Agent đang xử lý,pending_information|pending_review|pending_approval|executing,analysis,false,SRC-PROP-001,true
+pending_information,Thiếu dữ liệu từ RM/khách hàng,in_analysis,information_request,false,SRC-PROP-001,true
+pending_review,Có ngoại lệ hoặc rủi ro cao,pending_approval|rejected,human_review,false,SRC-PROP-001,true
+pending_approval,"Action đã chuẩn bị, chờ RM duyệt",executing|rejected,approval_gate,false,SRC-PROP-001,true
+executing,Đang gọi tool tạo case/task/report,completed|failed,action_execution,false,SRC-PROP-001,true
+completed,Workflow hoàn tất,closed,completion,false,SRC-PROP-001,true
+failed,Tool hoặc workflow lỗi,in_analysis|manual_resolution,failure_handling,false,SRC-PROP-001,true

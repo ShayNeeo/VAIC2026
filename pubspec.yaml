@@ -1,0 +1,51 @@
+name: rm_workspace_core
+description: "RM Decision Brief Workspace — Core Flutter app shell"
+version: 0.1.0
+publish_to: "none"
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.44.0"
+dependencies:
+  flutter:
+    sdk: flutter
+  go_router: ^14.2.0
+  http: ^1.2.0
+  provider: ^6.1.2
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
+  intl: ^0.19.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.8
+  freezed: ^2.5.2
+  json_serializable: ^6.8.0
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/mock/
+    - assets/fonts/
+  fonts:
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/Sora-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Sora-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Sora-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Sora-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Sora-ExtraBold.ttf
+          weight: 800
+    - family: IBM Plex Sans
+      fonts:
+        - asset: assets/fonts/IBMPlexSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/IBMPlexSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSans-Bold.ttf
+          weight: 700

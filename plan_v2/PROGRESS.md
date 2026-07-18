@@ -1,0 +1,57 @@
+# PROGRESS — V2 Build State
+
+## Tổng quan
+
+| Trường | Giá trị |
+|---|---|
+| Plan version | `2.0.0` |
+| Cập nhật cuối | `2026-07-18` |
+| Giai đoạn | `Local/sandbox MVP complete; production integration pending` |
+| Test/eval | `172 tests`; `40 business + 25 security + 20 reliability cases` |
+| API | `39 /api/v2 routes`; `19` public sales-case facade routes |
+| Blocker production | Thiếu data/API/SSO-IAM/policy owner/security sign-off thật |
+
+`Done` trong bảng dưới đây chỉ có nghĩa hoàn thành acceptance ở phạm vi **synthetic local MVP**. Không đồng nghĩa production verified.
+
+## Task tracker
+
+| ID | Task | Status | Evidence chính | Deviation/giới hạn |
+|---|---|---|---|---|
+| V2-001 | Contracts + schema validation | Done | `app/schemas/v2`, intake/planner/shared-state/AI-log contracts, `tests/contract` | JSON schemas vẫn đóng gói dưới `plan_v2/contracts` |
+| V2-002 | Employee/Workspace Context | Done | `app/context`, adapter/RBAC/provenance tests | Mock adapters |
+| V2-003 | Context Assembler | Done | merge/conflict/minimize + resilient CRM tests | Chưa chạy trên enterprise gateway |
+| V2-004 | Intent Extractor | Done | `app/intent`, intent/message-rerun tests | LLM optional; deterministic mặc định |
+| V2-005 | Slot Auto-Fill + Confidence | Done | slot/confidence/clarification tests | Calibration mới trên synthetic set |
+| V2-006 | Product ingestion/index | Done | Source Cards, byte parsers, governed ingestion, SQLite index | PDF scan cần OCR; Gold là synthetic |
+| V2-007 | Hybrid retrieval/evidence | Done | Product service, ACL/version tests, golden eval | Dense layer là hash fallback |
+| V2-008 | Eligibility/Legal | Done | rule registry + persistent Legal RAG + scope/evidence tests | Chưa có legal corpus/KYC-CIC thật |
+| V2-009 | Orchestration/state machine | Done | state machine, DAG, impact/message resume tests | Single-process engine |
+| V2-010 | Operations/dedup/resume | Done | checklist/artifact/dedup tests | CRM/task lookup là local draft/existing input |
+| V2-011 | Safety/approval/executor | Done | injection quarantine, one-time token, payload hash, idempotency | Enterprise SoD chưa có |
+| V2-012 | Storage/observability | Done | schema v2, intake persistence, quick-check, audit chain, per-case AI Decision Log, metrics/reliability | Backend local, chưa HA/OpenTelemetry/SIEM/retention production |
+| V2-013 | API/UI | Done | 39 routes, 19-route sales facade, guided RM Workspace, AI log tab, browser E2E | Auth header synthetic; chưa formal accessibility audit |
+| V2-014 | Evaluation/golden datasets | Done | 40 business + 25 security + 20 reliability cases, executable reports | Chưa có de-identified real data |
+| V2-015 | E2E hardening | Done | 172 tests, prior 92% app coverage, intake→profile→analysis→approval→execute browser journey | Done cho sandbox; production checklist còn mở |
+| V2-016 | Independent RAG MCP server | Done | Official MCP client/server transport, 4 tools, persistent 3-source/19-chunk index, ACL/auth/audit tests | Hash embedding + SQLite + synthetic corpus; production backend/auth/data còn mở |
+| V2-017 | Complexity Router + Risk & Guardrail Gate as named components | Done | `app/workflow/router.py` (`ComplexityRouter`), `app/workflow/risk_gate.py` (`RiskGuardrailGate`), `risk_gate_result` in `SharedCaseState`/JSON contract, `tests/unit/test_v2_risk_gate_and_router.py`, `docs/SHB_MULTI_AGENT_WORKFLOW_DIAGRAM_MAPPING.md` | Product/Compliance/Operations stay sequential by design (Compliance genuinely needs Product's product_ids first — see mapping doc section 3); this is a scoped, spec-aligned deviation from a literal reading of the diagram's parallel boxes, not an oversight |
+
+## Decision log
+
+- Workflow-first, agent optional: LLM chỉ xử lý semantic extraction; business rule và external action deterministic.
+- Contract-first: shared state/intent/context dùng V2 Pydantic + JSON Schema.
+- Synthetic source phải có Source Card và không được trộn với production.
+- Legal RAG cung cấp evidence; Eligibility Engine là nơi duy nhất quyết định pass/fail.
+- Eligibility fail-closed; Product module luôn để `eligibility=unknown`.
+- Approval gắn exact payload hash và one-time token; executor idempotent.
+- SQLite được chọn cho MVP chạy ngay; repository port cho phép thay PostgreSQL khi pilot.
+- AI Decision Log và Audit Log tách trách nhiệm: AI log giải thích model/rule/retrieval; audit log bất biến ghi actor/action. Cả hai đều gắn `case_id`/`trace_id`.
+- AI log chỉ lưu output summary và source metadata đã sanitize; không lưu raw PII, secret, raw prompt hoặc approval token.
+- RAG MCP tách process và chỉ expose read tools. Ingestion nằm ở Data Steward CLI, không cho LLM tự ghi serving index.
+- MCP retrieval audit chỉ lưu caller/query hash và metadata vận hành; raw query/chunk/token không được ghi.
+
+## Verification log
+
+- Chi tiết từng change set và lệnh kiểm tra: `docs/BUILD_V2_LOG.md`.
+- Điểm readiness và gap production: `docs/V2_READINESS_REPORT.md`.
+- Business eval: `data/eval/v2/latest_report.json`.
+- Security/reliability eval: `data/eval/v2/latest_safety_reliability_report.json`.

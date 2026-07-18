@@ -1,0 +1,20 @@
+[Unit]
+Description=SHB Product Agent MCP Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/shb-workspace
+Environment=PATH=/opt/shb-workspace/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+EnvironmentFile=-/opt/shb-workspace/.env
+ExecStart=/opt/shb-workspace/.venv/bin/python -m servers.product_agent.server
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# IPv6 bind - BIND_HOST=:: set in .env
+
+[Install]
+WantedBy=multi-user.target

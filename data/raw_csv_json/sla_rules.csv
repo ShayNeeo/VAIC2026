@@ -1,0 +1,13 @@
+sla_rule_id,object_type,case_or_task_type,risk_level,priority,start_event,target_hours,warning_hours,calendar,pause_on,breach_action,escalation_role,source_id,synthetic_flag
+SLA-001,case,complex_multi_domain,low,normal,case_created,24,18,business_hours,pending_information,notify_rm,Operations Lead,SRC-PROP-001,true
+SLA-002,case,complex_multi_domain,medium,high,case_created,16,12,business_hours,pending_information,escalate_rm,Operations Lead,SRC-PROP-001,true
+SLA-003,case,high_risk_review,high,high,case_created,8,6,business_hours,pending_review,human_review,Compliance Lead,SRC-PROP-001,true
+SLA-004,task,product_solution,any,any,task_created,6,4,business_hours,pending_information,reassign_backup,Product Lead,SRC-PROP-001,true
+SLA-005,task,legal_eligibility,high,any,task_created,8,6,business_hours,pending_information,human_review,Compliance Lead,SRC-PROP-001,true
+SLA-006,task,operational_checklist,any,any,task_created,8,6,business_hours,pending_information,notify_rm,Operations Lead,SRC-PROP-001,true
+SLA-007,task,evidence_validation,any,any,task_created,4,3,business_hours,pending_review,escalate_risk,Risk Lead,SRC-PROP-001,true
+SLA-008,payment_order,supplier_payment,any,high,instruction_received,2,1,calendar_hours,pending_approval,approval_alert,Operations Lead,SRC-PROP-001,true
+SLA-009,payroll_batch,corporate_payroll,any,high,file_received,4,3,calendar_hours,pending_approval,approval_alert,Operations Lead,SRC-PROP-001,true
+SLA-010,document,document_review,high,any,document_received,24,18,business_hours,needs_manual_review,human_review,Compliance Lead,SRC-PROP-001,true
+SLA-011,case,complex_multi_domain,any,any,approval_requested,4,3,business_hours,pending_approval,notify_rm,RM,SRC-PROP-001,true
+SLA-012,case,complex_multi_domain,any,any,tool_failed,2,1,calendar_hours,failed,manual_resolution,Platform Owner,SRC-PROP-001,true

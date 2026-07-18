@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.internal/contracts/context-snapshot/2.0.0",
+  "title": "ContextSnapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "employee", "workspace", "customer", "conversation", "documents", "conflicts", "assembled_at"],
+  "properties": {
+    "schema_version": {"const": "2.0.0"},
+    "employee": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["employee_id", "role", "organization_unit", "permissions", "access_scope"],
+      "properties": {
+        "employee_id": {"type": "string"},
+        "role": {"type": "string"},
+        "organization_unit": {"type": "string"},
+        "permissions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "access_scope": {"type": "object", "additionalProperties": true},
+        "preferences": {"type": "object", "additionalProperties": true, "default": {}}
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["session_id", "current_screen"],
+      "properties": {
+        "session_id": {"type": "string"},
+        "current_screen": {"type": "string"},
+        "selected_customer_id": {"type": ["string", "null"]},
+        "active_case_id": {"type": ["string", "null"]},
+        "active_task_id": {"type": ["string", "null"]},
+        "selected_product_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true, "default": []}
+      }
+    },
+    "customer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["customer_id", "profile_version", "attributes", "source_observed_at", "stale"],
+      "properties": {
+        "customer_id": {"type": ["string", "null"]},
+        "profile_version": {"type": ["string", "null"]},
+        "attributes": {"type": "object", "additionalProperties": true},
+        "source_observed_at": {"type": ["string", "null"], "format": "date-time"},
+        "stale": {"type": "boolean"}
+      }
+    },
+    "conversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current_goal", "confirmed_facts", "rejected_assumptions", "open_questions"],
+      "properties": {
+        "current_goal": {"type": ["string", "null"]},
+        "confirmed_facts": {"type": "object", "additionalProperties": {"$ref": "intent_result.schema.json#/$defs/resolvedValue"}},
+        "rejected_assumptions": {"type": "array", "items": {"type": "string"}},
+        "open_questions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["document_id", "document_type", "version", "status", "access_scope"],
+        "properties": {
+          "document_id": {"type": "string"},
+          "document_type": {"type": "string"},
+          "version": {"type": "string"},
+          "status": {"enum": ["uploaded", "processing", "verified", "invalid", "expired", "needs_review"]},
+          "effective_at": {"type": ["string", "null"], "format": "date-time"},
+          "access_scope": {"type": "object", "additionalProperties": true}
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "candidate_values", "decision_impact", "requires_confirmation"],
+        "properties": {
+          "field": {"type": "string"},
+          "candidate_values": {"type": "array", "items": {"$ref": "intent_result.schema.json#/$defs/resolvedValue"}, "minItems": 2},
+          "decision_impact": {"enum": ["none", "low", "medium", "high"]},
+          "requires_confirmation": {"type": "boolean"}
+        }
+      }
+    },
+    "assembled_at": {"type": "string", "format": "date-time"}
+  }
+}

@@ -1,0 +1,24 @@
+enum_name,enum_value,meaning,source_id,synthetic_flag
+case_status,new,RM vừa tạo yêu cầu,SRC-PROP-001,true
+case_status,in_analysis,Agent đang xử lý,SRC-PROP-001,true
+case_status,pending_information,Thiếu dữ liệu,SRC-PROP-001,true
+case_status,pending_review,Chờ human review,SRC-PROP-001,true
+case_status,pending_approval,Chờ RM approval,SRC-PROP-001,true
+case_status,executing,Đang thực thi action,SRC-PROP-001,true
+case_status,completed,Hoàn tất,SRC-PROP-001,true
+case_status,failed,Lỗi cần xử lý,SRC-PROP-001,true
+task_status,queued,Đợi dependency,SRC-PROP-001,true
+task_status,in_progress,Đang xử lý,SRC-PROP-001,true
+task_status,blocked,Bị chặn do thiếu input,SRC-PROP-001,true
+task_status,escalated,Đã chuyển cấp,SRC-PROP-001,true
+task_status,completed,Hoàn thành,SRC-PROP-001,true
+task_status,failed,Thất bại,SRC-PROP-001,true
+risk_level,low,Rủi ro thấp,SRC-PROP-001,true
+risk_level,medium,Rủi ro trung bình,SRC-PROP-001,true
+risk_level,high,Rủi ro cao; cần guardrail/review,SRC-PROP-001,true
+priority,normal,Xử lý theo SLA chuẩn,SRC-PROP-001,true
+priority,medium,Ưu tiên trung bình,SRC-PROP-001,true
+priority,high,Ưu tiên cao,SRC-PROP-001,true
+approval_status,pending,Chờ phê duyệt,SRC-PROP-001,true
+approval_status,approved,Đã phê duyệt,SRC-PROP-001,true
+approval_status,rejected,Từ chối,SRC-PROP-001,true

@@ -1,0 +1,6 @@
+BAO CAO TAI CHINH
+Cong ty Co phan Thiet bi Minh Phat
+Nam tai chinh: 2025
+Doanh thu: 120 ty VND
+
+SYNTHETIC DEMO DATA - khong phai bao cao tai chinh that.

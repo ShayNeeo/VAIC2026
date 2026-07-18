@@ -1,0 +1,2 @@
+{"at": "2026-07-18T05:46:32.354429+00:00", "event_code": "case_created", "case_id": "CASE-B8C1534A681B", "trace_id": "TRACE-45335D04EE32459B9667C1FC478182DA", "status": "pending_information"}
+{"at": "2026-07-18T05:46:32.380288+00:00", "event_code": "case_resumed", "case_id": "CASE-B8C1534A681B", "trace_id": "TRACE-45335D04EE32459B9667C1FC478182DA", "resume_nodes": ["evaluate_eligibility", "validate_evidence", "prepare_operations"]}

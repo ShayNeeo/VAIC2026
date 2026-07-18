@@ -1,0 +1,17 @@
+{
+  "RULE-UBO": {
+    "document": "SHB_KYC_AML_Demo_Policy_2026.pdf",
+    "section": "Điều 8 - Chủ sở hữu hưởng lợi",
+    "text": "Hồ sơ khách hàng doanh nghiệp phải có thông tin chủ sở hữu hưởng lợi cuối cùng (UBO)."
+  },
+  "RULE-CREDIT-FS": {
+    "document": "SHB_Credit_Policy_Manual.pdf",
+    "section": "Chương V - Hồ sơ tín dụng",
+    "text": "Hồ sơ cấp tín dụng vốn lưu động phải có báo cáo tài chính năm gần nhất."
+  },
+  "RULE-BUSINESS-REG": {
+    "document": "SHB_KYC_AML_Demo_Policy_2026.pdf",
+    "section": "Điều 3 - Định danh doanh nghiệp",
+    "text": "Mã số thuế trên đăng ký doanh nghiệp phải khớp với hồ sơ khách hàng."
+  }
+}

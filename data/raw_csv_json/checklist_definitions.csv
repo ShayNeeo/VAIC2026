@@ -1,0 +1,16 @@
+checklist_item_id,product_id,document_type,requirement,mandatory,applies_if,owner_role,validation_rule,sla_hours,source_id,synthetic_flag
+CHK-001,PRD-CA-001,business_registration,Đăng ký doanh nghiệp còn hiệu lực,true,always,Operations Specialist,status=verified AND expiry_date>=today,24,SRC-PROP-001,true
+CHK-002,PRD-CA-001,representative_id,Giấy tờ người đại diện hợp lệ,true,always,Legal Specialist,status=verified AND expiry_date>=today,24,SRC-PROP-001,true
+CHK-003,PRD-PY-001,authorized_signer_list,Danh sách người ký/duyệt payroll,true,payroll_requested,Operations Specialist,present=true,16,SRC-PROP-001,true
+CHK-004,PRD-PY-001,board_resolution,Nghị quyết/ủy quyền sử dụng dịch vụ payroll,true,payroll_requested,Legal Specialist,status=verified,24,SRC-PROP-001,true
+CHK-005,PRD-PY-001,payroll_file,File payroll mẫu để kiểm tra định dạng,true,payroll_requested,Operations Specialist,format in CSV|ISO20022-like-XML,8,SRC-PROP-001,true
+CHK-006,PRD-CO-001,collection_schedule,Lịch và logic đối soát khoản thu,true,collection_requested,Cash Management,present=true,16,SRC-PROP-001,true
+CHK-007,PRD-CO-001,bank_statement,Sao kê mẫu để thiết kế mapping đối soát,false,collection_requested,Operations Specialist,present=true,24,SRC-PROP-001,true
+CHK-008,PRD-CM-001,cash_management_setup,Thiết lập cấu trúc tài khoản và quyền truy cập,true,cash_management_requested,Cash Management,approved=true,32,SRC-PROP-001,true
+CHK-009,PRD-WC-001,financial_statement,Báo cáo tài chính gần nhất,true,working_capital_requested,Credit Analyst,status=verified AND period<=12m,48,SRC-PROP-001,true
+CHK-010,PRD-WC-001,ubo_declaration,Khai báo và xác minh UBO,true,credit_requested,Legal Specialist,all_ubo_verified=true,48,SRC-PROP-001,true
+CHK-011,PRD-WC-001,collateral,Thông tin tài sản/biện pháp bảo đảm,true,credit_requested,Credit Analyst,present=true,48,SRC-PROP-001,true
+CHK-012,PRD-GU-001,contract,Hợp đồng làm cơ sở phát hành bảo lãnh,true,guarantee_requested,Product Specialist,present=true,32,SRC-PROP-001,true
+CHK-013,PRD-PO-001,authorized_signer_list,Danh sách người tạo và duyệt lệnh,true,supplier_payment_requested,Operations Specialist,segregation_of_duties=true,16,SRC-PROP-001,true
+CHK-014,PRD-FX-001,invoice,Hóa đơn/chứng từ mục đích giao dịch,true,international_payment_requested,Legal Specialist,present=true,24,SRC-PROP-001,true
+CHK-015,PRD-FX-001,contract,Hợp đồng ngoại thương hoặc chứng từ liên quan,true,international_payment_requested,Product Specialist,present=true,24,SRC-PROP-001,true
