@@ -54,13 +54,13 @@ jobs:
         run: python -m pytest -q --ignore=scratch tests/test_sales_cases_e2e.py
 
       - name: Golden evaluation
-        run: python -m pytest -q --ignore=scratch app.evaluation.runner --output data/eval/v2/latest_report.json
+        run: python -m app.evaluation.runner --output data/eval/v2/latest_report.json
 
       - name: Safety/reliability evaluation
-        run: python -m pytest -q --ignore=scratch app.evaluation.safety_reliability_runner --output data/eval/v2/latest_safety_reliability_report.json
+        run: python -m app.evaluation.safety_reliability_runner --output data/eval/v2/latest_safety_reliability_report.json
 
       - name: Benchmark smoke
-        run: python -m pytest -q --ignore=scratch benchmarks.run --cache-mode --cases BENCH-A01,BENCH-B01,BENCH-D01,BENCH-E01,BENCH-F01 --output-dir benchmarks/results/ci-smoke
+        run: python -m benchmarks.run --cache-mode --cases BENCH-A01,BENCH-B01,BENCH-D01,BENCH-E01,BENCH-F01 --output-dir benchmarks/results/ci-smoke
 
       - name: Upload benchmark smoke results
         if: always()
