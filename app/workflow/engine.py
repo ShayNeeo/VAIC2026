@@ -440,6 +440,11 @@ class V2WorkflowEngine:
         payload = state.operations_result.get("action_payload") or state.operations_result.get("crm_case_draft") or {}
         state.status = transition(state.status, CaseStatus.PENDING_APPROVAL)
         state.approval = Approval(status=ApprovalStatus.PENDING, payload_hash=_hash(payload))
+        state.risk_gate_result = {
+            **(state.risk_gate_result or {}),
+            "specialist_clearance": True,
+            "specialist_clearance_scope": "current_case_version",
+        }
         state.workflow.current_node = "await_approval"
         self._event(state, "SpecialistReview", "specialist_review_cleared_case", {})
         return self._touch(state)

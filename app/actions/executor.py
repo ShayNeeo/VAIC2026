@@ -33,7 +33,8 @@ class ActionExecutorV2:
             return {**replay, "idempotent_replay": True}
         if state.status != CaseStatus.PENDING_APPROVAL:
             raise ExecutionDenied("case is not pending approval")
-        if (state.eligibility_result or {}).get("overall_status") != "passed":
+        specialist_clearance = bool((state.risk_gate_result or {}).get("specialist_clearance"))
+        if (state.eligibility_result or {}).get("overall_status") != "passed" and not specialist_clearance:
             raise ExecutionDenied("blocking or pending eligibility result")
         if not state.evidences or not all(item.is_valid for item in state.evidences):
             raise ExecutionDenied("evidence validation failed")
