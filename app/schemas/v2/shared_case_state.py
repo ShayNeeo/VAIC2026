@@ -80,6 +80,16 @@ class Evidence(BaseModel):
     quote: str
     is_valid: bool
     validation_score: Optional[Score] = None
+    # Set from app.safety.evidence_validator.ValidationStatus (see
+    # V2WorkflowEngine._product_evidence/_legal_evidence): True only for a
+    # citation/grounding mismatch (the source document is current and
+    # exists, but the quoted text was not found in it) -- a specialist can
+    # independently re-verify the underlying claim against the real
+    # document. False (default, and always for is_valid=True) for a
+    # structural document problem -- expired source, version mismatch,
+    # source not found, conflicting quotes -- none of which a human
+    # override should bypass. See app/workflow/risk_gate.py.
+    human_review_allowed: bool = False
 
 
 class Request(BaseModel):

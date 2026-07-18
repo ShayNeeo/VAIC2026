@@ -18,9 +18,23 @@ import pytest
 import time
 import math
 from datetime import datetime, timedelta
+import app.config as app_config
+import app.storage.employee_db as employee_db
 from app.schemas.v2.employee import RoleType
 from app.context.next_best_work import get_next_best_work
 from app.storage.employee_db import get_db_connection
+
+
+@pytest.fixture(autouse=True)
+def isolated_employee_db(tmp_path, monkeypatch):
+    """Same isolation as test_v2_employee_context.py -- this benchmark used
+    to DELETE FROM employee_work_items on data/state/v2.sqlite3, the file
+    the live demo app reads, permanently destroying the hero-demo seed
+    tasks every time the suite ran (see verification report §16)."""
+    db_path = tmp_path / "employee_eval.sqlite3"
+    monkeypatch.setattr(app_config.settings, "V2_DB_PATH", str(db_path))
+    employee_db.init_employee_db()
+    yield db_path
 
 
 def create_30_case_dataset(cursor: sqlite3.Cursor) -> None:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -84,6 +84,30 @@ class PersonalizationContext(BaseModel):
     preferences: Dict[str, Any] = Field(default_factory=dict)
     confirmed_habits: List[HabitModel] = Field(default_factory=list)
     context_version: int = 1
+    # True only when the personalization store itself failed and defaults
+    # were substituted (fail-soft) -- distinct from `enabled=False`, which
+    # means the employee deliberately opted out. A caller/UI needs to tell
+    # "you turned this off" apart from "this is temporarily degraded".
+    personalization_degraded: bool = False
+
+
+class VerifiedIdentity(BaseModel):
+    """The single, verified identity object every /api/v2/me/* and
+    /api/v2/recommendations/* route depends on. Never constructed from
+    request-body or query-parameter data -- only from
+    require_verified_identity() in app/api/v2/employee_router.py, which is
+    the one place identity is resolved via SSOPort/IAMPort."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    employee_id: str
+    session_id: str
+    roles: List[RoleType]
+    permissions: List[str] = Field(default_factory=list)
+    customer_scope: List[str] = Field(default_factory=list)
+    organization_unit: str = ""
+    auth_source: Literal["sso", "demo"]
+    identity_verified: bool
 
 
 class EmployeeContextSnapshot(BaseModel):

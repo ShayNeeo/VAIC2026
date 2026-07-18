@@ -1,0 +1,5 @@
+{"at": "2026-07-18T02:38:20.136378+00:00", "event_code": "sales_case_draft_created", "case_id": "CASE-BB513245A146", "employee_id": "RM-999"}
+{"at": "2026-07-18T02:38:20.166002+00:00", "event_code": "case_documents_uploaded", "case_id": "CASE-BB513245A146", "count": 1}
+{"at": "2026-07-18T02:38:20.246620+00:00", "event_code": "intake_extraction_completed", "case_id": "CASE-BB513245A146", "fields": 15}
+{"at": "2026-07-18T02:38:20.365360+00:00", "event_code": "case_documents_uploaded", "case_id": "CASE-BB513245A146", "count": 2}
+{"at": "2026-07-18T02:38:20.525215+00:00", "event_code": "intake_extraction_completed", "case_id": "CASE-BB513245A146", "fields": 20}

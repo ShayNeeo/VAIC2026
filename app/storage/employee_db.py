@@ -20,11 +20,11 @@ from app.schemas.v2.employee import (
     ProvenanceType,
 )
 
-DB_PATH = settings.V2_DB_PATH
-
-
 def get_db_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    # Read settings.V2_DB_PATH on every call (not cached at import time) so
+    # tests can monkeypatch it to an isolated temp file per-test/per-module
+    # instead of writing into the same DB the live app/demo uses.
+    conn = sqlite3.connect(settings.V2_DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -113,6 +113,47 @@ def init_employee_db() -> None:
         original_value TEXT, -- JSON
         edited_value TEXT, -- JSON
         confirmed_at TEXT NOT NULL
+    )
+    """)
+
+    # 7. Specialist Review table -- the action surface Product/Legal/
+    # Operations Specialist previously lacked entirely (every case-mutating
+    # endpoint in app/api/v2/router.py is RM-owned-only). case_version pins
+    # a review to the exact case state it resolved, so a stale clearance
+    # from a previous PENDING_REVIEW episode can never silently satisfy a
+    # new one (see cleared_roles_for_case_version below).
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS specialist_reviews (
+        review_id TEXT PRIMARY KEY,
+        case_id TEXT NOT NULL,
+        case_version INTEGER NOT NULL,
+        reviewer_employee_id TEXT NOT NULL,
+        review_type TEXT NOT NULL,
+        decision TEXT NOT NULL, -- cleared, blocked, needs_more_information
+        summary TEXT NOT NULL,
+        findings_json TEXT NOT NULL,
+        required_information_json TEXT NOT NULL,
+        evidence_ids_json TEXT NOT NULL,
+        case_status_changed INTEGER NOT NULL, -- 0/1
+        advisory_only INTEGER NOT NULL, -- 0/1
+        created_at TEXT NOT NULL
+    )
+    """)
+
+    # 8. Operational Readiness table -- a MANUAL, human-maintained tracker
+    # for Operations Specialist, deliberately separate from
+    # OperationsService's auto-computed checklist (which recomputes from
+    # document status on every analysis run and cannot be durably ticked
+    # off by a person). One current snapshot per case_id (upsert). Never
+    # read by CaseStatus/risk-gate logic -- advisory to the RM only.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS operational_readiness (
+        case_id TEXT PRIMARY KEY,
+        status TEXT NOT NULL, -- ready, not_ready
+        items_json TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        updated_by TEXT NOT NULL,
+        updated_at TEXT NOT NULL
     )
     """)
 
@@ -436,3 +477,155 @@ def save_recommendation_feedback(
     ))
     conn.commit()
     conn.close()
+
+
+def save_specialist_review(
+    *,
+    review_id: str,
+    case_id: str,
+    case_version: int,
+    reviewer_employee_id: str,
+    review_type: str,
+    decision: str,
+    summary: str,
+    findings: List[Dict[str, Any]],
+    required_information: List[str],
+    evidence_ids: List[str],
+    case_status_changed: bool,
+    advisory_only: bool,
+) -> None:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO specialist_reviews (
+            review_id, case_id, case_version, reviewer_employee_id, review_type,
+            decision, summary, findings_json, required_information_json,
+            evidence_ids_json, case_status_changed, advisory_only, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            review_id, case_id, case_version, reviewer_employee_id, review_type,
+            decision, summary, json.dumps(findings), json.dumps(required_information),
+            json.dumps(evidence_ids), int(case_status_changed), int(advisory_only),
+            datetime.utcnow().isoformat(),
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_specialist_reviews(case_id: str) -> List[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM specialist_reviews WHERE case_id = ? ORDER BY created_at",
+        (case_id,),
+    )
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {
+            "review_id": r["review_id"],
+            "case_id": r["case_id"],
+            "case_version": r["case_version"],
+            "reviewer_employee_id": r["reviewer_employee_id"],
+            "review_type": r["review_type"],
+            "decision": r["decision"],
+            "summary": r["summary"],
+            "findings": json.loads(r["findings_json"]),
+            "required_information": json.loads(r["required_information_json"]),
+            "evidence_ids": json.loads(r["evidence_ids_json"]),
+            "case_status_changed": bool(r["case_status_changed"]),
+            "advisory_only": bool(r["advisory_only"]),
+            "created_at": r["created_at"],
+        }
+        for r in rows
+    ]
+
+
+def cleared_roles_for_case_version(case_id: str, case_version: int) -> List[str]:
+    """review_type values with decision='cleared' recorded against this
+    EXACT case_version -- used to decide whether every specialist role the
+    risk gate named in required_reviewer_roles has actually signed off on
+    the CURRENT blocking reason, not a stale prior one."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT DISTINCT review_type FROM specialist_reviews "
+        "WHERE case_id = ? AND case_version = ? AND decision = 'cleared'",
+        (case_id, case_version),
+    )
+    roles = [r["review_type"] for r in cursor.fetchall()]
+    conn.close()
+    return roles
+
+
+def create_work_item(item: Dict[str, Any]) -> None:
+    """Insert (or replace) a single employee_work_items row at runtime --
+    previously this table was only ever populated by init_employee_db()'s
+    one-time seed; nothing could add a new item once the app was running,
+    which is exactly what surfacing a specialist review result back to the
+    owning RM's Next Best Work queue requires."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO employee_work_items (
+            item_id, employee_id, title, status, business_impact, urgency,
+            customer_commitment, risk_severity, dependency_unblock,
+            ownership_match, estimated_effort, created_at, due_at,
+            dependency_ids, role_required, customer_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            item["item_id"], item["employee_id"], item["title"], item.get("status", "pending"),
+            item.get("business_impact", 0.5), item.get("urgency", 0.5),
+            item.get("customer_commitment", 0.0), item.get("risk_severity", 0.5),
+            item.get("dependency_unblock", 0.0), item.get("ownership_match", 1.0),
+            item.get("estimated_effort", 0.2), datetime.utcnow().isoformat(), item.get("due_at"),
+            json.dumps(item.get("dependency_ids", [])), item["role_required"], item["customer_id"],
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def save_operational_readiness(
+    *, case_id: str, status: str, items: List[Dict[str, Any]], summary: str, updated_by: str,
+) -> None:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT INTO operational_readiness (case_id, status, items_json, summary, updated_by, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(case_id) DO UPDATE SET
+            status = excluded.status,
+            items_json = excluded.items_json,
+            summary = excluded.summary,
+            updated_by = excluded.updated_by,
+            updated_at = excluded.updated_at
+        """,
+        (case_id, status, json.dumps(items), summary, updated_by, datetime.utcnow().isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_operational_readiness(case_id: str) -> Optional[Dict[str, Any]]:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM operational_readiness WHERE case_id = ?", (case_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row is None:
+        return None
+    return {
+        "case_id": row["case_id"],
+        "status": row["status"],
+        "items": json.loads(row["items_json"]),
+        "summary": row["summary"],
+        "updated_by": row["updated_by"],
+        "updated_at": row["updated_at"],
+    }
