@@ -1,0 +1,70 @@
+{
+  "data_label": "SYNTHETIC DEMO DATA",
+  "data_origin": "SYNTHETIC_REALISTIC",
+  "source": "docs/SHB_Corporate_Sales_MVP_Data_Blueprint_V3_Proposal.docx section 9.10 ('12 cases: Pass, block, missing, stale, conflict') cross-referenced against data/synthetic/v3/legal/eligibility_rules.json and data/synthetic/v3/shared/companies.json built earlier in this same pack.",
+  "note": "context_overrides only apply for the scope of that one scenario -- they do NOT mutate the base company record in companies.json. status values follow blueprint section 11.2 (passed/failed/pending_information/pending_review).",
+  "scenarios": [
+    {
+      "scenario_id": "SCN-ELIG-001", "issue_type": "pass", "customer_id": "COMP-XYZ", "product_id": "SYNTH-PROD-PAYROLL",
+      "context_overrides": {}, "expected_status": "passed", "triggered_rules": [], "notes": "employees_count 25 >= 10, business_registration verified -- clean pass."
+    },
+    {
+      "scenario_id": "SCN-ELIG-002", "issue_type": "pass", "customer_id": "COMP-ABC", "product_id": "SYNTH-PROD-ACCOUNT",
+      "context_overrides": {}, "expected_status": "passed", "triggered_rules": [], "notes": "Only required_document rule applies; business_registration verified."
+    },
+    {
+      "scenario_id": "SCN-ELIG-003", "issue_type": "pass", "customer_id": "COMP-ABC", "product_id": "SYNTH-PROD-PAYROLL",
+      "context_overrides": {}, "expected_status": "passed", "triggered_rules": [], "notes": "employees_count 500 >= 10."
+    },
+    {
+      "scenario_id": "SCN-ELIG-004", "issue_type": "missing", "customer_id": "COMP-ABC", "product_id": "SYNTH-PROD-BULK-PAYMENT",
+      "context_overrides": {"documents.service_agreement": null}, "expected_status": "pending_information",
+      "triggered_rules": ["SYNTH-RULE-REG-001"], "missing_field": "documents.service_agreement",
+      "notes": "service_agreement not present in the base company record -- required_document rule for SYNTH-PROD-BULK-PAYMENT."
+    },
+    {
+      "scenario_id": "SCN-ELIG-005", "issue_type": "pass_with_warning", "customer_id": "COMP-ABC", "product_id": "SYNTH-PROD-CASH-MGMT",
+      "context_overrides": {}, "expected_status": "passed", "triggered_rules": [], "notes": "account_or_unit_count 6 >= 2 (warning-severity rule passes cleanly, included to prove a warning rule does not block when satisfied)."
+    },
+    {
+      "scenario_id": "SCN-ELIG-006", "issue_type": "block_warning_only", "customer_id": "COMP-XYZ", "product_id": "SYNTH-PROD-CASH-MGMT",
+      "context_overrides": {"account_or_unit_count": 1}, "expected_status": "passed_with_warning",
+      "triggered_rules": ["SYNTH-RULE-CASHMGMT-ACC-001"],
+      "notes": "account_or_unit_count 1 < 2 triggers the warning-severity rule, but warning severity must not flip overall_status to failed/pending_information -- distinguishes warning from blocking severity."
+    },
+    {
+      "scenario_id": "SCN-ELIG-007", "issue_type": "missing", "customer_id": "COMP-ABC", "product_id": "SYNTH-PROD-WORKING-CAPITAL",
+      "context_overrides": {}, "expected_status": "pending_information",
+      "triggered_rules": ["SYNTH-RULE-WC-FS-001", "SYNTH-RULE-WC-UBO-001"],
+      "notes": "Hero case's actual blocking pair per blueprint section 3.1/9.12: missing financial_statements and ubo_declaration. operating_years and bad_debt both pass."
+    },
+    {
+      "scenario_id": "SCN-ELIG-008", "issue_type": "block", "customer_id": "COMP-MP", "product_id": "SYNTH-PROD-WORKING-CAPITAL",
+      "context_overrides": {}, "expected_status": "failed",
+      "triggered_rules": ["SYNTH-RULE-WC-BADDEBT-001"],
+      "notes": "has_bad_debt_12m=true is a hard block (on_unknown=pending_review, but a KNOWN true value is a factual failure, not an unknown) -- all documents present and verified, so this isolates the bad-debt rule specifically."
+    },
+    {
+      "scenario_id": "SCN-ELIG-009", "issue_type": "pass", "customer_id": "COMP-MP", "product_id": "SYNTH-PROD-ACCOUNT",
+      "context_overrides": {}, "expected_status": "passed", "triggered_rules": [], "notes": "business_registration verified; bad-debt rule is scoped only to SYNTH-PROD-WORKING-CAPITAL, must not leak into unrelated products."
+    },
+    {
+      "scenario_id": "SCN-ELIG-010", "issue_type": "stale", "customer_id": "COMP-ABC", "product_id": "SYNTH-PROD-BULK-PAYMENT",
+      "context_overrides": {"documents.business_registration.status": "expired"}, "expected_status": "pending_information",
+      "triggered_rules": ["SYNTH-RULE-REG-001"],
+      "notes": "A previously-verified business_registration whose status is overridden to 'expired' for this scenario must be treated the same as missing (required_document operator only accepts 'verified'), not silently reused because a prior verified copy once existed -- staleness case per blueprint section 9.9 ('Freshness: TTL/update/effective date... Mark stale; block time-sensitive decision')."
+    },
+    {
+      "scenario_id": "SCN-ELIG-011", "issue_type": "conflict", "customer_id": "COMP-ABC", "product_id": "SYNTH-PROD-PAYROLL",
+      "context_overrides": {"employees_count_from_document": 450, "employees_count_from_crm": 500}, "expected_status": "pending_review",
+      "conflicting_fields": ["employees_count"],
+      "notes": "CRM says 500, an uploaded document says 450 -- section 9.9 ('Uniqueness/consistency: CRM-DMS-registry conflicts -> Conflict report/pending review') requires surfacing the conflict rather than silently picking either source; both values still individually satisfy the >=10 threshold so this tests conflict SURFACING independent of whether the rule itself would still pass."
+    },
+    {
+      "scenario_id": "SCN-ELIG-012", "issue_type": "missing", "customer_id": "COMP-XYZ", "product_id": "SYNTH-PROD-WORKING-CAPITAL",
+      "context_overrides": {}, "expected_status": "pending_information",
+      "triggered_rules": ["SYNTH-RULE-WC-FS-001", "SYNTH-RULE-WC-UBO-001"],
+      "notes": "COMP-XYZ has no financial_statements/ubo_declaration documents in the base record (never requested credit before) -- second, independent pending_information case on a different company/product pair than SCN-ELIG-007, to guard against a fix that only special-cases COMP-ABC."
+    }
+  ]
+}

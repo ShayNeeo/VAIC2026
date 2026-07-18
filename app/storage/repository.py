@@ -12,6 +12,14 @@ from threading import RLock
 from typing import Any, Dict, List, Optional
 
 from app.schemas.v2.intake import CustomerBusinessSnapshot, ExtractedField, FieldConflict, IntakeDocument, IntakeSession
+from app.schemas.v2.metadata import (
+    AccessControl,
+    MetadataEvent,
+    MetadataObject,
+    MetadataRelation,
+    MetadataType,
+    MetadataVersion,
+)
 from app.schemas.v2.shared_case_state import SharedCaseState
 from app.storage.migrations import LATEST_SCHEMA_VERSION, apply_migrations
 
@@ -95,6 +103,46 @@ class V2Repository:
                     payload_hash TEXT NOT NULL,
                     result_json TEXT NOT NULL,
                     created_at TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS metadata_objects (
+                    object_id TEXT PRIMARY KEY,
+                    type TEXT NOT NULL,
+                    access_control_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    is_active INTEGER NOT NULL,
+                    current_version_id TEXT,
+                    current_version_number INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS metadata_versions (
+                    version_id TEXT PRIMARY KEY,
+                    object_id TEXT NOT NULL,
+                    version_number INTEGER NOT NULL,
+                    payload_json TEXT NOT NULL,
+                    content_hash TEXT NOT NULL,
+                    previous_hash TEXT,
+                    created_at TEXT NOT NULL,
+                    created_by TEXT NOT NULL,
+                    source_system TEXT NOT NULL,
+                    FOREIGN KEY (object_id) REFERENCES metadata_objects(object_id)
+                );
+                CREATE TABLE IF NOT EXISTS metadata_relations (
+                    relation_id TEXT PRIMARY KEY,
+                    source_id TEXT NOT NULL,
+                    target_id TEXT NOT NULL,
+                    relation_type TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    created_by TEXT NOT NULL,
+                    confidence REAL NOT NULL,
+                    metadata_json TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS metadata_events (
+                    event_id TEXT PRIMARY KEY,
+                    object_id TEXT NOT NULL,
+                    version_id TEXT,
+                    event_type TEXT NOT NULL,
+                    actor TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    context_json TEXT NOT NULL
                 );
                 """
             )
@@ -491,6 +539,106 @@ class V2Repository:
             )
             row = connection.execute("SELECT result_json FROM idempotency_records WHERE idempotency_key=?", (key,)).fetchone()
         return json.loads(row["result_json"])
+
+    # --- Metadata Plane Operations ---
+
+    def save_metadata_version(self, version: MetadataVersion, event: Optional[MetadataEvent] = None) -> MetadataObject:
+        """Saves a new metadata version and ensures the parent object exists/updates."""
+        with self._lock, self._connect() as conn:
+            # Upsert MetadataObject
+            cursor = conn.execute(
+                "SELECT type, access_control_json, created_at, is_active FROM metadata_objects WHERE object_id = ?",
+                (version.object_id,)
+            )
+            row = cursor.fetchone()
+            if not row:
+                obj = MetadataObject(
+                    object_id=version.object_id,
+                    type=MetadataType.DOCUMENT,  # Temporary default; ideally provided
+                    current_version_id=version.version_id,
+                    current_version_number=version.version_number
+                )
+                conn.execute(
+                    """
+                    INSERT INTO metadata_objects (object_id, type, access_control_json, created_at, is_active, current_version_id, current_version_number)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (obj.object_id, obj.type.value, obj.access_control.model_dump_json(), obj.created_at.isoformat(), 1 if obj.is_active else 0, obj.current_version_id, obj.current_version_number)
+                )
+            else:
+                conn.execute(
+                    """
+                    UPDATE metadata_objects
+                    SET current_version_id = ?, current_version_number = ?
+                    WHERE object_id = ? AND current_version_number < ?
+                    """,
+                    (version.version_id, version.version_number, version.object_id, version.version_number)
+                )
+                obj = MetadataObject(
+                    object_id=version.object_id,
+                    type=MetadataType(row["type"]),
+                    access_control=AccessControl.model_validate_json(row["access_control_json"]),
+                    created_at=datetime.fromisoformat(row["created_at"]),
+                    is_active=bool(row["is_active"]),
+                    current_version_id=version.version_id,
+                    current_version_number=version.version_number
+                )
+            
+            # Insert Version
+            conn.execute(
+                """
+                INSERT INTO metadata_versions (version_id, object_id, version_number, payload_json, content_hash, previous_hash, created_at, created_by, source_system)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (version.version_id, version.object_id, version.version_number, json.dumps(version.payload), version.content_hash, version.previous_hash, version.created_at.isoformat(), version.created_by, version.source_system)
+            )
+
+            # Insert Event if provided
+            if event:
+                conn.execute(
+                    """
+                    INSERT INTO metadata_events (event_id, object_id, version_id, event_type, actor, timestamp, context_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (event.event_id, event.object_id, event.version_id, event.event_type.value, event.actor, event.timestamp.isoformat(), json.dumps(event.context))
+                )
+            
+            conn.commit()
+            return obj
+
+    def get_metadata_object(self, object_id: str) -> Optional[MetadataObject]:
+        with self._connect() as conn:
+            cursor = conn.execute("SELECT * FROM metadata_objects WHERE object_id = ?", (object_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return MetadataObject(
+                object_id=row["object_id"],
+                type=MetadataType(row["type"]),
+                access_control=AccessControl.model_validate_json(row["access_control_json"]),
+                created_at=datetime.fromisoformat(row["created_at"]),
+                is_active=bool(row["is_active"]),
+                current_version_id=row["current_version_id"],
+                current_version_number=row["current_version_number"]
+            )
+
+    def get_metadata_version(self, version_id: str) -> Optional[MetadataVersion]:
+        with self._connect() as conn:
+            cursor = conn.execute("SELECT * FROM metadata_versions WHERE version_id = ?", (version_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return MetadataVersion(
+                version_id=row["version_id"],
+                object_id=row["object_id"],
+                version_number=row["version_number"],
+                payload=json.loads(row["payload_json"]),
+                content_hash=row["content_hash"],
+                previous_hash=row["previous_hash"],
+                created_at=datetime.fromisoformat(row["created_at"]),
+                created_by=row["created_by"],
+                source_system=row["source_system"]
+            )
 
     @staticmethod
     def _sanitize(payload: Dict[str, Any]) -> Dict[str, Any]:

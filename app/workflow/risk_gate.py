@@ -64,7 +64,30 @@ class RiskGuardrailGate:
     """Runs after Evidence Validator, before the RM-facing branch."""
 
     @staticmethod
-    def evaluate(*, eligibility_result: Dict[str, Any], evidences: List[Evidence]) -> RiskGateDecision:
+    def evaluate(
+        *, 
+        eligibility_result: Dict[str, Any], 
+        evidences: List[Evidence],
+        customer_business_snapshot: Optional[Dict[str, Any]] = None,
+    ) -> RiskGateDecision:
+        
+        # Policy & Reputational Risk Check
+        if customer_business_snapshot:
+            reputational_flags = customer_business_snapshot.get("reputational_flags", [])
+            policy_flags = customer_business_snapshot.get("policy_flags", [])
+            if reputational_flags or policy_flags:
+                reasons = []
+                if reputational_flags: reasons.append("reputational_risk_detected")
+                if policy_flags: reasons.append("policy_violation_suspected")
+                return RiskGateDecision(
+                    outcome="need_review",
+                    risk_level="high",
+                    reasons=reasons,
+                    triggered_rules=reputational_flags + policy_flags,
+                    required_reviewer_roles=["legal_specialist", "risk_specialist"],
+                    human_review_allowed=True,
+                )
+
         invalid_evidence = [item for item in evidences if not item.is_valid]
         if invalid_evidence:
             # Evidence.human_review_allowed (set in

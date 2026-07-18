@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Sequence
+import uuid
 
 from app.knowledge.models import RetrievalHit
 from app.knowledge.service import ProductKnowledgeService
@@ -65,9 +66,21 @@ class ProductService:
                     "evidences": [self.knowledge.evidence(hit)],
                 }
             )
+        requirements = []
+        citations = []
+        for rec in recommendations:
+            for doc in rec["prerequisites"]:
+                requirements.append({"code": doc, "description": f"Yêu cầu hồ sơ cho sản phẩm {rec['product_id']}"})
+            for ev in rec["evidences"]:
+                citations.append(ev["claim_id"])
+                
         return {
             "status": "grounded" if recommendations else "no_grounded_product",
             "query": query,
+            "agent_run_id": f"ARUN-PROD-{uuid.uuid4().hex[:8].upper()}",
+            "facts_used": [attrs] if attrs else [],
+            "requirements": requirements,
+            "citations": citations,
             "recommendations": recommendations,
             "eligible_decision_deferred_to": "eligibility_module",
         }

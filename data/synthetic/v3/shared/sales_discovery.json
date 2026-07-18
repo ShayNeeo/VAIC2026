@@ -1,0 +1,29 @@
+{
+  "data_label": "SYNTHETIC DEMO DATA",
+  "data_origin": "SYNTHETIC_REALISTIC",
+  "source": "docs/SHB_Corporate_Sales_MVP_Data_Blueprint_V3_Proposal.docx section 9.14 Form F-02, code block P204 (COMP-ABC record given verbatim)",
+  "form_id": "F-02",
+  "records": [
+    {
+      "case_id": "CORP-DEMO-001",
+      "company": {"customer_id": "COMP-ABC", "employees_count": 500, "annual_revenue_vnd": 120000000000},
+      "sales_signals": {"supplier_payments_per_month": 1200, "cash_flow": "distributed", "erp": "file_export"},
+      "funding_need": {"amount_vnd": 20000000000, "tenor_months": 6, "purpose": "seasonal_working_capital"},
+      "unknown_fields": ["pay_day", "approval_matrix", "api_readiness"]
+    },
+    {
+      "case_id": "CORP-DEMO-002",
+      "company": {"customer_id": "COMP-XYZ", "employees_count": 25, "annual_revenue_vnd": 8000000000},
+      "sales_signals": {"supplier_payments_per_month": 40, "cash_flow": "stable", "erp": "none"},
+      "funding_need": null,
+      "unknown_fields": ["pay_day"]
+    },
+    {
+      "case_id": "CORP-DEMO-003",
+      "company": {"customer_id": "COMP-MP", "employees_count": 80, "annual_revenue_vnd": 35000000000},
+      "sales_signals": {"supplier_payments_per_month": 300, "cash_flow": "distributed", "erp": "file_export"},
+      "funding_need": {"amount_vnd": 10000000000, "tenor_months": 6, "purpose": "inventory_purchase"},
+      "unknown_fields": []
+    }
+  ]
+}

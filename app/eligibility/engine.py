@@ -45,8 +45,24 @@ class EligibilityEngine:
                 )
             )
         overall = self._aggregate([item for product in products for item in product.rules])
+        import uuid
+        
+        requirements = []
+        citations = []
+        facts_used = [customer] if customer else []
+        for product in products:
+            for item in product.rules:
+                if item.status == RuleStatus.PENDING_INFORMATION:
+                    requirements.append({"code": item.field, "description": f"Yêu cầu pháp lý/điều kiện cho field {item.field}"})
+                if item.source_document_id:
+                    citations.append(f"{item.source_document_id}@{item.source_version}")
+
         return {
             "overall_status": overall.value,
+            "agent_run_id": f"ARUN-LEGAL-{uuid.uuid4().hex[:8].upper()}",
+            "facts_used": facts_used,
+            "requirements": requirements,
+            "citations": list(set(citations)),
             "products": [item.model_dump(mode="json") for item in products],
             "registry_version": self.registry.version,
         }
@@ -66,9 +82,9 @@ class EligibilityEngine:
                     actual = "verified"
             if actual is None:
                 status = RuleStatus.PENDING_INFORMATION
-            elif rule.operator == "gte":
+            elif rule.operator in ("gte", "lte"):
                 status = RuleStatus.PASSED if float(actual) >= float(rule.expected) else RuleStatus.FAILED
-            elif rule.operator == "equals":
+            elif rule.operator in ("equals", "eq"):
                 status = RuleStatus.PASSED if actual == rule.expected else RuleStatus.FAILED
             elif rule.operator == "one_of":
                 normalized = str(actual).lower()

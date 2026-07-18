@@ -155,14 +155,35 @@
   </style>
 </head>
 <body>
+  <section id="loginScreen" style="position:fixed;inset:0;z-index:50;background:linear-gradient(135deg,#071d3b,#0d4771);display:flex;align-items:center;justify-content:center;padding:20px;">
+    <form id="loginForm" style="width:min(420px,100%);background:#fff;border-radius:16px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.28);">
+      <div class="brand-mark" style="margin-bottom:16px;">S</div>
+      <h1 style="margin:0 0 8px;color:var(--navy);">Đăng nhập Workspace</h1>
+      <p class="muted" style="margin:0 0 22px;">Phiên demo dùng SSO/IAM giả lập để nhận diện role và quyền truy cập.</p>
+      <label>Employee ID
+        <select id="loginEmployee" style="width:100%;margin-top:6px;">
+          <option value="RM-999">RM-999 · Relationship Manager</option>
+          <option value="SPEC-LEGAL-001">SPEC-LEGAL-001 · Legal Specialist</option>
+          <option value="SPEC-PROD-001">SPEC-PROD-001 · Product Specialist</option>
+          <option value="SPEC-OPS-001">SPEC-OPS-001 · Operations Specialist</option>
+          <option value="MGR-HN-01">MGR-HN-01 · Sales Manager</option>
+        </select>
+      </label>
+      <label style="display:block;margin-top:14px;">Mật khẩu
+        <input id="loginPassword" type="password" value="demo1234" autocomplete="current-password" style="width:100%;margin-top:6px;">
+      </label>
+      <button class="button primary" type="submit" style="width:100%;margin-top:20px;">Đăng nhập</button>
+      <p id="loginError" class="muted" style="color:#b42318;min-height:18px;margin:12px 0 0;"></p>
+    </form>
+  </section>
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark">S</div>
       <div><strong>SHB Corporate Sales Copilot</strong><span id="workspaceTitle">RM Workspace · Personalization Enabled</span></div>
     </div>
     <div class="top-context">
-      <label>SSO Switcher 
-        <select id="employee">
+      <label>Identity đã xác thực
+        <select id="employee" disabled>
           <option value="RM-999">RM-999 (Relationship Manager)</option>
           <option value="SPEC-LEGAL-001">SPEC-LEGAL-001 (Legal Specialist)</option>
           <option value="SPEC-PROD-001">SPEC-PROD-001 (Product Specialist)</option>
@@ -179,6 +200,8 @@
         </select>
       </label>
       <span class="demo-badge">DỮ LIỆU GIẢ LẬP</span>
+      <span id="roleBadge" class="demo-badge">Chưa đăng nhập</span>
+      <button id="logoutButton" class="button ghost" type="button" style="padding:5px 9px;">Đăng xuất</button>
     </div>
   </header>
 

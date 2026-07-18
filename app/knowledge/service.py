@@ -175,10 +175,16 @@ class ProductKnowledgeService:
     def evidence(hit: RetrievalHit) -> Dict[str, Any]:
         chunk = hit.chunk
         return {
+            "claim_id": f"EVID-{chunk.chunk_id[:8]}",
+            "module": "Product",
+            "claim": f"Found reference for {chunk.product_id}",
             "source_document_id": chunk.document_id,
             "source_version": chunk.document_version,
             "location": chunk.section_path,
             "quote": chunk.text,
             "product_id": chunk.product_id,
             "retrieval_score": hit.score,
+            "is_valid": True,
+            "validation_score": round(hit.score, 4),
+            "human_review_allowed": False,
         }

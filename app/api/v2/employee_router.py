@@ -28,6 +28,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
 
 from app.config import settings
+from app.auth import verify_session_token
 from app.context.employee_service import EmployeeContextService
 from app.context.next_best_work import get_next_best_work
 from app.integrations.enterprise import (
@@ -159,10 +160,17 @@ def require_verified_identity(
 
     if authorization and authorization.lower().startswith("bearer "):
         token = authorization[7:].strip()
-        if token == "EXPIRED_TOKEN":
+        session_payload = verify_session_token(token)
+        if session_payload is not None:
+            raw_credential = str(session_payload["sub"])
+            auth_source = "sso"
+        elif token.startswith("shb."):
+            _event_logger.emit("authentication_failed", reason="invalid_session_token", correlation_id=correlation_id)
+            raise _error(status.HTTP_401_UNAUTHORIZED, "UNAUTHENTICATED", "Phien dang nhap khong hop le hoac da het han.")
+        elif token == "EXPIRED_TOKEN":
             _event_logger.emit("authentication_failed", reason="token_expired", correlation_id=correlation_id)
             raise _error(status.HTTP_401_UNAUTHORIZED, "TOKEN_EXPIRED", "Token phien dang nhap da het han.")
-        if token.lower().startswith(_DEMO_TOKEN_PREFIX):
+        elif token.lower().startswith(_DEMO_TOKEN_PREFIX):
             if not settings.DEMO_AUTH_ENABLED:
                 _event_logger.emit("authentication_failed", reason="demo_auth_disabled", correlation_id=correlation_id)
                 raise _error(status.HTTP_401_UNAUTHORIZED, "UNAUTHENTICATED", "Demo auth dang bi tat.")

@@ -1,4 +1,5 @@
 const $ = id => document.getElementById(id);
+let authToken = sessionStorage.getItem("shb_access_token") || "";
 const esc = value => String(value ?? "—").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pretty = value => typeof value === "object" ? JSON.stringify(value, null, 2) : String(value ?? "—");
 
@@ -87,7 +88,7 @@ const profileLabels = {
 
 const ui = {caseId:null,intakeVersion:null,stateVersion:null,intakeStatus:"draft",runtime:null,profile:null,conflicts:[],documents:[],pendingFiles:[],approvalToken:null,previewHash:null,scenario:"payroll",lastPayload:{}};
 
-function headers(json=true){const value={"X-Employee-ID":$("employee").value,"X-Session-ID":$("session").value};if(json)value["Content-Type"]="application/json";return value}
+function headers(json=true){const value={"X-Employee-ID":$("employee").value,"X-Session-ID":$("session").value};if(authToken)value["Authorization"]=`Bearer ${authToken}`;if(json)value["Content-Type"]="application/json";return value}
 async function api(path,options={}){
   const isForm=options.body instanceof FormData;
   const response=await fetch(path,{...options,headers:{...headers(!isForm),...(options.headers||{})}});
@@ -274,7 +275,8 @@ async function loadEmployeeContext() {
     const role = data.authorization_context?.roles?.[0];
     routeWorkspace(role);
 
-    const roleLabel = { relationship_manager:"RM", legal_specialist:"Legal Spec.", product_specialist:"Product Spec.", operations_specialist:"Ops Spec.", manager:"Manager" }[role] || role;
+    const roleLabel = { relationship_manager:"RM", legal_specialist:"Legal Specialist", product_specialist:"Product Specialist", operations_specialist:"Operations Specialist", manager:"Manager" }[role] || role;
+    $("roleBadge").textContent = `Role: ${roleLabel}`;
     toast(`SSO <b>${esc(empId)}</b> · Role: <b>${esc(roleLabel)}</b>`);
   } catch (error) {
     hideAllWorkspaces();
@@ -324,6 +326,34 @@ function routeWorkspace(role) {
     $("workspaceTitle").textContent = "Manager Console · Aggregate Metrics Only";
     loadManagerWorkload();
   }
+}
+
+async function login(event) {
+  event.preventDefault();
+  $("loginError").textContent = "";
+  try {
+    const response = await fetch("/api/v2/auth/login", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({employee_id:$("loginEmployee").value, password:$("loginPassword").value})});
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.detail?.message || "Đăng nhập thất bại.");
+    authToken = data.access_token;
+    sessionStorage.setItem("shb_access_token", authToken);
+    $("employee").value = data.employee_id;
+    $("employee").disabled = true;
+    $("loginScreen").style.display = "none";
+    await loadCases();
+    await loadEmployeeContext();
+  } catch (error) {
+    $("loginError").textContent = error.message;
+  }
+}
+
+function logout() {
+  authToken = "";
+  sessionStorage.removeItem("shb_access_token");
+  $("employee").value = "RM-999";
+  $("roleBadge").textContent = "Chưa đăng nhập";
+  $("loginScreen").style.display = "flex";
+  hideAllWorkspaces();
 }
 
 async function loadNextBestWorkQueue() {
@@ -588,7 +618,8 @@ async function deletePersonalizationHabit() {
 }
 
 // Bind SSO switcher event
-$("employee").onchange = loadEmployeeContext;
+$("loginForm").onsubmit = login;
+$("logoutButton").onclick = logout;
 
 // Bind Personalization preferences change
 $("togglePersonalization").onchange = updatePersonalizationSettings;
@@ -600,5 +631,8 @@ $("btnDeleteHabit").onclick = deletePersonalizationHabit;
 selectScenario("payroll");
 setStage(1);
 setIntakeStatus("draft");
-loadCases();
-loadEmployeeContext();
+if (authToken) {
+  $("loginScreen").style.display = "none";
+  loadCases();
+  loadEmployeeContext();
+}

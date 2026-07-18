@@ -2,12 +2,12 @@ import 'api_client.dart';
 
 /// Runtime backend configuration.
 ///
-/// Default points at the future production domain `vaic-api.w9.nu`.
-/// While developing against a local Cloudflare tunnel, override with:
-///   flutter run --dart-define=API_BASE_URL=https://<tunnel>.trycloudflare.com
+/// Android emulator reaches the local backend through 10.0.2.2.
+/// For a physical phone, pass a LAN IP or tunnel URL:
+///   flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8000
 const String kApiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: kDefaultBaseUrl,
+  defaultValue: 'http://10.0.2.2:8000',
 );
 
 ApiClient buildApiClient() => ApiClient(baseUrl: kApiBaseUrl);

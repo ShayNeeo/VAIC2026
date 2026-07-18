@@ -1,0 +1,28 @@
+{
+  "dataset_name": "SHB Corporate Sales MVP Data Pack V3",
+  "generated_at": "2026-07-18",
+  "generator_version": "manual-v3.0",
+  "seed": 20260718,
+  "data_label": "SYNTHETIC DEMO DATA -- NOT A REAL BANKING DOCUMENT",
+  "source_document": "docs/SHB_Corporate_Sales_MVP_Data_Blueprint_V3_Proposal.docx",
+  "scope_decision": "Built to the blueprint's own MVP data pack (section 9.10) and Appendix E fast-track schedule, not the larger 27-section production-data-engineering prompt this repo also received -- explicit user choice, recorded in this session's conversation, given both scopes could not fit before the same-day 2026-07-18 demo referenced by the blueprint's own Appendix E.",
+  "generation_method": "Records hand-authored directly against the blueprint's own field shapes (Form F-01/F-02/F-09, section 9.16 example records) rather than via a stochastic generator script -- reasonable at this MVP's scale (~80 total records), and every numeric/company value is either taken verbatim from the blueprint document or explicitly marked ASSUMPTION/SYNTHETIC_REALISTIC in the owning file. No official SHB fee, interest rate, or credit limit is asserted anywhere in this pack.",
+  "files": {
+    "products/product_catalog.json": {"count": 6, "description": "6 synthetic corporate products per blueprint section 9.10"},
+    "legal/eligibility_rules.json": {"count": 7, "description": "Blocking/warning rules per blueprint section 9.10 ('5-10 rules'); SYNTH-RULE-WC-FS-001 reused verbatim from the blueprint's own section 9.16 example"},
+    "legal/banking_policy_documents.json": {"count": 5, "description": "5 banking policy documents containing official guidelines for KYC, UBO, Payroll, Cash Management, Bulk Payment"},
+    "operations/sop_workflow.json": {"count": 11, "description": "SOP steps across 4 of the 6 products (see scope_note in the file itself)"},
+    "shared/companies.json": {"count": 3, "description": "1 hero case (COMP-ABC, values from blueprint Table 196) + 2 regression cases (clean pass, hard block)"},
+    "shared/employee_context.json": {"count": 1, "description": "Form F-01 example, RM-999/CORP-DEMO-001"},
+    "shared/sales_discovery.json": {"count": 3, "description": "Form F-02 records, one per company"},
+    "scenarios/conversations.json": {"count": 20, "description": "20 conversation variants per blueprint section 9.10"},
+    "scenarios/eligibility_scenarios.json": {"count": 12, "description": "12 eligibility cases (pass/block/missing/stale/conflict) per blueprint section 9.10"},
+    "scenarios/e2e_golden_cases.json": {"count": 10, "description": "10 E2E golden cases (6 normal, 2 edge, 1 adversarial, 1 tool failure) per blueprint section 9.10, Form F-09 shape"},
+    "scenarios/security_cases.json": {"count": 5, "description": "5 security cases (injection, wrong RM, approval tamper, replay, PII log) per blueprint section 9.10"}
+  },
+  "total_records": 83,
+  "not_included_from_blueprint_mvp_list": {
+    "40_rag_queries": "Blueprint section 9.10 also lists 40 RAG queries / 40 E2E / 25 security / 20 reliability as a LARGER pilot-scale suite in a different table (Table 329, section 17) than the MVP data pack table (Table 225, section 9.10) this file follows. The MVP table's own numbers (10 E2E, 5 security) were used; the 40/25/20 pilot-scale figures were not built in this pass.",
+    "vendor_adapter_poc": "Section 9.10 R6 ('Một official/vendor adapter POC ở shadow mode') is explicitly 'không bắt buộc cho offline MVP' in the blueprint's own text -- not built."
+  }
+}

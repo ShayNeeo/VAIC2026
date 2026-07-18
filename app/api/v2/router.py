@@ -566,6 +566,7 @@ def create_router(
             if item.status == DocumentJobStatus.COMPLETED
         ]
         context = assemble(x_employee_id, session_value.session_id, workspace_documents)
+        print("DEBUG CONTEXT:", context.workspace.selected_customer_id)
         attributes = dict(context.customer.attributes)
         profile = session_value.profile
         attributes.update(profile.company_identity)
@@ -650,15 +651,112 @@ def create_router(
 
     @router.get("/sales-cases/{case_id}/missing-information")
     def get_sales_case_missing_information(case_id: str, x_employee_id: str = Header(...)) -> Dict[str, Any]:
+        """Return structured missing information for RM and specialist review.
+
+        Works for both pending_information (customer must provide documents/data)
+        and pending_review (specialist must review evidence failures or rule violations).
+        Does NOT require operations_result to be populated -- can be called immediately
+        after analysis reaches any blocking state, not only after the full pipeline runs.
+        """
         stored = owned(case_id, x_employee_id)
+        state = stored.state
+        eligibility = state.eligibility_result or {}
+
+        # Customer-actionable missing items: fields/documents the RM or customer must provide
+        customer_action_items: List[Dict[str, Any]] = []
+        # Items requiring specialist review: evidence failures or non-information-gap rule blocks
+        specialist_review_items: List[Dict[str, Any]] = []
+        missing_fields: List[str] = []
+        missing_documents: List[str] = []
+        reason_codes: List[str] = []
+
+        for product in eligibility.get("products", []):
+            for rule in product.get("rules", []):
+                rule_status = rule.get("status")
+                if rule_status == "pending_information":
+                    field = rule.get("field", "")
+                    if field.startswith("documents.") or rule.get("failure_code", "").endswith("_MISSING"):
+                        doc_type = field.replace("documents.", "")
+                        if doc_type and doc_type not in missing_documents:
+                            missing_documents.append(doc_type)
+                        customer_action_items.append({
+                            "rule_id": rule.get("rule_id"),
+                            "field": field,
+                            "failure_code": rule.get("failure_code"),
+                            "description": f"Cần bổ sung: {field}",
+                            "product_id": product.get("product_id"),
+                        })
+                        if "MISSING" not in reason_codes:
+                            reason_codes.append("BUSINESS_INFORMATION_MISSING")
+                    else:
+                        if field and field not in missing_fields:
+                            missing_fields.append(field)
+                        customer_action_items.append({
+                            "rule_id": rule.get("rule_id"),
+                            "field": field,
+                            "failure_code": rule.get("failure_code"),
+                            "description": f"Thiếu thông tin: {field}",
+                            "product_id": product.get("product_id"),
+                        })
+                        if "BUSINESS_INFORMATION_MISSING" not in reason_codes:
+                            reason_codes.append("BUSINESS_INFORMATION_MISSING")
+                elif rule_status in ("failed", "pending_review"):
+                    specialist_review_items.append({
+                        "rule_id": rule.get("rule_id"),
+                        "field": rule.get("field"),
+                        "status": rule_status,
+                        "failure_code": rule.get("failure_code"),
+                        "human_review_allowed": rule.get("human_review_allowed", False),
+                        "product_id": product.get("product_id"),
+                    })
+                    if rule_status == "failed":
+                        if "NON_OVERRIDABLE_RULE_FAILED" not in reason_codes and not rule.get("human_review_allowed"):
+                            reason_codes.append("NON_OVERRIDABLE_RULE_FAILED")
+                        elif "REVIEWABLE_RULE_FAILED" not in reason_codes and rule.get("human_review_allowed"):
+                            reason_codes.append("REVIEWABLE_RULE_FAILED")
+                    elif rule_status == "pending_review":
+                        if "REVIEWABLE_RULE_FAILED" not in reason_codes:
+                            reason_codes.append("REVIEWABLE_RULE_FAILED")
+
+        # Evidence grounding failures (from risk gate result if available)
+        invalid_evidences = [item for item in state.evidences if not item.is_valid]
+        for evidence in invalid_evidences:
+            code = "EVIDENCE_QUOTE_MISSING" if not evidence.quote else "EVIDENCE_PROVENANCE_INVALID"
+            if code not in reason_codes:
+                reason_codes.append(code)
+            specialist_review_items.append({
+                "claim_id": evidence.claim_id,
+                "module": evidence.module,
+                "source_document_id": evidence.source_document_id,
+                "human_review_allowed": evidence.human_review_allowed,
+                "type": "evidence_validation_failure",
+            })
+
+        # Supplement with operations_result missing_information if available
+        ops_missing = []
+        if state.operations_result:
+            ops_missing = state.operations_result.get("missing_information", [])
+
         return {
             "case_id": case_id,
-            "questions": stored.state.next_best_questions,
-            "actions": stored.state.next_best_actions,
+            "case_status": state.status.value,
+            "customer_action_items": customer_action_items,
+            "specialist_review_items": specialist_review_items,
+            "missing_fields": missing_fields,
+            "missing_documents": missing_documents,
+            "reason_codes": reason_codes,
+            "source_refs": [
+                {"rule_id": item.get("rule_id"), "source_document_id": None}
+                for item in customer_action_items + specialist_review_items
+            ],
+            # Legacy fields for backward compatibility
+            "questions": state.next_best_questions,
+            "actions": state.next_best_actions,
             "blocked_steps": [
-                item.get("step_id") for item in (stored.state.execution_plan or {}).get("steps", [])
+                item.get("step_id") for item in (state.execution_plan or {}).get("steps", [])
                 if item.get("status") == "blocked"
             ],
+            "operations_missing_information": ops_missing,
         }
 
     @router.post("/sales-cases/{case_id}/approval-preview")
@@ -710,21 +808,21 @@ def create_router(
         state_value.approval = Approval(
             status=ApprovalStatus.APPROVED,
             approver_id=x_employee_id,
-            payload_hash=claims["payload_hash"],
-            expires_at=datetime.fromtimestamp(claims["expires_at"], tz=timezone.utc),
+            payload_hash=claims["package_hash"],
+            expires_at=datetime.fromtimestamp(claims["exp"], tz=timezone.utc),
         )
         updated = persist(state_value, expected_version=stored.version)
         repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
-            actor=x_employee_id, action="payload_approved", payload={"payload_hash": claims["payload_hash"]},
+            actor=x_employee_id, action="payload_approved", payload={"payload_hash": claims["package_hash"]},
         )
         response.headers["ETag"] = str(updated.version)
         return {
             "case_id": case_id,
             "state_version": updated.version,
             "approval_token": issued["token"],
-            "payload_hash": claims["payload_hash"],
-            "expires_at": claims["expires_at"],
+            "payload_hash": claims["package_hash"],
+            "expires_at": claims["exp"],
         }
 
     @router.post("/sales-cases/{case_id}/reject")
@@ -1062,17 +1160,17 @@ def create_router(
         claims = issued["claims"]
         state_value.approval = Approval(
             status=ApprovalStatus.APPROVED, approver_id=x_employee_id,
-            payload_hash=claims["payload_hash"], expires_at=datetime.fromtimestamp(claims["expires_at"], tz=timezone.utc),
+            payload_hash=claims["package_hash"], expires_at=datetime.fromtimestamp(claims["exp"], tz=timezone.utc),
         )
         updated = persist(state_value, expected_version=stored.version)
         repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
-            actor=x_employee_id, action="payload_approved", payload={"payload_hash": claims["payload_hash"], "token_id": claims["token_id"]},
+            actor=x_employee_id, action="payload_approved", payload={"payload_hash": claims["package_hash"], "token_id": claims["jti"]},
         )
-        logger.emit("payload_approved", case_id=case_id, trace_id=state_value.trace_id, payload_hash=claims["payload_hash"])
+        logger.emit("payload_approved", case_id=case_id, trace_id=state_value.trace_id, payload_hash=claims["package_hash"])
         metrics.increment("approval.issued")
         response.headers["ETag"] = str(updated.version)
-        return {"case_id": case_id, "state_version": updated.version, "approval_token": issued["token"], "expires_at": claims["expires_at"]}
+        return {"case_id": case_id, "state_version": updated.version, "approval_token": issued["token"], "expires_at": claims["exp"]}
 
     @router.post("/cases/{case_id}/execute")
     def execute_case(
@@ -1316,6 +1414,56 @@ def create_router(
             "rag_provider_mode": settings.RAG_PROVIDER,
             "rag_providers": {"product": product_rag_health, "legal": legal_rag_health},
         }
+
+    @router.get("/sales-cases/{case_id}/checklist")
+    def get_sales_case_checklist(case_id: str, x_employee_id: str = Header(...)) -> Dict[str, Any]:
+        require_permission(x_employee_id, "case:read")
+        stored = owned(case_id, x_employee_id)
+        checklist = stored.state.case_checklist
+        if not checklist:
+            raise HTTPException(status_code=404, detail={"code": "CHECKLIST_NOT_FOUND"})
+        return {"case_id": case_id, "checklist": checklist}
+
+    @router.post("/sales-cases/{case_id}/checklist/{item_id}/documents")
+    async def upload_checklist_item_documents(
+        case_id: str,
+        item_id: str,
+        response: Response,
+        files: List[UploadFile] = File(...),
+        x_employee_id: str = Header(...),
+    ) -> Dict[str, Any]:
+        require_permission(x_employee_id, "case:write")
+        stored_case = owned(case_id, x_employee_id)
+        
+        checklist = stored_case.state.case_checklist
+        if not checklist:
+            raise HTTPException(status_code=404, detail={"code": "CHECKLIST_NOT_FOUND"})
+            
+        item_exists = any(item.get("item_id") == item_id for item in checklist.get("items", []))
+        if not item_exists:
+            raise HTTPException(status_code=404, detail={"code": "CHECKLIST_ITEM_NOT_FOUND"})
+            
+        try:
+            stored_intake = intake_owned(case_id, x_employee_id)
+        except HTTPException:
+            raise HTTPException(status_code=400, detail={"code": "NO_ACTIVE_INTAKE_SESSION"})
+
+        receipts: List[Dict[str, Any]] = []
+        for file in files:
+            data = await file.read(settings.MAX_UPLOAD_BYTES + 1)
+            try:
+                stored_intake, document, deduplicated = intake_service().add_document(
+                    stored_intake,
+                    filename=file.filename or "upload",
+                    mime_type=file.content_type or "application/octet-stream",
+                    data=data,
+                )
+            except IntakeValidationError as exc:
+                raise intake_error(exc) from exc
+            receipts.append({**intake_service().public_document(document), "deduplicated": deduplicated, "checklist_item_id": item_id})
+            
+        response.headers["ETag"] = str(stored_case.version)
+        return {"case_id": case_id, "checklist_item_id": item_id, "documents": receipts}
 
     return router
 

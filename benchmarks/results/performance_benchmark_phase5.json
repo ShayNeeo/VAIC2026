@@ -1,0 +1,12 @@
+{
+  "provider": "LocalEmbedding (hash-BoW, in-process, no network) -- see module docstring for why live semantic timing is BLOCKED_BY_ENVIRONMENT here",
+  "generated_at": "2026-07-18T08:38:07.252588+00:00",
+  "legal_corpus_size": 9,
+  "operations_corpus_size": 15,
+  "legal_cold_ms": 3.748,
+  "legal_warm_p50_ms": 2.591,
+  "legal_warm_p95_ms": 3.13,
+  "operations_cold_ms": 3.446,
+  "operations_warm_p50_ms": 3.298,
+  "operations_warm_p95_ms": 3.982
+}

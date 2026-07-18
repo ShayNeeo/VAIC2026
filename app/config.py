@@ -72,6 +72,10 @@ class Settings(BaseModel):
     DEMO_AUTH_ENABLED: bool = os.getenv(
         "DEMO_AUTH_ENABLED", "true" if os.getenv("APP_ENV", "development") == "development" else "false"
     ).lower() == "true"
+    # Local-only login boundary. Replace with enterprise SSO in pilot/production.
+    DEMO_LOGIN_PASSWORD: str = os.getenv("DEMO_LOGIN_PASSWORD", "demo1234")
+    AUTH_SECRET: str = os.getenv("AUTH_SECRET", os.getenv("APPROVAL_SECRET", "demo-only-change-me"))
+    AUTH_TOKEN_TTL_SECONDS: int = int(os.getenv("AUTH_TOKEN_TTL_SECONDS", str(8 * 60 * 60)))
     
     # App Settings
     HOST: str = os.getenv("HOST", "0.0.0.0")

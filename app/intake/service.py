@@ -48,6 +48,16 @@ class IntakeService:
         crm_attributes: Optional[Dict[str, Any]] = None,
         case_id: Optional[str] = None,
     ) -> StoredIntake:
+        from app.context.customer_resolver import CustomerResolver, ResolutionStatus
+
+        resolver = CustomerResolver(self.repository)
+        resolution = resolver.resolve_customer(customer_id, manual_input, employee_id)
+        
+        if resolution.status == ResolutionStatus.ACCESS_DENIED:
+            raise IntakeValidationError("ACCESS_DENIED", resolution.message, status_code=403)
+
+        resolved_customer_id = resolution.customer_id
+        
         now = _now()
         case_id = case_id or f"CASE-{uuid.uuid4().hex[:12].upper()}"
         session = IntakeSession(
@@ -55,16 +65,22 @@ class IntakeService:
             case_id=case_id,
             employee_id=employee_id,
             session_id=session_id,
-            customer_id=customer_id,
+            customer_id=resolved_customer_id,
             status=IntakeStatus.DRAFT,
             version=1,
             manual_input=manual_input,
             extracted_fields=self._initial_fields(manual_input, crm_attributes or {}),
-            audit_events=[_event(employee_id, "sales_case_draft_created", {"case_id": case_id})],
+            audit_events=[
+                _event(employee_id, "sales_case_draft_created", {"case_id": case_id}),
+                _event(employee_id, "customer_resolved", {"status": resolution.status.value, "customer_id": resolved_customer_id})
+            ],
             created_at=now,
             updated_at=now,
         )
         session.profile = self._build_profile(session)
+        
+        # If we have existing inventory, we could attach it to session or handle it later
+        
         return self.repository.create_intake(session)
 
     def add_document(
@@ -98,27 +114,38 @@ class IntakeService:
             sections = parse_document_bytes(safe_name, data)
         except (UnsupportedDocumentError, UnicodeDecodeError, ValueError, OSError) as exc:
             raise IntakeValidationError("DOCUMENT_PARSE_FAILED", f"Không đọc được tệp: {type(exc).__name__}") from exc
-        quality = extraction_quality(sections)
-        combined = "\n".join(item.text for item in sections)
-        screened = screen_input(combined)
-        now = _now()
-        status = DocumentJobStatus.UPLOADED
-        error_code = None
-        if not screened.safe:
+        from app.intake.document_assurance import DocumentAssuranceService, AssessmentStatus
+        
+        assurance_service = DocumentAssuranceService()
+        assessment = assurance_service.evaluate(f"DOC-{uuid.uuid4().hex[:12].upper()}", data, "general_document")
+
+        if assessment.status != AssessmentStatus.PASS:
             status = DocumentJobStatus.QUARANTINED
-            error_code = "PROMPT_INJECTION_SUSPECTED"
-        elif not quality.get("publishable"):
-            status = DocumentJobStatus.NEEDS_OCR
-            error_code = "OCR_REQUIRED"
+            error_code = assessment.status.value
+            quality = {"publishable": False, "reason": assessment.reason}
+        else:
+            quality = extraction_quality(sections)
+            combined = "\n".join(item.text for item in sections)
+            screened = screen_input(combined)
+            status = DocumentJobStatus.UPLOADED
+            error_code = None
+            if not screened.safe:
+                status = DocumentJobStatus.QUARANTINED
+                error_code = "PROMPT_INJECTION_SUSPECTED"
+            elif not quality.get("publishable"):
+                status = DocumentJobStatus.NEEDS_OCR
+                error_code = "OCR_REQUIRED"
+
+        now = _now()
         document = IntakeDocument(
-            document_id=f"DOC-{uuid.uuid4().hex[:12].upper()}",
+            document_id=assessment.document_id,
             case_id=session.case_id,
             filename=safe_name,
             mime_type=mime_type or "application/octet-stream",
             size_bytes=len(data),
             sha256=digest,
             status=status,
-            quality={**quality, "prompt_injection_flags": len(screened.flags)},
+            quality={**quality, "assurance_scores": {"fraud": assessment.fraud_score, "completeness": assessment.completeness_score, "relevance": assessment.relevance_score}},
             error_code=error_code,
             created_at=now,
             updated_at=now,
