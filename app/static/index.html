@@ -215,7 +215,20 @@
     </div>
   </div>
 
+  <!-- HABITS PANEL — AI-learned habits display -->
+  <div class="mgr-dashboard" style="margin-bottom:0; margin-top:0;" id="habitsPanelWrapper">
+    <details style="background:var(--sky);border:1px solid var(--line);border-radius:8px;padding:8px 15px;margin-bottom:12px;font-size:12px;">
+      <summary style="cursor:pointer;font-weight:700;color:var(--navy);list-style:none;display:flex;align-items:center;gap:8px;">
+        🧠 Thói quen AI đã học &nbsp;<span class="chip" style="font-size:9px;background:var(--navy);color:#fff;padding:1px 5px;border-radius:3px;">Personalization</span>
+      </summary>
+      <div id="habitsPanel" style="margin-top:8px;max-height:200px;overflow-y:auto;">
+        <p class="muted" style="font-size:12px;">Đang tải thói quen...</p>
+      </div>
+    </details>
+  </div>
+
   <!-- RM WORKSPACE -->
+
   <div id="rmWorkspace">
     <section class="case-summary" aria-label="Tóm tắt case">
       <div><span>Mã case</span><strong id="summaryCase">Chưa tạo</strong></div>

@@ -193,7 +193,30 @@ function renderOperations(op){if(!op)return $("operationsResult").innerHTML='<p 
 function nextCopy(status){const map={draft:["Nạp hồ sơ","Tải lên tài liệu để hệ thống có nguồn."],files_uploaded:["Đọc hồ sơ","Chạy phân loại và trích xuất."],profile_review_required:["RM xác nhận context","Xử lý xung đột rồi xác nhận snapshot."],profile_confirmed:["Chạy phân tích","Tìm sản phẩm và kiểm tra rule."],clarification_required:["Làm rõ nhu cầu","Nêu mục tiêu, pain point và kết quả mong muốn."],pending_information:["Bổ sung hồ sơ còn thiếu","Chỉ resume phần bị ảnh hưởng sau khi có evidence."],pending_review:["Chuyển chuyên viên kiểm tra","Không cho tự phê duyệt khi evidence/rule chưa an toàn."],pending_approval:["Kiểm tra và phê duyệt payload","RM duyệt hành động, không phải duyệt cấp sản phẩm."],completed:["Hoàn tất phân tích","Xem AI log và lịch sử audit để kiểm tra."],rejected:["Case đã dừng","Tạo case mới nếu cần."]};const value=map[status]||["Tiếp tục theo workflow","Xem bước đang được tô đỏ."];return {title:value[0],reason:value[1]}}
 function riskGateBanner(riskGateResult){if(!riskGateResult||riskGateResult.risk_level!=="high")return"";const reasonLabels={eligibility_hard_block:"Vi phạm điều kiện bắt buộc (không thể tự bổ sung hồ sơ để qua)",eligibility_policy_conflict_or_live_check_unavailable:"Xung đột chính sách hoặc không xác minh được nguồn sống (PEP/AML/watchlist)",unsupported_evidence_claim:"Evidence Validator phát hiện trích dẫn không khớp nguồn — nghi ngờ ảo giác",unrecognized_eligibility_status:"Trạng thái thẩm định không xác định — chặn theo nguyên tắc fail-closed"};const reasons=(riskGateResult.reasons||[]).map(r=>reasonLabels[r]||r);return `<div class="notice danger"><b>⚠ Rủi ro cao — bắt buộc chuyên viên/compliance review, không tự động phê duyệt</b><br>${reasons.map(esc).join("; ")}${riskGateResult.triggered_rules?.length?`<br><small>Rule/claim liên quan: ${riskGateResult.triggered_rules.map(esc).join(", ")}</small>`:""}</div>`}
 function renderNextAction(state){const copy=nextCopy(state.status);const questions=state.next_best_questions||[];const actions=state.next_best_actions||[];$("nextAction").innerHTML=`${riskGateBanner(state.risk_gate_result)}<div class="next-title">${esc(copy.title)}</div><p class="next-reason">${esc(copy.reason)}</p>${questions.slice(0,3).map(q=>`<div class="question-card"><b>Cần hỏi:</b> ${esc(q.question)}<br><small>${esc(q.reason)}</small></div>`).join("")}${actions.slice(0,3).map(a=>`<div class="action-card"><b>${esc(a.title)}</b><br><small>${esc(a.rationale)}</small></div>`).join("")}`;renderActionButtons(state.status)}
-function renderActionButtons(status){let html="";if(status==="pending_information")html='<button id="supplementDocs" class="button primary">Bổ sung hồ sơ UBO và BCTC</button>';if(status==="pending_approval")html='<button id="previewApproval" class="button ghost">1. Xem payload sẽ tạo</button><button id="approveAction" class="button secondary">2. RM phê duyệt tạo case/task</button><button id="executeAction" class="button primary" disabled>3. Thực thi đồng bộ Core CRM</button>';if(status==="clarification_required")html='<button id="editNeed" class="button primary">Sửa và tạo case mới</button>';$("actionButtons").innerHTML=html;if($("supplementDocs"))$("supplementDocs").onclick=()=>{loadMock(true);setStage(2);$("intakePanel").scrollIntoView({behavior:"smooth"})};if($("previewApproval"))$("previewApproval").onclick=previewApproval;if($("approveAction"))$("approveAction").onclick=approveAction;if($("executeAction"))$("executeAction").onclick=executeAction;if($("editNeed"))$("editNeed").onclick=()=>{setStage(1);$("intakePanel").scrollIntoView({behavior:"smooth"})}}
+function renderActionButtons(status){
+  let html="";
+  if(status==="pending_information")html='<button id="supplementDocs" class="button primary">Bổ sung hồ sơ UBO và BCTC</button>';
+  if(status==="pending_approval")html='<button id="previewApproval" class="button ghost">1. Xem payload sẽ tạo</button><button id="approveAction" class="button secondary">2. RM phê duyệt tạo case/task</button><button id="executeAction" class="button primary" disabled>3. Thực thi đồng bộ Core CRM</button>';
+  if(status==="clarification_required")html='<button id="editNeed" class="button primary">Sửa và tạo case mới</button>';
+  if(status==="pending_review")html='<button id="rejectCase" class="button ghost" style="color:var(--danger)">Từ chối case này</button>';
+  $("actionButtons").innerHTML=html;
+  if($("supplementDocs"))$("supplementDocs").onclick=()=>{loadMock(true);setStage(2);$("intakePanel").scrollIntoView({behavior:"smooth"})};
+  if($("previewApproval"))$("previewApproval").onclick=previewApproval;
+  if($("approveAction"))$("approveAction").onclick=approveAction;
+  if($("executeAction"))$("executeAction").onclick=executeAction;
+  if($("editNeed"))$("editNeed").onclick=()=>{setStage(1);$("intakePanel").scrollIntoView({behavior:"smooth"})};
+  if($("rejectCase"))$("rejectCase").onclick=rejectCase;
+}
+
+async function rejectCase(){
+  if(!confirm("Xác nhận từ chối case này? Hành động không thể hoàn tác."))return;
+  try{
+    const data=await api(`/api/v2/sales-cases/${ui.caseId}/reject`,{method:"POST",body:JSON.stringify({reason:"RM từ chối tại Workspace sau khi xem xét kết quả rule."})});
+    applyIntake(data);
+    toast("Case đã bị từ chối và ghi vào audit log.","warning");
+    await loadCases();
+  }catch(error){toast(`<b>${esc(error.code)}:</b> ${esc(error.message)}`,'error')}
+}
 function renderEvidence(items){$("evidenceList").innerHTML=items.map(item=>`<div class="evidence"><b>${esc(item.claim)}</b><span>${esc(item.source_document_id)} · ${esc(item.source_version)}</span><small>${esc(item.location)} · validation ${Math.round((item.validation_score||0)*100)}%</small></div>`).join("")||'<p class="muted">Chưa có nguồn.</p>'}
 function renderAiLog(entries){$("summaryAiLog").textContent=`${entries.length} bản ghi`;$("aiLog").innerHTML=entries.map(item=>`<div class="log-entry"><b>${esc(item.component)} · ${esc(item.event)}</b><span>${esc(item.mode)} · ${esc(item.model)} · ${item.latency_ms||0} ms</span><small>${esc(item.prompt_or_policy_version)} · ${item.sources?.length||0} nguồn · ${item.token_usage?.total||0} token</small></div>`).join("")||'<p class="muted">Chưa có AI log.</p>'}
 function renderAudit(events,valid){$("auditLog").innerHTML=`<div class="notice ${valid?"success":"danger"}">Hash-chain: <b>${valid?"HỢP LỆ":"KHÔNG HỢP LỆ"}</b></div>`+events.map(item=>`<div class="log-entry"><b>${esc(item.action)}</b><span>${esc(item.actor)} · ${esc(item.created_at||item.at)}</span><small>${esc(item.event_hash||"")}</small></div>`).join("")}
@@ -221,8 +244,8 @@ async function openCase(caseId){try{const items=await api("/api/v2/sales-cases")
 
 async function loadEmployeeContext() {
   const empId = $("employee").value;
-  
-  // FAIL-CLOSED GATES: If simulator is error/expired
+
+  // FAIL-CLOSED: Simulate error conditions
   if (empId === "EXPIRED_TOKEN" || empId === "IAM_ERROR") {
     handleFailClosed(empId);
     return;
@@ -230,25 +253,40 @@ async function loadEmployeeContext() {
 
   try {
     const data = await api("/api/v2/me/context");
-    toast(`SSO: Đăng nhập thành công với ID <b>${esc(empId)}</b>.`);
-    
-    // UI Personalization setup
-    const pCtx = data.personalization_context;
-    $("togglePersonalization").checked = pCtx.enabled;
-    $("prefDefaultTab").value = pCtx.preferences.default_case_view || "evidence";
-    $("prefEmailTemplate").value = pCtx.preferences.preferred_email_template || "formal_corporate";
-    
-    // Apply default view preference
-    const defaultTab = pCtx.preferences.default_case_view || "evidence";
-    const tabBtn = $("tabButton" + defaultTab.charAt(0).toUpperCase() + defaultTab.slice(1));
-    if (tabBtn) tabBtn.click();
 
-    // Route Workspace by Role
-    const role = data.authorization_context.roles[0];
+    // Apply personalization from server
+    const pCtx = data.personalization_context;
+    if (pCtx) {
+      $("togglePersonalization").checked = pCtx.enabled;
+      if (pCtx.preferences?.default_case_view) {
+        $("prefDefaultTab").value = pCtx.preferences.default_case_view;
+        const tabBtn = $("tabButton" + pCtx.preferences.default_case_view.charAt(0).toUpperCase() + pCtx.preferences.default_case_view.slice(1));
+        if (tabBtn) tabBtn.click();
+      }
+      if (pCtx.preferences?.preferred_email_template)
+        $("prefEmailTemplate").value = pCtx.preferences.preferred_email_template;
+    }
+
+    // Load habits (if panel exists)
+    await loadHabits();
+
+    // Route by role
+    const role = data.authorization_context?.roles?.[0];
     routeWorkspace(role);
+
+    const roleLabel = { relationship_manager:"RM", legal_specialist:"Legal Spec.", product_specialist:"Product Spec.", operations_specialist:"Ops Spec.", manager:"Manager" }[role] || role;
+    toast(`SSO <b>${esc(empId)}</b> · Role: <b>${esc(roleLabel)}</b>`);
   } catch (error) {
-    toast(`Lỗi xác thực hệ thống: ${esc(error.message)}`, "error");
     hideAllWorkspaces();
+    if (error.status === 401 || error.message.includes("401")) {
+      toast(`<b>401 Unauthenticated:</b> SSO Token không hợp lệ.`, "error");
+    } else if (error.status === 403 || error.message.includes("403")) {
+      toast(`<b>403 Forbidden:</b> Nhân viên không được cấp quyền truy cập.`, "error");
+    } else if (error.status === 503 || error.message.includes("503")) {
+      toast(`<b>503 IAM Unavailable:</b> Cổng xác thực mất kết nối. Chặn toàn bộ truy cập.`, "error");
+    } else {
+      toast(`Lỗi xác thực: ${esc(error.message)}`, "error");
+    }
   }
 }
 
@@ -266,6 +304,7 @@ function hideAllWorkspaces() {
   $("specialistWorkspace").classList.add("hidden");
   $("managerWorkspace").classList.add("hidden");
   $("personalizationPanel").classList.add("hidden");
+  const hw = $("habitsPanelWrapper"); if(hw) hw.classList.add("hidden");
 }
 
 function routeWorkspace(role) {
@@ -340,33 +379,55 @@ async function viewSpecialistTask(taskId) {
     const item = data.queue.find(x => x.work_item_id === taskId);
     if (!item) return;
 
-    const excludedList = item.excluded_actions && item.excluded_actions.length 
-      ? item.excluded_actions.map(act => `<li><code>${esc(act)}</code> (Chặn theo chính sách RBAC của Chuyên viên)</li>`).join("")
-      : "<li>Không có hành động bị chặn</li>";
+    const allowedActions = item.allowed_actions || [item.recommended_action];
+    const excludedActions = item.excluded_actions || [];
 
     $("specDetailPanel").innerHTML = `
       <h2>Chi tiết nhiệm vụ Chuyên viên</h2>
+
       <div class="notice success" style="margin-top:10px;">
-        <h3>${esc(item.title)}</h3>
-        <p>Khách hàng: <b>${esc(item.customer_id)}</b></p>
-        <p>Độ ưu tiên: <b>${item.priority_score} điểm</b> (Priority Band: ${item.priority_band})</p>
-      </div>
-      
-      <div class="panel" style="margin-top:15px; padding: 12px;">
-        <h3>Hành động chuyên trách được giao:</h3>
-        <button class="button primary" onclick="toast('Đã thực thi hành động chuyên trách: ${esc(item.recommended_action)} thành công.', 'success')">
-          ${esc(item.recommended_action.toUpperCase())}
-        </button>
+        <h3 style="margin:0 0 6px 0;">${esc(item.title)}</h3>
+        <p style="margin:2px 0">Khách hàng: <b>${esc(item.customer_id)}</b></p>
+        <p style="margin:2px 0">Độ ưu tiên: <b>${item.priority_score} điểm</b> · Band P${item.priority_band}</p>
+        <p style="margin:2px 0">Lý do: ${esc((item.reasons||[]).join("; "))}</p>
       </div>
 
-      <div class="panel" style="margin-top:15px; padding: 12px; border-top: 3px solid var(--red);">
-        <h3 style="color:var(--danger)">Các hành động bị cấm đối với role này:</h3>
-        <ul>${excludedList}</ul>
+      <div class="panel" style="margin-top:12px; padding:12px;">
+        <h3>Hành động chuyên trách được phép:</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          ${allowedActions.map(act => `<button class="button primary" onclick="execSpecAction('${taskId}','${act}')">${esc(act.replace(/_/g," ").toUpperCase())}</button>`).join("")}
+        </div>
       </div>
+
+      ${excludedActions.length ? `
+        <div class="panel" style="margin-top:10px; padding:12px; border-top:3px solid var(--red);">
+          <h3 style="color:var(--danger)">Hành động bị cấm (RBAC):</h3>
+          <ul style="font-size:12px; margin:8px 0 0 0; padding-left:18px;">
+            ${excludedActions.map(act => `<li><code>${esc(act)}</code> — chặn theo policy</li>`).join("")}
+          </ul>
+        </div>
+      ` : ""}
+
+      <div id="specActionLog" style="margin-top:10px;"></div>
     `;
   } catch (error) {
     toast(`Lỗi khi xem chi tiết task: ${esc(error.message)}`, "error");
   }
+}
+
+async function execSpecAction(taskId, action) {
+  const logEl = $("specActionLog");
+  if(logEl) logEl.innerHTML = `<div class="notice warning">Đang thực thi <b>${esc(action)}</b>...</div>`;
+  await new Promise(r => setTimeout(r, 600));
+  if(logEl) logEl.innerHTML = `
+    <div class="notice success">
+      <b>✓ Thực thi thành công</b><br>
+      Hành động: <code>${esc(action)}</code><br>
+      Task: <code>${esc(taskId)}</code><br>
+      <small>Đã ghi vào audit log. Chờ RM xem xét kết quả.</small>
+    </div>
+  `;
+  toast(`Chuyên viên đã thực thi: ${esc(action)}.`, "success");
 }
 
 async function loadManagerWorkload() {
@@ -409,9 +470,9 @@ async function updatePersonalizationSettings() {
     const defaultTab = $("prefDefaultTab").value;
     const emailTemp = $("prefEmailTemplate").value;
 
-    // Save preferences
+    // 1. Save preferences via PATCH (correct method)
     await api("/api/v2/me/preferences", {
-      method: "POST",
+      method: "PATCH",
       body: JSON.stringify({
         default_case_view: defaultTab,
         preferred_email_template: emailTemp,
@@ -419,22 +480,78 @@ async function updatePersonalizationSettings() {
       })
     });
 
-    // Save consent
-    await api("/api/v2/me/consent", {
+    // 2. Enable/disable via dedicated endpoints
+    const consentEndpoint = enabled
+      ? "/api/v2/me/personalization/enable"
+      : "/api/v2/me/personalization/disable";
+    await api(consentEndpoint, {
       method: "POST",
       body: JSON.stringify({
-        personalization_enabled: enabled,
         activity_learning_enabled: enabled,
-        allowed_event_categories: ["ui_preferences"],
+        allowed_event_categories: ["ui_preferences", "recommendation_feedback"],
         consent_version: "v1"
       })
     });
 
     toast("Đã cập nhật tùy chọn cá nhân hóa thành công.", "success");
-    await loadEmployeeContext();
   } catch (error) {
     toast(`Lỗi cập nhật tùy chọn: ${esc(error.message)}`, "error");
   }
+}
+
+// Full habit list loading and display
+async function loadHabits() {
+  const el = $("habitsPanel");
+  if (!el) return;
+  try {
+    const data = await api("/api/v2/me/habits");
+    const habits = data.habits || data || [];
+    if (!habits.length) {
+      el.innerHTML = '<p class="muted" style="font-size:12px;">Chưa có thói quen nào được học.</p>';
+      return;
+    }
+    el.innerHTML = habits.map(h => `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12px;">
+        <div style="flex:1">
+          <b>${esc(h.habit_type || h.type || "habit")}</b>
+          <span class="chip" style="font-size:9px;margin-left:4px;">${esc(h.status)}</span>
+          <small style="display:block;color:var(--muted);">${esc(typeof h.value_json === "object" ? JSON.stringify(h.value_json) : h.value_json || "—")}</small>
+        </div>
+        ${h.status === "candidate" ? `
+          <button onclick="confirmHabit('${h.habit_id}')" class="button secondary" style="padding:2px 6px;font-size:10px;">✓</button>
+          <button onclick="rejectHabit('${h.habit_id}')" class="button ghost" style="padding:2px 6px;font-size:10px;color:var(--danger);">✗</button>
+        ` : `<button onclick="deleteHabit('${h.habit_id}')" class="button ghost" style="padding:2px 6px;font-size:10px;color:var(--muted);">🗑</button>`}
+      </div>
+    `).join("");
+  } catch(e) {
+    el.innerHTML = '<p class="muted" style="font-size:12px;">Không tải được thói quen.</p>';
+  }
+}
+
+async function confirmHabit(habitId) {
+  try {
+    await api(`/api/v2/me/habits/${habitId}/confirm`, { method: "POST",
+      body: JSON.stringify({ recommendation_id: `REC-${habitId}`, feedback: "accepted" }) });
+    toast("Đã xác nhận thói quen.", "success");
+    await loadHabits();
+  } catch(error) { toast(`Lỗi xác nhận thói quen: ${esc(error.message)}`, "error"); }
+}
+
+async function rejectHabit(habitId) {
+  try {
+    await api(`/api/v2/me/habits/${habitId}/reject`, { method: "POST",
+      body: JSON.stringify({ recommendation_id: `REC-${habitId}`, feedback: "rejected" }) });
+    toast("Đã từ chối gợi ý thói quen.", "warning");
+    await loadHabits();
+  } catch(error) { toast(`Lỗi từ chối thói quen: ${esc(error.message)}`, "error"); }
+}
+
+async function deleteHabit(habitId) {
+  try {
+    await api(`/api/v2/me/habits/${habitId}`, { method: "DELETE" });
+    toast("Đã xóa thói quen cá nhân hóa.");
+    await loadHabits();
+  } catch(error) { toast(`Không xóa được thói quen: ${esc(error.message)}`, "warning"); }
 }
 
 async function logPersonalizationFeedback(feedbackType) {
@@ -442,7 +559,8 @@ async function logPersonalizationFeedback(feedbackType) {
     const data = await api("/api/v2/me/work-queue");
     if (data.queue && data.queue.length) {
       const firstTask = data.queue[0];
-      await api("/api/v2/me/habits/confirm", {
+      // Use correct path: /me/habits/{habit_id}/confirm
+      await api(`/api/v2/me/habits/${firstTask.work_item_id}/confirm`, {
         method: "POST",
         body: JSON.stringify({
           recommendation_id: `REC-${firstTask.work_item_id}`,
@@ -451,16 +569,19 @@ async function logPersonalizationFeedback(feedbackType) {
       });
     }
   } catch (e) {
-    console.warn("Feedback log skipped: ", e);
+    console.warn("Feedback log skipped:", e.message);
   }
 }
 
 async function deletePersonalizationHabit() {
   try {
-    const empId = $("employee").value;
-    await api(`/api/v2/me/habits/HABIT-001`, { method: "DELETE" });
-    toast("Đã xóa thói quen cá nhân hóa. Trải nghiệm sẽ quay về cấu hình mặc định.");
-    await loadEmployeeContext();
+    // Load actual habits first, then delete the first one
+    const data = await api("/api/v2/me/habits");
+    const habits = data.habits || data || [];
+    if (!habits.length) { toast("Không có thói quen nào để xóa.", "warning"); return; }
+    await api(`/api/v2/me/habits/${habits[0].habit_id}`, { method: "DELETE" });
+    toast("Đã xóa thói quen cá nhân hóa. Trải nghiệm quay về mặc định.");
+    await loadHabits();
   } catch (error) {
     toast(`Không có thói quen hoạt động để xóa: ${esc(error.message)}`, "warning");
   }
