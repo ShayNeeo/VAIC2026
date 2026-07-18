@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 import json
 from datetime import datetime
@@ -24,7 +25,11 @@ def get_db_connection() -> sqlite3.Connection:
     # Read settings.V2_DB_PATH on every call (not cached at import time) so
     # tests can monkeypatch it to an isolated temp file per-test/per-module
     # instead of writing into the same DB the live app/demo uses.
-    conn = sqlite3.connect(settings.V2_DB_PATH)
+    db_path = settings.V2_DB_PATH
+    parent = os.path.dirname(db_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
