@@ -17,6 +17,19 @@ jobs:
         with:
           channel: stable
 
+      - name: Set up Node (for font fetch)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install font tooling
+        run: |
+          npm install -g pnpm
+          pip install --user fonttools brotli
+
+      - name: Fetch fonts (gitignored TTFs, regenerated in CI)
+        run: bash tools/fetch_fonts.sh
+
       - name: Install dependencies
         run: flutter pub get
 
