@@ -21,7 +21,7 @@ app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), na
 
 @app.get("/health")
 def health() -> Dict[str, str]:
-    return {"status": "ok", "data_mode": "SHB_ENTERPRISE_DATA"}
+    return {"status": "ok", "data_mode": "SYNTHETIC_DEMO_DATA"}
 
 @app.get("/", response_class=HTMLResponse)
 def workspace() -> str:

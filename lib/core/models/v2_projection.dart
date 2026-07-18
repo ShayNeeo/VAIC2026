@@ -10,6 +10,37 @@ const String kDemoEmployeeId = 'EMP-RM-001';
 const String kDemoSessionId = 'SES-DEMO-001';
 const String kDemoRmName = 'Nguyễn An';
 
+/// Additive projection model for product-scoped legal policies. The backend
+/// remains the source of truth; this model deliberately does not decide
+/// eligibility.
+class LegalPolicyRef {
+  final String policyId, title, section, version, effectiveFrom, quote, decisionEffect;
+  final bool evidenceValid;
+  const LegalPolicyRef({required this.policyId, required this.title, required this.section, required this.version, required this.effectiveFrom, required this.quote, required this.decisionEffect, required this.evidenceValid});
+}
+
+List<LegalPolicyRef> _projectLegalPolicies(Map<String, dynamic> raw) {
+  final eligibility = raw['eligibility_result'] as Map<String, dynamic>? ?? {};
+  final products = eligibility['products'] as List? ?? const [];
+  final seen = <String>{};
+  final output = <LegalPolicyRef>[];
+  for (final productRaw in products) {
+    final product = productRaw as Map<String, dynamic>;
+    for (final policyRaw in product['related_policies'] as List? ?? const []) {
+      final policy = policyRaw as Map<String, dynamic>;
+      final key = '${policy['policy_id']}:${policy['document_version']}:${policy['section']}';
+      if (!seen.add(key)) continue;
+      output.add(LegalPolicyRef(
+        policyId: (policy['policy_id'] ?? '').toString(), title: (policy['title'] ?? '').toString(),
+        section: (policy['section'] ?? '').toString(), version: (policy['document_version'] ?? '').toString(),
+        effectiveFrom: (policy['effective_from'] ?? '').toString(), quote: (policy['source_quote'] ?? '').toString(),
+        decisionEffect: (policy['decision_effect'] ?? 'informational').toString(), evidenceValid: policy['evidence_valid'] == true,
+      ));
+    }
+  }
+  return output;
+}
+
 Map<String, int> _branchStatusCounts(String status) {
   // Map backend CaseStatus -> demo branch buckets (ready/need_info/review/blocked)
   return switch (status) {
@@ -117,6 +148,7 @@ CaseDetail projectDetail(Map<String, dynamic> raw) {
   final attrs = customer['attributes'] as Map<String, dynamic>? ?? {};
   final request = raw['request'] as Map<String, dynamic>? ?? {};
   final name = _customerName(customer);
+  final legalPolicies = _projectLegalPolicies(raw);
   return CaseDetail(
     caseId: raw['case_id'] ?? '',
     caseNumber: raw['case_id'] ?? '',
@@ -134,7 +166,14 @@ CaseDetail projectDetail(Map<String, dynamic> raw) {
     needFacts: const [],
     opportunities: _projectOpportunities(raw),
     missingDocuments: const [],
-    evidence: const [],
+    evidence: legalPolicies.map((policy) => EvidenceRef(
+      id: policy.policyId,
+      document: policy.title,
+      section: '${policy.section} · v${policy.version}',
+      effectiveDate: policy.effectiveFrom,
+      owner: policy.quote,
+      tier: 'SYNTHETIC_DEMO_DATA · ${policy.decisionEffect} · ${policy.evidenceValid ? 'đã xác minh' : 'cần review'}',
+    )).toList(),
     emailDraft: '',
     checklist: const [
       ChecklistItem(id: 'c1', text: 'Xác nhận phạm vi hành động đúng chính sách', owner: kDemoRmName, sla: 'Trước duyệt', completed: false),

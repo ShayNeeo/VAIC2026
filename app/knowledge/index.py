@@ -241,6 +241,18 @@ class PersistentHybridIndex:
         with self._connect() as connection:
             return int(connection.execute("SELECT COUNT(*) FROM knowledge_chunks").fetchone()[0])
 
+    def prune(self, *, chunk_types: set[str], keep_chunk_ids: set[str]) -> int:
+        """Remove stale chunks owned by one governed corpus during version sync."""
+        removed = 0
+        with self._connect() as connection:
+            rows = connection.execute("SELECT chunk_id, payload FROM knowledge_chunks").fetchall()
+            for row in rows:
+                chunk = KnowledgeChunk.model_validate_json(row["payload"])
+                if chunk.chunk_type in chunk_types and chunk.chunk_id not in keep_chunk_ids:
+                    connection.execute("DELETE FROM knowledge_chunks WHERE chunk_id = ?", (row["chunk_id"],))
+                    removed += 1
+        return removed
+
     def get_chunks_for_document(
         self, document_id: str, document_version: Optional[str] = None
     ) -> List[KnowledgeChunk]:

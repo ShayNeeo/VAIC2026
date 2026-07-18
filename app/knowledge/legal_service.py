@@ -18,8 +18,8 @@ from app.knowledge.rag_provider import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_RULES = ROOT / "data" / "synthetic" / "v2" / "eligibility_rules.json"
-DEFAULT_SOURCE_CARD = ROOT / "data" / "catalog" / "source_cards" / "synthetic_legal_knowledge.json"
+DEFAULT_POLICIES = ROOT / "data" / "synthetic" / "v2" / "b2b_policies.json"
+DEFAULT_SOURCE_CARD = ROOT / "data" / "catalog" / "source_cards" / "synthetic_b2b_policies.json"
 
 _logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class LegalKnowledgeService:
 
     def ingest(
         self,
-        rules_path: str | Path = DEFAULT_RULES,
+        rules_path: str | Path = DEFAULT_POLICIES,
         source_card_path: str | Path = DEFAULT_SOURCE_CARD,
     ) -> int:
         require_serving_approval(source_card_path)
@@ -56,43 +56,46 @@ class LegalKnowledgeService:
         raw = source.read_bytes()
         payload = json.loads(raw.decode("utf-8"))
         chunks: List[KnowledgeChunk] = []
-        for rule in payload["rules"]:
-            text = " | ".join(
-                [
-                    rule["rule_id"],
-                    f"Mã lỗi: {rule['failure_code']}",
-                    f"Trường kiểm tra: {rule['field']}",
-                    f"Nội dung nguồn: {rule['source_quote']}",
-                ]
-            )
-            for scope in rule["scope"]:
-                chunks.append(
-                    KnowledgeChunk(
-                        chunk_id=f"{rule['rule_id']}:{rule['version']}:{scope}",
-                        document_id=rule["source_document_id"],
-                        document_version=rule["source_version"],
-                        product_id=scope,
-                        section_path=rule["source_location"],
-                        chunk_type="legal_rule",
-                        text=text,
-                        effective_from=rule["effective_from"],
-                        effective_to=rule["effective_to"],
-                        active=True,
-                        segments=[],
-                        access_scope={"branches": ["*"]},
-                        content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        for policy in payload["policies"]:
+            if not policy["active"] or policy.get("synthetic") is not True:
+                continue
+            for section in policy["sections"]:
+                text = " | ".join([policy["policy_id"], policy["title"], section["title"], section["summary"], f"Nội dung nguồn: {section['source_quote']}"])
+                scopes = section.get("product_ids", policy["product_ids"])
+                for scope in scopes:
+                    chunk_id = f"{policy['policy_id']}:{policy['document_version']}:{section['section_id']}:{scope}"
+                    chunks.append(
+                        KnowledgeChunk(
+                            chunk_id=chunk_id,
+                            document_id=policy["document_id"],
+                            document_version=policy["document_version"],
+                            product_id=scope,
+                            section_path=section["section_id"],
+                            chunk_type="b2b_policy",
+                            text=text,
+                            effective_from=policy["effective_from"],
+                            effective_to=policy["effective_to"],
+                            active=True,
+                            segments=[],
+                            access_scope=policy["access_scope"],
+                            content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                        )
                     )
-                )
         source_hash = hashlib.sha256(raw).hexdigest()
+        self.index.prune(
+            chunk_types={"legal_rule", "b2b_policy"},
+            keep_chunk_ids={chunk.chunk_id for chunk in chunks},
+        )
         return self.index.upsert(
             chunks,
             source_hash=source_hash,
-            dataset_version=str(payload["registry_version"]),
+            dataset_version=str(payload["dataset_version"]),
         )
 
     def ensure_index(self) -> None:
-        if self.index.count() == 0:
-            self.ingest()
+        # Upsert is source-hash idempotent and also refreshes an existing
+        # local index when the versioned policy pack changes.
+        self.ingest()
 
     def rag_health(self) -> dict:
         health = compute_health(settings.RAG_PROVIDER, self._circuit)

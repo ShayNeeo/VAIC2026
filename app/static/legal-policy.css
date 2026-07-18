@@ -1,0 +1,8 @@
+.legal-decision { min-width: 0; }
+.legal-conclusion { font-size: 11px; color: var(--ink); margin: 7px 0; }
+.required-action { display: block; color: #815400; margin: 5px 0; }
+.policy-list { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.policy-item { border: 1px solid var(--line); border-radius: 6px; padding: 7px; margin-top: 6px; background: #f8fafb; font-size: 10px; }
+.policy-item summary { cursor: pointer; font-weight: 800; color: var(--navy); }
+.policy-item p { margin: 5px 0; color: var(--muted); }
+.policy-item blockquote { margin: 6px 0; padding: 6px 8px; border-left: 3px solid var(--blue); background: #fff; color: #40576a; }

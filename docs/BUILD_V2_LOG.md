@@ -2,6 +2,15 @@
 
 Nhật ký này là bằng chứng triển khai Plan V2. Một hạng mục chỉ được ghi `Done` khi có test hoặc eval tương ứng. Dữ liệu hiện tại là synthetic và không được coi là chính sách SHB thật.
 
+## V2-018 — Product-scoped Legal B2B policies — 2026-07-18
+
+- Thêm governed `SYNTHETIC_DEMO_DATA` policy pack cho 4 sản phẩm active và Source Card/lineage.
+- Mở rộng Pydantic eligibility output với `related_policies` và `legal_summary`; rule bắt buộc tham chiếu `policy_id`/`section_id`.
+- Legal RAG index policy sections; workflow kiểm chứng exact quote, fail-closed khi evidence thiếu và ghi policy metadata/metrics.
+- Web và Flutter projection hiển thị policy, version, hiệu lực, decision effect và quote; xóa `app/legal/LegalAgentV2` orphan.
+- Verification: `pytest -q` → `275 passed`; business eval `40/40`, policy precision/recall `1.0/1.0`, unsafe pass `0`; security `25/25`, reliability `20/20`.
+- Flutter analyze/test chưa chạy trong máy review vì không có Flutter SDK trong PATH; thay đổi Dart additive, không chạy codegen.
+
 ## Baseline — 2026-07-17
 
 | Hạng mục | Kết quả |

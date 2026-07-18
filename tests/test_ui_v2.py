@@ -16,7 +16,7 @@ def test_workspace_exposes_a_clear_decision_reading_order():
         "Kết luận xử lý",
         "AI hiểu khách hàng cần gì?",
         "Sản phẩm nào phù hợp?",
-        "Đạt, không đạt hay còn thiếu?",
+        "Kết quả pháp lý theo sản phẩm",
         "Hành động ưu tiên",
         "Nguồn chứng minh kết luận",
         "Dữ liệu kỹ thuật JSON",

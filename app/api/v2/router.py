@@ -1265,7 +1265,7 @@ def create_router(
             rag_overall = "degraded"
         return {
             "status": "ok" if storage.get("healthy") else "degraded",
-            "data_mode": "SHB_ENTERPRISE_DATA",
+            "data_mode": "SYNTHETIC_DEMO_DATA",
             "storage": storage,
             "indexes": {"product_chunks": product_index, "legal_chunks": legal_index},
             # Additive field -- does not change any existing key above.

@@ -18,6 +18,7 @@ Tiếp nhận hồ sơ → trích xuất Customer Business Snapshot → RM xác 
 - Intent extraction có schema, confidence và deterministic fallback khi chưa bật LLM.
 - Persistent hybrid Product RAG và Legal RAG bằng SQLite, có ACL, version, effective date, citation và retrieval score.
 - Eligibility Engine deterministic, versioned và fail-closed; LLM không quyết định đạt/không đạt.
+- Bộ policy B2B synthetic gắn Product → Rule → Policy → Section cho Payroll, Cash Management, Bulk Payment và Working Capital; output từng sản phẩm có chính sách/điều khoản, legal summary, hồ sơ cần bổ sung và evidence đã kiểm chứng. Xem `docs/LEGAL_B2B_CAPABILITY_MATRIX.md`.
 - Planner liên kết Product → Legal/Eligibility → Operations → Approval; có Next Best Question và Next Best Action.
 - Operations tạo checklist, proposal/email nháp và exact CRM/task payload; không tự gọi hệ thống ngoài.
 - Approval token khóa theo `case_id`, RM, exact payload hash, nonce, expiry và one-time use; executor có idempotency.
@@ -138,8 +139,9 @@ Ngoài development, app từ chối khởi tạo approval service nếu còn dù
 
 Snapshot ngày `2026-07-18` (chạy trực tiếp với `.env` mặc định, không override thủ công):
 
-- `268 passed`, 0 fail, lặp lại `pytest -q` 2 lần liên tiếp đều pass (không còn flake).
+- `275 passed`, 0 fail (snapshot Legal B2B ngày 2026-07-18).
 - Business golden evaluation `40/40`; unsafe approval rate `0%`.
+- Relevant-policy precision/recall `100%/100%` trên 10 eligibility golden cases synthetic.
 - Security `25/25`; reliability `20/20`.
 - Hero multi-product scenario (`tests/test_sales_cases_e2e.py`, 5 case bao gồm flagship) `5/5 passed`.
 - Benchmark single-agent vs multi-agent (40 case, warm cache): `missing_info_recall` 0.0 (single) vs 0.889 (multi); `legal_flag_recall` 0.0 (single) vs 0.833 (multi) — single-agent path không có khả năng phát hiện thiếu hồ sơ hoặc rủi ro pháp lý vì không chạy Eligibility Engine. Chi tiết: `docs/SINGLE_VS_MULTI_AGENT_BENCHMARK.md`.
