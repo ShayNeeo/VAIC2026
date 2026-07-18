@@ -26,7 +26,8 @@ ROLE_CAPABILITIES: Dict[RoleType, Set[str]] = {
         "product:recommend",
         "product:verify_fit",
         "product:add_justification",
-        "proposal:review"
+        "proposal:review",
+        "product:manage_knowledge"
     },
     RoleType.LEGAL_SPECIALIST: {
         "case:read",
@@ -34,14 +35,20 @@ ROLE_CAPABILITIES: Dict[RoleType, Set[str]] = {
         "legal:verify_evidence",
         "legal:check_issue",
         "legal:block_non_eligible",
-        "proposal:review"
+        "proposal:review",
+        "legal:manage_knowledge"
     },
-    RoleType.OPERATIONS_SPECIALIST: {
+    RoleType.CREDIT_SPECIALIST: {
         "case:read",
-        "task:update",
-        "ops:prepare_task",
-        "ops:generate_checklist",
-        "ops:update_implementation"
+        "credit:analyze_file",
+        "credit:review_structure",
+        "credit:manage_knowledge"
+    },
+    RoleType.INSURANCE_SPECIALIST: {
+        "case:read",
+        "insurance:analyze_coverage",
+        "insurance:review_coverage",
+        "insurance:manage_knowledge"
     },
     RoleType.MANAGER: {
         "case:read",

@@ -1,4 +1,4 @@
-"""Fail-closed MCP tool policy for each Expert Agent profile."""
+"""Fail-closed MCP tool policy for each expert profile."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Dict, FrozenSet
 from services.rag_mcp.schemas import CallerPrincipal, ExpertAgentType, KnowledgeDomain
 
 
-POLICY_VERSION = "2026.07-v2"
+POLICY_VERSION = "2026.07-v3-credit"
 
 
 @dataclass(frozen=True)
@@ -22,49 +22,49 @@ class ToolRule:
 
 TOOL_RULES: Dict[str, ToolRule] = {
     "product_search": ToolRule(
-        "ProductExpert", "product", "knowledge:product:read", "Tìm sản phẩm, biểu phí và solution bundle."
+        "ProductExpert", "product", "knowledge:product:read", "Tìm sản phẩm và solution bundle."
     ),
     "product_get_chunk": ToolRule(
-        "ProductExpert", "product", "knowledge:product:read", "Đọc lại một chunk sản phẩm đã được truy xuất."
+        "ProductExpert", "product", "knowledge:product:read", "Đọc exact chunk sản phẩm."
     ),
     "product_list_sources": ToolRule(
-        "ProductExpert", "product", "knowledge:product:read", "Liệt kê nguồn sản phẩm được phê duyệt."
+        "ProductExpert", "product", "knowledge:product:read", "Liệt kê nguồn sản phẩm được duyệt."
     ),
     "legal_search": ToolRule(
-        "LegalExpert", "legal", "knowledge:legal:read", "Tra cứu policy, KYC và evidence pháp lý."
+        "LegalExpert", "legal", "knowledge:legal:read", "Tra policy, KYC và evidence pháp lý."
     ),
     "legal_get_chunk": ToolRule(
-        "LegalExpert", "legal", "knowledge:legal:read", "Đọc lại một chunk pháp lý đã được truy xuất."
+        "LegalExpert", "legal", "knowledge:legal:read", "Đọc exact chunk pháp lý."
     ),
     "legal_list_sources": ToolRule(
-        "LegalExpert", "legal", "knowledge:legal:read", "Liệt kê nguồn pháp lý được phê duyệt."
+        "LegalExpert", "legal", "knowledge:legal:read", "Liệt kê nguồn pháp lý được duyệt."
     ),
-    "operations_search": ToolRule(
-        "OperationsExpert", "operations", "knowledge:operations:read", "Tra cứu SOP, checklist, SLA và template."
+    "credit_search": ToolRule(
+        "CreditExpert", "credit", "knowledge:credit:read", "Tra chính sách cho vay và thẩm định tín dụng."
     ),
-    "operations_get_chunk": ToolRule(
-        "OperationsExpert", "operations", "knowledge:operations:read", "Đọc lại một chunk vận hành đã được truy xuất."
+    "credit_get_chunk": ToolRule(
+        "CreditExpert", "credit", "knowledge:credit:read", "Đọc exact chunk tín dụng."
     ),
-    "operations_list_sources": ToolRule(
-        "OperationsExpert", "operations", "knowledge:operations:read", "Liệt kê nguồn vận hành được phê duyệt."
+    "credit_list_sources": ToolRule(
+        "CreditExpert", "credit", "knowledge:credit:read", "Liệt kê nguồn tín dụng được duyệt."
     ),
     "evidence_get_chunk": ToolRule(
-        "EvidenceExpert", "all", "knowledge:evidence:read", "Đọc chính xác chunk được claim tham chiếu."
+        "EvidenceExpert", "all", "knowledge:evidence:read", "Đọc exact chunk mà claim tham chiếu."
     ),
     "evidence_verify_citation": ToolRule(
-        "EvidenceExpert", "all", "knowledge:evidence:read", "Đối chiếu ID, version và content hash của citation."
+        "EvidenceExpert", "all", "knowledge:evidence:read", "Đối chiếu ID, version và content hash."
     ),
     "rag_search": ToolRule(
-        "KnowledgeAdmin", "all", "knowledge:admin", "Tìm kiếm liên miền để kiểm thử/quản trị corpus."
+        "KnowledgeAdmin", "all", "knowledge:admin", "Tìm kiếm liên miền cho corpus QA."
     ),
     "rag_get_chunk": ToolRule(
         "KnowledgeAdmin", "all", "knowledge:admin", "Đọc chunk bất kỳ trong phạm vi quản trị."
     ),
     "rag_list_sources": ToolRule(
-        "KnowledgeAdmin", "all", "knowledge:admin", "Kiểm kê toàn bộ nguồn đang serving."
+        "KnowledgeAdmin", "all", "knowledge:admin", "Kiểm kê nguồn đang serving."
     ),
     "rag_health": ToolRule(
-        "KnowledgeAdmin", "all", "knowledge:admin", "Kiểm tra health, index và ingestion."
+        "KnowledgeAdmin", "all", "knowledge:admin", "Kiểm tra health và ingestion."
     ),
 }
 
@@ -72,7 +72,7 @@ TOOL_RULES: Dict[str, ToolRule] = {
 PROFILE_ENDPOINTS = {
     "ProductExpert": "/mcp/product",
     "LegalExpert": "/mcp/legal",
-    "OperationsExpert": "/mcp/operations",
+    "CreditExpert": "/mcp/credit",
     "EvidenceExpert": "/mcp/evidence",
     "KnowledgeAdmin": "/mcp",
 }
@@ -98,3 +98,4 @@ def authorize_tool(principal: CallerPrincipal, tool_name: str) -> ToolRule:
     }.intersection(principal.roles):
         raise PermissionError("KnowledgeAdmin tools require KnowledgeAdmin or DataSteward role")
     return rule
+

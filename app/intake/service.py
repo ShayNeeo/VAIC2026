@@ -11,7 +11,8 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from app.config import settings
 from app.intake.extractor import classify_document, detect_needs, extract_document_fields
-from app.knowledge.parsers import UnsupportedDocumentError, extraction_quality, parse_document_bytes
+from app.knowledge.ocr import OcrUnavailableError
+from app.knowledge.parsers import UnsupportedDocumentError, extraction_quality, ocr_pdf_sections, parse_document_bytes
 from app.safety.input_guardrails_v2 import screen_input
 from app.schemas.v2.intake import (
     CustomerBusinessSnapshot,
@@ -125,6 +126,29 @@ class IntakeService:
             quality = {"publishable": False, "reason": assessment.reason}
         else:
             quality = extraction_quality(sections)
+            # OCR fallback: pypdf's text-layer extraction found nothing
+            # usable (a scanned/image PDF). Try local Tesseract OCR before
+            # giving up to NEEDS_OCR -- but only accept the OCR result if
+            # its own extraction_quality AND mean confidence clear the
+            # configured floor; otherwise fall through to the exact same
+            # NEEDS_OCR/OCR_REQUIRED path as before OCR existed. Never
+            # silently accepts low-confidence OCR noise as real text.
+            if not quality.get("publishable") and suffix == ".pdf" and settings.OCR_ENABLED:
+                try:
+                    ocr_sections = ocr_pdf_sections(data)
+                except OcrUnavailableError:
+                    ocr_sections = []
+                if ocr_sections:
+                    ocr_quality = extraction_quality(ocr_sections)
+                    confidences = [s.metadata.get("ocr_confidence", 0.0) for s in ocr_sections]
+                    mean_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+                    if ocr_quality.get("publishable") and mean_confidence >= settings.OCR_MIN_CONFIDENCE:
+                        sections = ocr_sections
+                        quality = {**ocr_quality, "ocr_used": True, "ocr_mean_confidence": round(mean_confidence, 4)}
+                    else:
+                        quality = {
+                            **quality, "ocr_attempted": True, "ocr_mean_confidence": round(mean_confidence, 4),
+                        }
             combined = "\n".join(item.text for item in sections)
             screened = screen_input(combined)
             status = DocumentJobStatus.UPLOADED

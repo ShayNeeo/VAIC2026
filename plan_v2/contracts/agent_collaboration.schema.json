@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.internal/contracts/agent-collaboration/1.0.0",
+  "title": "Expert Agent Collaboration Contracts",
+  "oneOf": [
+    {"$ref": "#/$defs/taskAssignment"},
+    {"$ref": "#/$defs/expertFinding"},
+    {"$ref": "#/$defs/assistanceRequest"},
+    {"$ref": "#/$defs/constraintNotice"},
+    {"$ref": "#/$defs/collaborationSession"},
+    {"$ref": "#/$defs/synthesisResult"}
+  ],
+  "$defs": {
+    "agentType": {
+      "enum": ["PlannerCoordinator", "ProductExpert", "LegalExpert", "CreditExpert", "InsuranceExpert", "EvidenceValidator"]
+    },
+    "artifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "artifact_type", "schema_version", "content_hash"],
+      "properties": {
+        "artifact_id": {"type": "string", "minLength": 1},
+        "artifact_type": {"type": "string", "minLength": 1},
+        "schema_version": {"type": "string", "minLength": 1},
+        "content_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "chunk_id", "document_id", "document_version", "content_hash", "support_status"],
+      "properties": {
+        "claim_id": {"type": "string"},
+        "chunk_id": {"type": "string"},
+        "document_id": {"type": "string"},
+        "document_version": {"type": "string"},
+        "content_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "location": {"type": ["string", "null"]},
+        "quote": {"type": ["string", "null"]},
+        "support_status": {
+          "enum": ["supported", "partially_supported", "contradicted", "stale", "unauthorized", "missing"]
+        }
+      }
+    },
+    "confidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_coverage", "source_authority", "freshness_status", "consistency_status", "rule_certainty", "input_completeness"],
+      "properties": {
+        "evidence_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+        "source_authority": {"enum": ["A_INTERNAL", "A_OFFICIAL", "B_LICENSED", "C_OPEN", "D_DERIVED", "E_SYNTHETIC", "UNKNOWN"]},
+        "freshness_status": {"enum": ["current", "warning", "stale", "blocked", "unknown"]},
+        "retrieval_quality": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "consistency_status": {"enum": ["consistent", "conflicting", "unresolved", "not_checked"]},
+        "rule_certainty": {"enum": ["deterministic", "not_applicable", "unknown"]},
+        "input_completeness": {"type": "number", "minimum": 0, "maximum": 1},
+        "display_confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "calibration_policy_version": {"type": ["string", "null"]}
+      }
+    },
+    "agentRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run_id", "model", "mode", "prompt_version", "output_schema_version", "manifest_version", "tool_policy_version", "tools_called", "denied_tools", "latency_ms", "output_hash"],
+      "properties": {
+        "run_id": {"type": "string"},
+        "model": {"type": "string"},
+        "mode": {"enum": ["llm", "deterministic_fallback"]},
+        "prompt_version": {"type": "string"},
+        "output_schema_version": {"const": "1.0.0"},
+        "manifest_version": {"type": "string"},
+        "tool_policy_version": {"type": "string"},
+        "tools_called": {"type": "array", "items": {"type": "string"}},
+        "denied_tools": {"type": "array", "items": {"type": "string"}},
+        "latency_ms": {"type": "integer", "minimum": 0},
+        "fallback_reason": {"type": ["string", "null"]},
+        "output_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "taskAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "message_type", "task_id", "case_id", "trace_id", "assigned_by", "assigned_to", "task_type", "objective", "input_refs", "constraints", "round", "deadline_at", "input_hash"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "message_type": {"const": "TaskAssignment"},
+        "task_id": {"type": "string"},
+        "case_id": {"type": "string"},
+        "trace_id": {"type": "string"},
+        "assigned_by": {"const": "PlannerCoordinator"},
+        "assigned_to": {"$ref": "#/$defs/agentType"},
+        "task_type": {"type": "string"},
+        "objective": {"type": "string", "minLength": 3},
+        "input_refs": {"type": "array", "items": {"$ref": "#/$defs/artifactRef"}},
+        "constraints": {"type": "array", "items": {"type": "string"}},
+        "allowed_tool_names": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "round": {"type": "integer", "minimum": 0, "maximum": 3},
+        "deadline_at": {"type": "string", "format": "date-time"},
+        "input_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    },
+    "expertFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "message_type", "finding_id", "case_id", "trace_id", "task_id", "agent_type", "agent_manifest_version", "revision", "conclusion", "decision_rationale_summary", "known_facts", "inferences", "unknowns", "assumptions", "recommendations", "constraints", "evidence_refs", "confidence", "assistance_request_ids", "fallback_used", "output_hash", "stop_reason", "agent_run", "domain_result"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "message_type": {"const": "ExpertFinding"},
+        "finding_id": {"type": "string"},
+        "case_id": {"type": "string"},
+        "trace_id": {"type": "string"},
+        "task_id": {"type": "string"},
+        "agent_type": {"$ref": "#/$defs/agentType"},
+        "agent_manifest_version": {"type": "string"},
+        "revision": {"type": "integer", "minimum": 1, "maximum": 3},
+        "parent_finding_id": {"type": ["string", "null"]},
+        "conclusion": {"type": "string"},
+        "decision_rationale_summary": {"type": "array", "items": {"type": "string"}, "maxItems": 8},
+        "known_facts": {"type": "array", "items": {"type": "object"}},
+        "inferences": {"type": "array", "items": {"type": "object"}},
+        "unknowns": {"type": "array", "items": {"type": "object"}},
+        "assumptions": {"type": "array", "items": {"type": "object"}},
+        "recommendations": {"type": "array", "items": {"type": "object"}},
+        "constraints": {"type": "array", "items": {"type": "object"}},
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidenceRef"}},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "assistance_request_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "fallback_used": {"type": "boolean", "default": false},
+        "output_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "stop_reason": {"enum": ["completed", "needs_assistance", "insufficient_evidence", "hard_block", "timeout", "fallback"]}
+        ,"agent_run": {"$ref": "#/$defs/agentRun"}
+        ,"domain_result": {"type": "object"}
+      }
+    },
+    "assistanceRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "message_type", "request_id", "case_id", "trace_id", "from_agent", "target_agent", "question_type", "question", "input_refs", "constraints", "expected_output", "priority", "dedup_key", "round"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "message_type": {"const": "AssistanceRequest"},
+        "request_id": {"type": "string"},
+        "case_id": {"type": "string"},
+        "trace_id": {"type": "string"},
+        "from_agent": {"$ref": "#/$defs/agentType"},
+        "target_agent": {"$ref": "#/$defs/agentType"},
+        "question_type": {"type": "string"},
+        "question": {"type": "string", "minLength": 3},
+        "input_refs": {"type": "array", "items": {"$ref": "#/$defs/artifactRef"}},
+        "constraints": {"type": "array", "items": {"type": "string"}},
+        "expected_output": {"const": "ExpertFinding"},
+        "priority": {"enum": ["normal", "high"]},
+        "dedup_key": {"type": "string"},
+        "round": {"type": "integer", "minimum": 1, "maximum": 3}
+      }
+    },
+    "constraintNotice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "message_type", "constraint_id", "case_id", "trace_id", "issued_by", "constraint_type", "severity", "description", "evidence_refs", "overridable", "effective_at"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "message_type": {"const": "ConstraintNotice"},
+        "constraint_id": {"type": "string"},
+        "case_id": {"type": "string"},
+        "trace_id": {"type": "string"},
+        "issued_by": {"enum": ["LegalExpert", "EvidenceValidator", "PlannerCoordinator"]},
+        "constraint_type": {"enum": ["hard_rule", "missing_information", "access", "stale_source", "conflict", "operational_dependency"]},
+        "severity": {"enum": ["blocking", "review", "warning"]},
+        "description": {"type": "string"},
+        "evidence_refs": {"type": "array", "items": {"$ref": "#/$defs/evidenceRef"}},
+        "overridable": {"type": "boolean"},
+        "effective_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "collaborationSession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "message_type", "session_id", "case_id", "trace_id", "status", "current_round", "max_rounds", "task_ids", "finding_ids", "assistance_request_ids", "constraint_ids", "convergence_hashes", "started_at"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "message_type": {"const": "CollaborationSession"},
+        "session_id": {"type": "string"},
+        "case_id": {"type": "string"},
+        "trace_id": {"type": "string"},
+        "status": {"enum": ["planned", "running", "converged", "needs_human_review", "budget_exhausted", "failed"]},
+        "current_round": {"type": "integer", "minimum": 0, "maximum": 3},
+        "max_rounds": {"const": 3},
+        "task_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "finding_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "assistance_request_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "constraint_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "convergence_hashes": {"type": "array", "items": {"type": "string"}, "maxItems": 3},
+        "stop_reason": {"type": ["string", "null"]},
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "synthesisResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "message_type", "synthesis_id", "case_id", "trace_id", "primary_solution", "alternative_solutions", "blocked_candidates", "unresolved_conflicts", "missing_information", "evidence_validation_summary", "human_review_requirements", "source_finding_ids", "synthesis_policy_version", "output_hash"],
+      "properties": {
+        "schema_version": {"const": "1.0.0"},
+        "message_type": {"const": "SynthesisResult"},
+        "synthesis_id": {"type": "string"},
+        "case_id": {"type": "string"},
+        "trace_id": {"type": "string"},
+        "primary_solution": {"type": ["object", "null"]},
+        "alternative_solutions": {"type": "array", "items": {"type": "object"}, "maxItems": 2},
+        "blocked_candidates": {"type": "array", "items": {"type": "object"}},
+        "unresolved_conflicts": {"type": "array", "items": {"type": "object"}},
+        "missing_information": {"type": "array", "items": {"type": "object"}},
+        "operations_plan": {"type": ["object", "null"]},
+        "customer_draft": {"type": ["object", "null"]},
+        "evidence_validation_summary": {"type": "object"},
+        "human_review_requirements": {"type": "array", "items": {"type": "object"}},
+        "source_finding_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "synthesis_policy_version": {"type": "string"},
+        "output_hash": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"}
+      }
+    }
+  }
+}

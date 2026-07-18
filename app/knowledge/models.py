@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -79,6 +79,15 @@ class KnowledgeChunk(BaseModel):
     # that sets this (SOP step chunks point at a per-workflow overview
     # parent chunk).
     parent_chunk_id: Optional[str] = None
+    # Department Agent Knowledge Console addition -- who fed this chunk to
+    # the domain's Agent and when. None for every static-file ingestion path
+    # above (product/legal/operations ingest()); set only by
+    # app/api/v2/knowledge_router.py, the one place a specialist submits
+    # knowledge through the API instead of a JSON seed file. Distinct from
+    # authority_tier/verification_status: this is provenance ("who"), not a
+    # trust ranking ("how much to weigh it").
+    contributed_by: Optional[str] = None
+    contributed_at: Optional[datetime] = None
 
 
 class RetrievalHit(BaseModel):

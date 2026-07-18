@@ -212,7 +212,7 @@ class LegalKnowledgeService:
     ) -> List[RetrievalHit]:
         from services.rag_mcp.client import RagMCPClient
         from services.rag_mcp.config import RagMCPSettings
-        from services.rag_mcp.schemas import SearchKnowledgeRequest, CallerPrincipal
+        from services.rag_mcp.schemas import CallerPrincipal, ExpertSearchRequest, ScopedSearchFilters
 
         mcp_settings = RagMCPSettings(
             url=settings.RAG_MCP_LEGAL_URL,
@@ -220,14 +220,22 @@ class LegalKnowledgeService:
             require_auth=True,
         )
         async with RagMCPClient(mcp_settings) as client:
-            principal = CallerPrincipal(employee_id="SYSTEM", branch=branch, roles=["LegalExpert"])
-            req = SearchKnowledgeRequest(
+            principal = CallerPrincipal(
+                employee_id="SYSTEM-LEGAL",
+                branch=branch,
+                agent_type="LegalExpert",
+                agent_instance_id="legal-expert-runtime-v1",
+                roles=["LegalExpert"],
+                permissions=["knowledge:legal:read"],
+            )
+            req = ExpertSearchRequest(
                 query=query,
                 principal=principal,
-                filters={"product_ids": [product_id] if product_id else []},
+                filters=ScopedSearchFilters(product_ids=[product_id] if product_id else []),
                 top_k=top_k,
+                trace_id=f"TRACE-LEGAL-{hashlib.sha256(query.encode('utf-8')).hexdigest()[:12]}",
             )
-            resp = await client.search(req)
+            resp = await client.expert_search("legal_search", req)
 
             hits: List[RetrievalHit] = []
             for chunk in resp.chunks:
@@ -244,11 +252,13 @@ class LegalKnowledgeService:
                             active=True,
                             effective_from=chunk.effective_from,
                             effective_to=chunk.effective_to,
-                            content_hash="",
+                            content_hash=chunk.citation.content_hash,
                             segments=[],
                             access_scope={"branches": chunk.citation.branches or ["*"]},
                         ),
                         score=chunk.score,
+                        dense_score=chunk.dense_score,
+                        sparse_score=chunk.sparse_score,
                     )
                 )
             return hits

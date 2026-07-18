@@ -84,7 +84,7 @@ class RiskGuardrailGate:
                     risk_level="high",
                     reasons=reasons,
                     triggered_rules=reputational_flags + policy_flags,
-                    required_reviewer_roles=["legal_specialist", "risk_specialist"],
+                    required_reviewer_roles=["legal_specialist", "credit_specialist"],
                     human_review_allowed=True,
                 )
 
@@ -173,6 +173,8 @@ def _required_reviewer_roles(*, invalid_evidence: List[Evidence]) -> List[str]:
     for item in invalid_evidence:
         if item.module == "Product":
             roles.add("product_specialist")
+        elif item.module == "Credit":
+            roles.add("credit_specialist")
         else:
             roles.add("legal_specialist")
     return sorted(roles) if roles else ["legal_specialist"]

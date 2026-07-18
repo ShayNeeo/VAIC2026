@@ -298,6 +298,7 @@ class _InformationSection extends StatelessWidget {
   }
 }
 
+
 class _WorkQueueSection extends StatelessWidget {
   final EmployeeWorkspaceController controller;
   const _WorkQueueSection({required this.controller});

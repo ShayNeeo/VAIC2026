@@ -28,8 +28,15 @@
       "files": [
         "data/raw_csv_json/product_policies.csv",
         "data/mock_documents/Quy_trinh_KYC_va_Mo_tai_khoan_doanh_nghiep.md",
-        "data/mock_documents/Quy_che_cho_vay_von_luu_dong_KHDN_SHB.md",
         "data/mock_documents/Huong_dan_bao_lanh_ngan_hang_B2B.md"
+      ]
+    },
+    {
+      "source_card": "data/catalog/source_cards/synthetic_credit_reference_pack.json",
+      "adapter": "credit_reference_pack",
+      "files": [
+        "data/mock_documents/Quy_che_cho_vay_von_luu_dong_KHDN_SHB.md",
+        "data/legal/policies/shb_credit_policy_manual.json"
       ]
     },
     {

@@ -3,9 +3,9 @@
 **SYNTHETIC BENCHMARK DATA** -- no real SHB customer or transaction data.
 
 - Dataset: `corporate-sales-single-vs-multi-agent-v1` v`2026.07.18-v1`, 5 cases
-- Run at: 2026-07-17T23:26:43.559135+00:00
+- Run at: 2026-07-18T14:13:03.682785+00:00
 - Cache mode: `warm`
-- git_commit: `2e76c27c6763c8a3789cc87efdc1beb3cb366ac9`, working_tree_dirty: `True`
+- git_commit: `0787ade58f0fe106ec2fbcc93d284e153a194472`, working_tree_dirty: `True`
 - RAG_PROVIDER: `local`, intent mode: `deterministic`
 
 ## Routing accuracy: 0.75
@@ -25,7 +25,7 @@
 | unsupported_claim_rate | None | 0.0 | - |
 | abstention_accuracy | 0.75 | 0.75 | - |
 | forbidden_violation_rate | 0.0 | 0.0 | - |
-| avg_latency_ms | 1.6273 | 4.4842 | 2.8569 |
+| avg_latency_ms | 11.3247 | 21.897 | 10.5723 |
 
 ## Per-category breakdown
 

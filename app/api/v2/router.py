@@ -606,8 +606,9 @@ def create_router(
             state_value.customer_business_snapshot = profile.model_dump(mode="json")
             changes = [f"document:{item.document_type}" for item in workspace_documents] or ["customer.profile"]
             try:
-                state_value = workflow.resume(state_value, changes=changes)
+                state_value = await workflow.resume(state_value, changes=changes)
             except ValueError as exc:
+
                 raise HTTPException(status_code=409, detail={"code": "ANALYSIS_RESUME_REJECTED", "message": str(exc)}) from exc
             stored_case = persist(state_value, expected_version=existing.version)
             audit_action = "analysis_resumed_from_profile"
@@ -1031,7 +1032,8 @@ def create_router(
                     message_id=f"MSG-{uuid.uuid4().hex[:12].upper()}",
                 )
             else:
-                state_value = workflow.resume(state_value, changes=changes)
+                state_value = await workflow.resume(state_value, changes=changes)
+
         except ValueError as exc:
             raise HTTPException(status_code=409, detail={"code": "CASE_DOCUMENT_REJECTED", "message": str(exc)}) from exc
         updated = persist(state_value, expected_version=stored.version)
@@ -1088,7 +1090,8 @@ def create_router(
                     message_id=f"MSG-{uuid.uuid4().hex[:12].upper()}",
                 )
             else:
-                state_value = workflow.resume(state_value, changes=[body.field])
+                state_value = await workflow.resume(state_value, changes=[body.field])
+
         except ValueError as exc:
             raise HTTPException(status_code=409, detail={"code": "CONTEXT_CORRECTION_REJECTED", "message": str(exc)}) from exc
         updated = persist(state_value, expected_version=stored.version)
@@ -1107,7 +1110,7 @@ def create_router(
         }
 
     @router.post("/cases/{case_id}/resume")
-    def resume_case(case_id: str, body: ResumeBody, response: Response, x_employee_id: str = Header(...)) -> Dict[str, Any]:
+    async def resume_case(case_id: str, body: ResumeBody, response: Response, x_employee_id: str = Header(...)) -> Dict[str, Any]:
         stored = owned(case_id, x_employee_id)
         state_value = stored.state
         documents, detected_changes = merge_documents(list(state_value.context.documents), body.documents)
@@ -1116,7 +1119,8 @@ def create_router(
         if not changes:
             response.headers["ETag"] = str(stored.version)
             return {**response_payload(stored), "deduplicated": True}
-        state_value = workflow.resume(state_value, changes=changes)
+        state_value = await workflow.resume(state_value, changes=changes)
+
         updated = persist(state_value, expected_version=body.expected_state_version)
         repo().append_audit(
             event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,

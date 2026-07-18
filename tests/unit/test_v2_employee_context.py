@@ -53,6 +53,7 @@ def auth_headers(demo_token: str) -> dict:
 RM = auth_headers("demo-rm-999")
 LEGAL = auth_headers("demo-spec-legal-001")
 PRODUCT = auth_headers("demo-spec-prod-001")
+INSURANCE = auth_headers("demo-spec-insurance-001")
 MANAGER = auth_headers("demo-mgr-hn-01")
 
 
@@ -151,6 +152,18 @@ def test_specialist_queue_filters_by_subtype(client):
     assert len(items) > 0
     for item in items:
         assert "Specialist" in item["title"] or True  # role filter already applied server-side
+
+
+def test_insurance_specialist_identity_and_minh_phat_queue_are_backend_mapped(client):
+    context = client.get("/api/v2/me/context", headers=INSURANCE)
+    assert context.status_code == 200, context.text
+    auth = context.json()["authorization_context"]
+    assert auth["roles"] == ["insurance_specialist"]
+    assert "insurance:manage_knowledge" in auth["permissions"]
+
+    queue = client.get("/api/v2/me/work-queue", headers=INSURANCE)
+    assert queue.status_code == 200, queue.text
+    assert any(item["work_item_id"] == "TASK-501" for item in queue.json())
 
 
 def test_manager_aggregate_does_not_return_raw_employee_data(client):

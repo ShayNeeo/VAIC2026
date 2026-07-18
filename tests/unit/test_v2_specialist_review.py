@@ -1,12 +1,12 @@
 """HTTP-driven tests for the specialist-review action surface (Legal/Product/
-Operations Specialist) added on top of the Role-Aware Employee Copilot layer,
+Credit Specialist) added on top of the Role-Aware Employee Copilot layer,
 plus the follow-up hardening round: human_review_allowed (block-override
 classification), expected_case_version (optimistic concurrency), idempotent
 RM notifications, and Operational Readiness (Operations' real, separate
 action surface).
 
 Context: docs/EMPLOYEE_ROLE_DESIGN_EVALUATION_REPORT.md found that Product,
-Legal and Operations Specialist had correct identity/scope/queue isolation
+Legal and Credit Specialist had correct identity/scope/queue isolation
 but NO endpoint to ever act on a case -- every case-mutating endpoint in
 app/api/v2/router.py is owned()-gated to the assigned RM only, and a
 PENDING_REVIEW (need_review, risk_level=high) case had no defined human
@@ -60,7 +60,7 @@ def auth_headers(demo_token: str) -> dict:
 RM = auth_headers("demo-rm-999")
 LEGAL = auth_headers("demo-spec-legal-001")
 PRODUCT = auth_headers("demo-spec-prod-001")
-OPERATIONS = auth_headers("demo-spec-ops-001")
+CREDIT = auth_headers("demo-spec-credit-001")
 MANAGER = auth_headers("demo-mgr-hn-01")
 
 A_FINDING = [{"code": "INDEPENDENTLY_VERIFIED", "severity": "medium", "message": "Da doi chieu voi tai lieu goc."}]
@@ -298,38 +298,33 @@ def test_specialist_cannot_review_case_not_waiting_for_their_role(client):
 
 
 # ---------------------------------------------------------------------------
-# Operations Specialist: advisory-only this round (see module docstring)
+# Credit Specialist: owns only Credit evidence/analysis review
 # ---------------------------------------------------------------------------
 
-def test_operations_specialist_review_is_advisory_only(client):
-    _seed_pending_review_case(_repo(), case_id="CASE-OPS-1", invalid_modules=["Eligibility"])
+def test_credit_specialist_can_clear_credit_evidence_block(client):
+    _seed_pending_review_case(_repo(), case_id="CASE-CREDIT-1", invalid_modules=["Credit"])
     resp = client.post(
-        "/api/v2/cases/CASE-OPS-1/specialist-reviews",
-        json={"review_type": "operations_specialist", "decision": "cleared", "summary": "Da xem qua."},
-        headers=OPERATIONS,
+        "/api/v2/cases/CASE-CREDIT-1/specialist-reviews",
+        json={"review_type": "credit_specialist", "decision": "cleared", "summary": "Da tham dinh dong tien.", "findings": A_FINDING},
+        headers=CREDIT,
     )
     assert resp.status_code == 201, resp.text
     body = resp.json()
-    assert body["advisory_only"] is True
-    assert body["case_status_changed"] is False
-    assert body["case_status"] == "pending_review"
-    case = _repo().get_case("CASE-OPS-1")
-    assert case.state.status == CaseStatus.PENDING_REVIEW  # unchanged
+    assert body["advisory_only"] is False
+    assert body["case_status_changed"] is True
+    assert body["case_status"] == "pending_approval"
 
 
-def test_operations_specialist_cannot_clear_legal_issue(client):
-    """Same case as above, phrased as the negative claim directly: an
-    Operations 'cleared' decision must never move a legally-blocked case to
-    pending_approval -- there is no engine concept of Operations resolving
-    a legal/eligibility block."""
-    _seed_pending_review_case(_repo(), case_id="CASE-OPS-2", invalid_modules=["Eligibility"])
-    client.post(
-        "/api/v2/cases/CASE-OPS-2/specialist-reviews",
-        json={"review_type": "operations_specialist", "decision": "cleared", "summary": "OK theo toi."},
-        headers=OPERATIONS,
+def test_credit_specialist_cannot_clear_legal_issue(client):
+    _seed_pending_review_case(_repo(), case_id="CASE-CREDIT-2", invalid_modules=["Eligibility"])
+    resp = client.post(
+        "/api/v2/cases/CASE-CREDIT-2/specialist-reviews",
+        json={"review_type": "credit_specialist", "decision": "cleared", "summary": "OK theo toi.", "findings": A_FINDING},
+        headers=CREDIT,
     )
-    case = _repo().get_case("CASE-OPS-2")
-    assert case.state.status != CaseStatus.PENDING_APPROVAL
+    assert resp.status_code == 409
+    assert resp.json()["detail"]["error"]["code"] == "SPECIALIST_REVIEW_NOT_APPLICABLE"
+    case = _repo().get_case("CASE-CREDIT-2")
     assert case.state.status == CaseStatus.PENDING_REVIEW
 
 
@@ -551,10 +546,10 @@ def test_get_specialist_reviews_history(client):
 
 
 # ---------------------------------------------------------------------------
-# Operational Readiness: Operations Specialist's real, separate action surface
+# Operational Readiness: deterministic module remains RM-owned
 # ---------------------------------------------------------------------------
 
-def test_operations_specialist_can_set_operational_readiness(client):
+def test_rm_can_set_operational_readiness(client):
     _seed_pending_review_case(_repo(), case_id="CASE-READY-1", invalid_modules=["Eligibility"])
     resp = client.put(
         "/api/v2/cases/CASE-READY-1/operational-readiness",
@@ -565,12 +560,12 @@ def test_operations_specialist_can_set_operational_readiness(client):
             ],
             "summary": "San sang thuc thi.",
         },
-        headers=OPERATIONS,
+        headers=RM,
     )
     assert resp.status_code == 200, resp.text
     body = resp.json()
     assert body["status"] == "ready"
-    assert body["updated_by"] == "SPEC-OPS-001"
+    assert body["updated_by"] == "RM-999"
 
 
 def test_operational_readiness_not_ready_when_any_item_incomplete(client):
@@ -584,7 +579,7 @@ def test_operational_readiness_not_ready_when_any_item_incomplete(client):
             ],
             "summary": "Con thieu xac nhan dau moi.",
         },
-        headers=OPERATIONS,
+        headers=RM,
     )
     assert resp.status_code == 200, resp.text
     assert resp.json()["status"] == "not_ready"
@@ -599,18 +594,18 @@ def test_operational_readiness_does_not_touch_case_status(client):
     client.put(
         "/api/v2/cases/CASE-READY-3/operational-readiness",
         json={"items": [{"code": "PAYLOAD_VALIDATED", "status": "completed"}], "summary": "OK."},
-        headers=OPERATIONS,
+        headers=RM,
     )
     case = _repo().get_case("CASE-READY-3")
-    assert case.state.status == CaseStatus.PENDING_REVIEW  # never touched by Operations
+    assert case.state.status == CaseStatus.PENDING_REVIEW  # never touched by readiness tracker
 
 
-def test_legal_specialist_cannot_set_operational_readiness(client):
+def test_credit_specialist_cannot_set_operational_readiness(client):
     _seed_pending_review_case(_repo(), case_id="CASE-READY-4", invalid_modules=["Eligibility"])
     resp = client.put(
         "/api/v2/cases/CASE-READY-4/operational-readiness",
         json={"items": [{"code": "PAYLOAD_VALIDATED", "status": "completed"}], "summary": "OK."},
-        headers=LEGAL,
+        headers=CREDIT,
     )
     assert resp.status_code == 403
 
@@ -620,7 +615,7 @@ def test_rm_can_read_operational_readiness(client):
     client.put(
         "/api/v2/cases/CASE-READY-5/operational-readiness",
         json={"items": [{"code": "PAYLOAD_VALIDATED", "status": "completed"}], "summary": "OK."},
-        headers=OPERATIONS,
+        headers=RM,
     )
     resp = client.get("/api/v2/cases/CASE-READY-5/operational-readiness", headers=RM)
     assert resp.status_code == 200

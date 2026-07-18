@@ -18,15 +18,43 @@
     "prohibited_uses": ["production_decision", "customer_communication_as_fact"]
   },
   "decision_role": "EVALUATION_ONLY",
+  "access": {
+    "method": "FILE",
+    "endpoint_or_location": "data/raw_csv_json + data/mock_documents",
+    "authentication": "repository ACL",
+    "sandbox_available": true,
+    "quota": null,
+    "sla": null
+  },
   "governance": {
     "legal_basis_or_license": "Project-owned synthetic content",
     "sensitivity": "INTERNAL",
+    "retention": "project lifetime",
+    "residency": "local development workspace",
+    "cross_border": false,
     "approved": true,
     "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "freshness": {
+    "update_cadence": "manual per demo release",
+    "max_age_seconds": 31536000,
+    "stale_behavior": "MANUAL_REVIEW"
+  },
+  "identifiers": {
+    "primary_key": "product_id/document_id",
+    "join_keys": ["product_id", "source_id"],
+    "canonical_internal_id": "PRD-*"
   },
   "quality": {
     "required_checks": ["utf8", "schema", "uniqueness", "product_reference", "effective_date", "lineage", "prompt_injection"],
     "publish_gate": "all deterministic checks pass"
+  },
+  "lineage": {
+    "ingestion_job": "services.rag_mcp.ingestion:product_reference_pack",
+    "raw_location": "data/raw_csv_json;data/mock_documents",
+    "silver_location": "data/rag_mcp/rag.sqlite3",
+    "gold_location": "MCP /mcp/product",
+    "consumer_artifacts": ["ProductExpert/ExpertFinding"]
   },
   "lifecycle_status": "ACTIVE",
   "risks_and_notes": [

@@ -1,7 +1,7 @@
 {
   "dataset_id": "corporate-sales-v2-golden",
   "dataset_version": "2026.07.17-v1",
-  "evaluated_at": "2026-07-18T05:08:57.669565+00:00",
+  "evaluated_at": "2026-07-18T14:12:51.385625+00:00",
   "case_count": 40,
   "metrics": {
     "intent_accuracy": 1.0,

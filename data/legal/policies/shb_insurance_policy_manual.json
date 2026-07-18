@@ -1,0 +1,77 @@
+{
+  "document_id": "SHB_Insurance_Policy_Manual",
+  "title": "Sổ tay Chính sách Bảo hiểm Doanh nghiệp — Demo Synthetic",
+  "version": "2026.1",
+  "effective_from": "2026-01-01",
+  "effective_to": null,
+  "status": "active",
+  "owner": "Insurance/Risk",
+  "note": "DỮ LIỆU SYNTHETIC CHỈ DÙNG CHO DEMO/HACKATHON — KHÔNG PHẢI CHÍNH SÁCH THẬT CỦA SHB",
+  "chapters": [
+    {
+      "chapter_id": "CHAP-II",
+      "title": "Chương II — Bảo hiểm tài sản đảm bảo",
+      "articles": [
+        {
+          "article_id": "DIEU-8",
+          "title": "Điều 8 — Yêu cầu bắt buộc đối với tín dụng có bảo đảm",
+          "text": "Tài sản đảm bảo dùng cho khoản cấp tín dụng có bảo đảm (bất động sản, nhà xưởng, máy móc thiết bị) phải được mua bảo hiểm tài sản (property insurance) còn hiệu lực trong suốt thời gian vay, với SHB là bên thụ hưởng thứ nhất (first beneficiary) trên hợp đồng bảo hiểm.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-8-K1",
+              "text": "Khoản 1: Giá trị bảo hiểm tối thiểu bằng giá trị tài sản đảm bảo hoặc dư nợ cấp tín dụng, tùy giá trị nào cao hơn.",
+              "rule_refs": ["RULE-INS-COLLATERAL-001"]
+            },
+            {
+              "clause_id": "DIEU-8-K2",
+              "text": "Khoản 2: Thiếu hợp đồng bảo hiểm tài sản đảm bảo hợp lệ dẫn đến trạng thái pending_information cho khoản tín dụng có bảo đảm liên quan; không được giải ngân cho tới khi bổ sung.",
+              "rule_refs": ["RULE-INS-COLLATERAL-001"]
+            }
+          ]
+        },
+        {
+          "article_id": "DIEU-9",
+          "title": "Điều 9 — Công ty bảo hiểm được chấp thuận",
+          "text": "Hợp đồng bảo hiểm chỉ được chấp nhận nếu phát hành bởi doanh nghiệp bảo hiểm được Bộ Tài chính cấp phép hoạt động tại Việt Nam và không thuộc danh sách công ty bị đình chỉ nghiệp vụ.",
+          "clauses": []
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-IV",
+      "title": "Chương IV — Bảo hiểm hàng hóa vận chuyển (Logistics)",
+      "articles": [
+        {
+          "article_id": "DIEU-19",
+          "title": "Điều 19 — Doanh nghiệp logistics và vận tải",
+          "text": "Doanh nghiệp hoạt động trong lĩnh vực logistics, giao nhận và vận tải hàng hóa khi sử dụng sản phẩm bảo lãnh hoặc tín dụng liên quan tới lô hàng đang vận chuyển phải có bảo hiểm hàng hóa vận chuyển (cargo insurance) cho lô hàng làm cơ sở bảo lãnh/thế chấp.",
+          "clauses": [
+            {
+              "clause_id": "DIEU-19-K1",
+              "text": "Khoản 1: Phạm vi bảo hiểm tối thiểu là All Risks hoặc tương đương theo Institute Cargo Clauses (A).",
+              "rule_refs": ["RULE-INS-CARGO-001"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "chapter_id": "CHAP-VI",
+      "title": "Chương VI — Bảo hiểm gián đoạn kinh doanh và tín dụng thương mại",
+      "articles": [
+        {
+          "article_id": "DIEU-28",
+          "title": "Điều 28 — Bảo hiểm gián đoạn kinh doanh",
+          "text": "Đối với khoản cấp tín dụng vốn lưu động giá trị lớn cho doanh nghiệp có mô hình vận hành phụ thuộc một cơ sở sản xuất duy nhất, khuyến nghị (không bắt buộc) mua bảo hiểm gián đoạn kinh doanh (business interruption insurance) để bảo vệ nguồn trả nợ trong trường hợp sự cố bất khả kháng.",
+          "clauses": []
+        },
+        {
+          "article_id": "DIEU-29",
+          "title": "Điều 29 — Bảo hiểm tín dụng thương mại",
+          "text": "Doanh nghiệp có tỷ trọng doanh thu tập trung vào một số ít khách hàng lớn (concentration risk) được khuyến nghị mua bảo hiểm tín dụng thương mại (trade credit insurance) để giảm thiểu rủi ro mất khả năng thu hồi công nợ phải thu, làm cơ sở củng cố nguồn trả nợ.",
+          "clauses": []
+        }
+      ]
+    }
+  ]
+}

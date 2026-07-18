@@ -34,7 +34,7 @@
 | V2-015 | E2E hardening | Done | 172 tests, prior 92% app coverage, intake→profile→analysis→approval→execute browser journey | Done cho sandbox; production checklist còn mở |
 | V2-016 | Independent RAG MCP server | Done | Official MCP client/server transport, 4 tools, persistent 3-source/19-chunk index, ACL/auth/audit tests | Hash embedding + SQLite + synthetic corpus; production backend/auth/data còn mở |
 | V2-017 | Complexity Router + Risk & Guardrail Gate as named components | Done | `app/workflow/router.py` (`ComplexityRouter`), `app/workflow/risk_gate.py` (`RiskGuardrailGate`), `risk_gate_result` in `SharedCaseState`/JSON contract, `tests/unit/test_v2_risk_gate_and_router.py`, `docs/SHB_MULTI_AGENT_WORKFLOW_DIAGRAM_MAPPING.md` | Product/Compliance/Operations stay sequential by design (Compliance genuinely needs Product's product_ids first — see mapping doc section 3); this is a scoped, spec-aligned deviation from a literal reading of the diagram's parallel boxes, not an oversight |
-| V2-018 | Product-scoped synthetic B2B policies + Legal output/UI | Done | `B2BPolicyRegistry`, governed policy pack, Product → Rule → Policy → Section output, Web/Flutter projection, `tests/unit/test_v2_b2b_policies.py` | Synthetic only; policy thật và SME/Legal sign-off còn mở |
+| V2-018–025 | Intelligent Expert Agent collaboration upgrade | Done cho synthetic local MVP | LangGraph Product/Credit/Insurance, immutable manifests, exact tool allowlist, typed findings/synthesis, Agent Knowledge Console, AI Decision Log và E2E approval/execute tests | LLM/MCP thật, dữ liệu thật và security sign-off production vẫn chưa có; Legal/Eligibility và Operations giữ deterministic |
 
 ## Decision log
 
@@ -49,6 +49,9 @@
 - AI log chỉ lưu output summary và source metadata đã sanitize; không lưu raw PII, secret, raw prompt hoặc approval token.
 - RAG MCP tách process và chỉ expose read tools. Ingestion nằm ở Data Steward CLI, không cho LLM tự ghi serving index.
 - MCP retrieval audit chỉ lưu caller/query hash và metadata vận hành; raw query/chunk/token không được ghi.
+- Expert Agent không được yêu cầu hoặc lưu Chain-of-Thought; chỉ lưu decision rationale summary, facts/inferences/unknowns và evidence refs đã sanitize.
+- Agent role/tool permission do immutable manifest + trusted runtime identity quyết định; system prompt không phải authorization boundary.
+- Collaboration đi qua Coordinator bằng typed message; hard rule, Evidence Validator, Risk Gate và Approval không bị LLM/Coordinator override.
 
 ## Verification log
 

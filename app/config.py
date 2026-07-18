@@ -57,9 +57,24 @@ class Settings(BaseModel):
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     INTENT_USE_LLM: bool = os.getenv("INTENT_USE_LLM", "false").lower() == "true"
+    # Expert LLM enrichment is opt-in. The deterministic expert services and
+    # collaboration contracts still run when disabled/provider-down.
+    AGENTIC_LLM_ENABLED: bool = os.getenv("AGENTIC_LLM_ENABLED", "false").lower() == "true"
     MODEL_TIMEOUT_SECONDS: float = float(os.getenv("MODEL_TIMEOUT_SECONDS", "15"))
     MAX_UPLOAD_BYTES: int = int(os.getenv("MAX_UPLOAD_BYTES", "10485760"))
     
+    # OCR fallback (app/knowledge/ocr.py) for scanned/image PDFs where
+    # pypdf's text-layer extraction yields no usable text. Local Tesseract
+    # only -- never sends document bytes to an external service. Language
+    # data lives in-repo (data/ocr_tessdata) rather than relying on the
+    # system Tesseract install's tessdata, which may not include Vietnamese.
+    OCR_ENABLED: bool = os.getenv("OCR_ENABLED", "true").lower() == "true"
+    OCR_LANG: str = os.getenv("OCR_LANG", "vie+eng")
+    OCR_MIN_CONFIDENCE: float = float(os.getenv("OCR_MIN_CONFIDENCE", "0.35"))
+    OCR_DPI: int = int(os.getenv("OCR_DPI", "300"))
+    TESSDATA_DIR: str = os.getenv("TESSDATA_DIR", "./data/ocr_tessdata")
+    TESSERACT_CMD: str = os.getenv("TESSERACT_CMD", r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+
     # Vector DB settings
     VECTOR_DB_DIR: str = os.getenv("VECTOR_DB_DIR", "./data/vector_db")
     V2_DB_PATH: str = os.getenv("V2_DB_PATH", "./data/state/v2.sqlite3")
@@ -95,5 +110,7 @@ class Settings(BaseModel):
     RAG_MCP_PRODUCT_TOKEN: str = os.getenv("RAG_MCP_PRODUCT_TOKEN", "local-rag-mcp-change-me-product")
     RAG_MCP_LEGAL_URL: str = os.getenv("RAG_MCP_LEGAL_URL", "http://localhost:8100/mcp/legal")
     RAG_MCP_LEGAL_TOKEN: str = os.getenv("RAG_MCP_LEGAL_TOKEN", "local-rag-mcp-change-me-legal")
+    RAG_MCP_CREDIT_URL: str = os.getenv("RAG_MCP_CREDIT_URL", "http://localhost:8100/mcp/credit")
+    RAG_MCP_CREDIT_TOKEN: str = os.getenv("RAG_MCP_CREDIT_TOKEN", "local-rag-mcp-change-me-credit")
 
 settings = Settings()

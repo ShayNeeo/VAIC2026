@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -38,9 +39,26 @@ from app.integrations.enterprise import (
     map_enterprise_role_to_role_type,
 )
 from app.integrations.errors import ContextError, UpstreamTimeoutError, UpstreamUnavailableError
+from app.knowledge.legal_service import LegalKnowledgeService
+from app.knowledge.credit_service import CreditKnowledgeService
+from app.knowledge.insurance_service import InsuranceKnowledgeService
+from app.knowledge.models import KnowledgeChunk
+from app.knowledge.retrieval_contracts import AuthorityTier, VerificationStatus
+from app.knowledge.service import ProductKnowledgeService
 from app.observability.runtime import JsonEventLogger, metrics
 from app.reliability.capability_registry import has_capability
 from app.storage.repository import StateConflictError, V2Repository
+from app.schemas.v2.agent_knowledge import (
+    DOMAIN_BY_ROLE,
+    MANAGE_CAPABILITY_BY_DOMAIN,
+    AgentActivitySnapshot,
+    AgentCaseActivityItem,
+    AgentDomain,
+    KnowledgeEntryCreateRequest,
+    KnowledgeEntryRecord,
+    KnowledgeEntryUpdateRequest,
+    default_chunk_type,
+)
 from app.schemas.v2.employee import (
     AuthorizationContext,
     ConsentModel,
@@ -116,6 +134,7 @@ def _repo() -> V2Repository:
 router = APIRouter(prefix="/me", tags=["Employee Copilot"])
 recommendation_router = APIRouter(prefix="/recommendations", tags=["Employee Copilot"])
 case_action_router = APIRouter(prefix="/cases", tags=["Specialist Review"])
+knowledge_router = APIRouter(prefix="/me/agent-knowledge", tags=["Agent Knowledge Console"])
 
 _DEMO_TOKEN_PREFIX = "demo-"
 
@@ -570,7 +589,7 @@ def get_team_workload(identity: VerifiedIdentity = Depends(require_verified_iden
     }
 
 
-# --- Specialist Review (Product/Legal/Operations act on a case) ------------
+# --- Specialist Review (Product/Legal/Credit act on a case) ----------------
 # Closes docs/EMPLOYEE_ROLE_DESIGN_EVALUATION_REPORT.md gap #1/#2/#3:
 # previously every case-mutating endpoint in app/api/v2/router.py was
 # owned()-gated (RM-only); a specialist could see a work-queue item but had
@@ -583,12 +602,8 @@ def get_team_workload(identity: VerifiedIdentity = Depends(require_verified_iden
 #     case (RiskGateDecision.required_reviewer_roles, derived from
 #     Evidence.module + eligibility outcome) -- never a blanket "any
 #     specialist can clear anything" grant.
-#   - Operations Specialist review is recorded, audited and surfaced to the
-#     RM, but is advisory-only: the deterministic engine has no "operations
-#     block" gate to resolve (OperationsService's checklist is auto-computed
-#     from document status on every run, not a manual to-do list a human
-#     checks off), so letting an Operations decision flip case status would
-#     fabricate a control that does not exist in the engine. Left as P1.
+#   - Credit Specialist resolves only a Credit-owned review requirement;
+#     it cannot clear Product or Legal constraints and never approves credit.
 #   - A multi-domain block (e.g. both Product AND Legal evidence invalid)
 #     requires EVERY named role to clear before the case advances --
 #     cleared_roles_for_case_version() stops one specialist from unilaterally
@@ -600,7 +615,9 @@ def _reviewer_capability(role: RoleType, decision: str) -> str:
         return "legal:block_non_eligible" if decision == "blocked" else "legal:check_issue"
     if role == RoleType.PRODUCT_SPECIALIST:
         return "product:verify_fit"
-    return "ops:update_implementation"
+    if role == RoleType.CREDIT_SPECIALIST:
+        return "credit:review_structure"
+    raise ValueError(f"unsupported specialist role: {role.value}")
 
 
 def _notification_item_id(
@@ -758,7 +775,7 @@ def submit_specialist_review(
     risk_result = state_value.risk_gate_result or {}
     required_roles = set(risk_result.get("required_reviewer_roles") or ["legal_specialist"])
 
-    if role in {RoleType.LEGAL_SPECIALIST, RoleType.PRODUCT_SPECIALIST}:
+    if role in {RoleType.LEGAL_SPECIALIST, RoleType.PRODUCT_SPECIALIST, RoleType.CREDIT_SPECIALIST}:
         if role.value not in required_roles:
             raise _error(status.HTTP_409_CONFLICT, "SPECIALIST_REVIEW_NOT_APPLICABLE",
                          "Case hien khong cho review tu vai tro nay.")
@@ -789,8 +806,8 @@ def submit_specialist_review(
                     status.HTTP_422_UNPROCESSABLE_ENTITY, "FINDINGS_REQUIRED",
                     "Gia han (cleared) mot block phai co it nhat mot finding lam can cu.",
                 )
-    else:
-        advisory_only = True  # Operations: recorded + audited, never flips case status this round.
+    else:  # Defensive only; request schema rejects non-specialist roles first.
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Vai tro khong duoc phep review case.")
 
     review_id = f"REVIEW-{uuid.uuid4().hex[:12].upper()}"
     now = datetime.now(timezone.utc)
@@ -908,7 +925,7 @@ def submit_specialist_review(
     )
 
 
-# --- Operational Readiness (Operations Specialist's real action surface) ---
+# --- Operational Readiness (RM-owned deterministic operations surface) -----
 # A separate, manual domain object -- NOT the same thing as
 # app/operations/service.py's OperationsService checklist, which recomputes
 # itself from document status on every analysis run and therefore cannot be
@@ -940,10 +957,10 @@ def put_operational_readiness(
     body: OperationalReadinessRequest,
     identity: VerifiedIdentity = Depends(require_verified_identity),
 ) -> OperationalReadinessSnapshot:
-    if RoleType.OPERATIONS_SPECIALIST not in identity.roles:
+    if RoleType.RM not in identity.roles:
         metrics.increment("security.authorization_denied")
-        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Chi Operations Specialist duoc cap nhat readiness.")
-    require_capability(identity, "ops:update_implementation")
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Chi RM phu trach case duoc cap nhat readiness.")
+    require_capability(identity, "case:write")
 
     stored = _repo().get_case(case_id)
     if stored is None:
@@ -967,12 +984,260 @@ def put_operational_readiness(
         blocked_codes = [item.code for item in body.items if item.status != "completed"]
         item_id = _notification_item_id(
             case_id=case_id, case_version=stored.version, event_type="operational_readiness_not_ready",
-            target_employee_id=state_value.context.employee.employee_id, role_set=["operations_specialist"],
+            target_employee_id=state_value.context.employee.employee_id, role_set=["relationship_manager"],
         )
         _notify_rm(
             state_value, item_id=item_id,
-            title=f"Operations: case {case_id} chua san sang thuc thi -- con thieu {', '.join(blocked_codes)}",
+            title=f"Van hanh: case {case_id} chua san sang thuc thi -- con thieu {', '.join(blocked_codes)}",
             urgency=0.6, risk_severity=0.4,
         )
     row = get_operational_readiness(case_id)
     return OperationalReadinessSnapshot(**row)
+
+
+# --- Agent Knowledge Console (department Specialist controls their own -----
+# domain's Agent knowledge base) -------------------------------------------
+# A specialist may only ever read/feed/update knowledge for their OWN
+# domain's Agent -- Product Specialist -> ProductExpertAgent's knowledge,
+# Credit Specialist -> CreditExpertAgent's, Insurance Specialist ->
+# InsuranceExpertAgent's -- enforced by DOMAIN_BY_ROLE (never a body/query
+# parameter). Reuses the existing KnowledgeChunk/PersistentHybridIndex
+# storage each of the three domain services already indexes into; this is
+# not a new knowledge store.
+
+_VERSION_SUFFIX = re.compile(r"::v\d+$")
+_AGENT_COMPONENT_BY_DOMAIN = {
+    "product": {"ProductExpert", "ProductExpertAgent"},
+    "legal": {"LegalExpert", "LegalComplianceAgent"},
+    "credit": {"CreditExpert", "CreditExpertAgent"},
+    "insurance": {"InsuranceExpert", "InsuranceExpertAgent"},
+}
+# V2WorkflowEngine._product_evidence()/_legal_evidence() (app/workflow/engine.py)
+# tag Evidence.module as "Product"/"Eligibility" -- "Eligibility" because
+# that node evaluates product eligibility, not a "Legal" label -- and there
+# Credit evidence is carried by typed ExpertFinding.evidence_refs rather
+# than the legacy state.evidences list.
+_EVIDENCE_MODULE_BY_DOMAIN = {"product": "product", "legal": "eligibility", "credit": None, "insurance": None}
+
+
+def _domain_for(identity: VerifiedIdentity) -> AgentDomain:
+    role = identity.roles[0]
+    domain = DOMAIN_BY_ROLE.get(role)
+    if domain is None:
+        raise _error(
+            status.HTTP_403_FORBIDDEN, "FORBIDDEN",
+            "Vai tro cua ban khong quan ly tri thuc cho Agent nao.",
+        )
+    return domain
+
+
+def _knowledge_service_for(domain: AgentDomain):
+    if domain == "product":
+        return ProductKnowledgeService()
+    if domain == "legal":
+        return LegalKnowledgeService()
+    if domain == "credit":
+        return CreditKnowledgeService()
+    return InsuranceKnowledgeService()
+
+
+def _to_knowledge_record(chunk: KnowledgeChunk, domain: AgentDomain) -> KnowledgeEntryRecord:
+    return KnowledgeEntryRecord(
+        chunk_id=chunk.chunk_id, domain=domain, document_id=chunk.document_id,
+        document_version=chunk.document_version, product_id=chunk.product_id,
+        section_path=chunk.section_path, chunk_type=chunk.chunk_type, text=chunk.text,
+        effective_from=chunk.effective_from, effective_to=chunk.effective_to,
+        is_superseded=chunk.is_superseded, is_quarantined=chunk.is_quarantined,
+        authority_tier=chunk.authority_tier.value if chunk.authority_tier else None,
+        verification_status=chunk.verification_status.value if chunk.verification_status else None,
+        contributed_by=chunk.contributed_by, contributed_at=chunk.contributed_at,
+    )
+
+
+@knowledge_router.get("", response_model=List[KnowledgeEntryRecord])
+def list_agent_knowledge(
+    identity: VerifiedIdentity = Depends(require_verified_identity),
+) -> List[KnowledgeEntryRecord]:
+    domain = _domain_for(identity)
+    service = _knowledge_service_for(domain)
+    chunks = service.index.list_chunks()
+    chunks.sort(key=lambda c: c.contributed_at or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    return [_to_knowledge_record(c, domain) for c in chunks]
+
+
+@knowledge_router.post("", response_model=KnowledgeEntryRecord, status_code=status.HTTP_201_CREATED)
+def create_agent_knowledge_entry(
+    body: KnowledgeEntryCreateRequest,
+    identity: VerifiedIdentity = Depends(require_verified_identity),
+) -> KnowledgeEntryRecord:
+    domain = _domain_for(identity)
+    require_capability(identity, MANAGE_CAPABILITY_BY_DOMAIN[domain])
+
+    service = _knowledge_service_for(domain)
+    now = datetime.now(timezone.utc)
+    chunk_id = f"SPEC-{domain.upper()}-{uuid.uuid4().hex[:10].upper()}"
+    document_id = body.document_id or f"SPEC-CONTRIB-{identity.employee_id}"
+    chunk = KnowledgeChunk(
+        chunk_id=chunk_id, document_id=document_id, document_version="1",
+        product_id=body.product_id, section_path=body.section_path,
+        chunk_type=body.chunk_type or default_chunk_type(domain), text=body.text,
+        effective_from=body.effective_from, effective_to=body.effective_to, active=True,
+        segments=[], access_scope={"branches": ["*"]},
+        content_hash=hashlib.sha256(body.text.encode("utf-8")).hexdigest(),
+        source_type="specialist_contributed",
+        authority_tier=AuthorityTier.TIER_2_VERIFIED_INTERNAL,
+        verification_status=VerificationStatus.VERIFIED,
+        contributed_by=identity.employee_id, contributed_at=now,
+    )
+    service.index.upsert(
+        [chunk], source_hash=chunk.content_hash, dataset_version=f"specialist-{now.date().isoformat()}",
+    )
+    _event_logger.emit(
+        "agent_knowledge_entry_created", employee_id=identity.employee_id, domain=domain,
+        chunk_id=chunk_id, product_id=body.product_id,
+    )
+    return _to_knowledge_record(chunk, domain)
+
+
+@knowledge_router.patch("/{chunk_id}", response_model=KnowledgeEntryRecord)
+def update_agent_knowledge_entry(
+    chunk_id: str,
+    body: KnowledgeEntryUpdateRequest,
+    identity: VerifiedIdentity = Depends(require_verified_identity),
+) -> KnowledgeEntryRecord:
+    domain = _domain_for(identity)
+    require_capability(identity, MANAGE_CAPABILITY_BY_DOMAIN[domain])
+    service = _knowledge_service_for(domain)
+    existing = service.index.exact_lookup_by_chunk_id(chunk_id)
+    if existing is None:
+        raise _error(status.HTTP_404_NOT_FOUND, "KNOWLEDGE_ENTRY_NOT_FOUND", "Khong tim thay muc tri thuc nay.")
+
+    now = datetime.now(timezone.utc)
+    dataset_version = f"specialist-{now.date().isoformat()}"
+
+    if body.is_quarantined is not None and body.is_quarantined != existing.is_quarantined:
+        existing = existing.model_copy(update={"is_quarantined": body.is_quarantined})
+        service.index.upsert([existing], source_hash=existing.content_hash, dataset_version=dataset_version)
+        _event_logger.emit(
+            "agent_knowledge_entry_quarantine_toggled", employee_id=identity.employee_id, domain=domain,
+            chunk_id=chunk_id, is_quarantined=body.is_quarantined,
+        )
+
+    if body.text is None:
+        if body.effective_to is not None and body.effective_to != existing.effective_to:
+            existing = existing.model_copy(update={"effective_to": body.effective_to})
+            service.index.upsert([existing], source_hash=existing.content_hash, dataset_version=dataset_version)
+        return _to_knowledge_record(existing, domain)
+
+    # Text change: never overwritten in place -- the old chunk is kept and
+    # marked is_superseded so its history stays inspectable/citable, and a
+    # new versioned chunk_id carries the updated text forward.
+    try:
+        next_version = int(existing.document_version) + 1
+    except ValueError:
+        next_version = 2
+    base_chunk_id = _VERSION_SUFFIX.sub("", chunk_id)
+    new_chunk_id = f"{base_chunk_id}::v{next_version}"
+    superseded = existing.model_copy(update={"is_superseded": True})
+    new_chunk = existing.model_copy(update={
+        "chunk_id": new_chunk_id,
+        "document_version": str(next_version),
+        "text": body.text,
+        "effective_to": body.effective_to if body.effective_to is not None else existing.effective_to,
+        "content_hash": hashlib.sha256(body.text.encode("utf-8")).hexdigest(),
+        "is_superseded": False,
+        "contributed_by": identity.employee_id,
+        "contributed_at": now,
+    })
+    service.index.upsert([superseded, new_chunk], source_hash=new_chunk.content_hash, dataset_version=dataset_version)
+    _event_logger.emit(
+        "agent_knowledge_entry_updated", employee_id=identity.employee_id, domain=domain,
+        old_chunk_id=chunk_id, new_chunk_id=new_chunk_id,
+    )
+    return _to_knowledge_record(new_chunk, domain)
+
+
+@knowledge_router.get("/activity", response_model=AgentActivitySnapshot)
+def get_agent_activity(
+    identity: VerifiedIdentity = Depends(require_verified_identity),
+) -> AgentActivitySnapshot:
+    """"Agent cua toi dang lam gi": knowledge entries this domain's Agent
+    can retrieve today, plus a metadata (not full-content) summary of
+    recent cases in this specialist's assigned customer_scope that Agent
+    has produced a result on -- including evidence count and the Agent's
+    own latest ai_decision_log entry, so the specialist sees what the
+    Agent did and what it grounded that on, not just a raw case list."""
+    domain = _domain_for(identity)
+    service = _knowledge_service_for(domain)
+    chunks = service.index.list_chunks()
+    active_count = sum(1 for c in chunks if not c.is_superseded and not c.is_quarantined)
+
+    result_field = {
+        "product": "product_result",
+        "legal": "eligibility_result",
+        "credit": "credit_result",
+        "insurance": "insurance_result",
+    }[domain]
+    components = _AGENT_COMPONENT_BY_DOMAIN[domain]
+
+    stored_cases = _repo().list_cases_for_customers(identity.customer_scope)
+    items: List[AgentCaseActivityItem] = []
+    for stored in stored_cases[:25]:
+        state_value = stored.state
+        agent_result = getattr(state_value, result_field)
+        agent_summary: Dict[str, Any] = {}
+        if domain == "product" and agent_result:
+            recs = agent_result.get("recommendations", [])
+            agent_summary = {"recommendation_count": len(recs), "product_ids": [r.get("product_id") for r in recs]}
+        elif domain == "legal" and agent_result:
+            agent_summary = {
+                "overall_status": agent_result.get("overall_status"),
+                "rule_count": len(agent_result.get("rule_evaluations", [])),
+            }
+        elif domain == "credit" and agent_result:
+            agent_summary = {
+                "status": agent_result.get("status"),
+                "credit_product_ids": agent_result.get("credit_product_ids", []),
+                "hard_block_count": len(agent_result.get("hard_blocks", [])),
+                "missing_information_count": len(agent_result.get("missing_information", [])),
+                "analysis_confidence": agent_result.get("analysis_confidence"),
+            }
+        elif domain == "insurance" and agent_result:
+            agent_summary = {
+                "status": agent_result.get("status"),
+                "insurance_product_ids": agent_result.get("insurance_product_ids", []),
+                "coverage_check_count": len(agent_result.get("coverage_checks", [])),
+                "hard_block_count": len(agent_result.get("hard_blocks", [])),
+                "missing_information_count": len(agent_result.get("missing_information", [])),
+            }
+        evidence_module = _EVIDENCE_MODULE_BY_DOMAIN[domain]
+        domain_evidence = (
+            [ev for ev in state_value.evidences if ev.module.lower() == evidence_module]
+            if evidence_module is not None else []
+        )
+        expert_evidence_count = 0
+        expert_type = {"credit": "CreditExpert", "insurance": "InsuranceExpert"}.get(domain)
+        if expert_type:
+            expert_evidence_count = sum(
+                len(finding.evidence_refs)
+                for finding in state_value.expert_findings
+                if finding.agent_type.value == expert_type
+            )
+        last_ai_log = next(
+            (e for e in reversed(state_value.ai_decision_log) if e.get("component") in components), None,
+        )
+        items.append(
+            AgentCaseActivityItem(
+                case_id=state_value.case_id, case_status=state_value.status.value,
+                customer_id=state_value.context.customer.customer_id,
+                updated_at=state_value.updated_at, agent_has_run=agent_result is not None,
+                agent_summary=agent_summary, evidence_count=len(domain_evidence) + expert_evidence_count,
+                last_ai_log_event=last_ai_log,
+            )
+        )
+
+    return AgentActivitySnapshot(
+        domain=domain, generated_at=datetime.now(timezone.utc),
+        knowledge_entry_count=len(chunks), active_knowledge_entry_count=active_count,
+        cases=items,
+    )

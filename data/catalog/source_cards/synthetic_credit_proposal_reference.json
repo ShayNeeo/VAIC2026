@@ -1,0 +1,68 @@
+{
+  "schema_version": "2.0.0",
+  "source_id": "SYNTHETIC-CREDIT-PROPOSAL-REFERENCE-V1",
+  "name": "Synthetic auto-generated credit proposal memo (Tờ trình đề xuất) reference example",
+  "domain": "operations",
+  "tier": "E_SYNTHETIC",
+  "provider": "repository curated synthetic data",
+  "owner": {
+    "business_owner": "MVP Operations Reference Owner",
+    "data_steward": "MVP Operations Data Steward",
+    "technical_owner": "AI Engineering"
+  },
+  "purpose": {
+    "allowed_uses": ["development", "automated_test", "offline_demo", "operations_output_format_reference"],
+    "prohibited_uses": [
+      "cited_as_product_evidence",
+      "cited_as_credit_evidence",
+      "cited_as_insurance_evidence",
+      "cited_as_eligibility_evidence",
+      "production_underwriting_decision"
+    ]
+  },
+  "decision_role": "EVALUATION_ONLY",
+  "access": {
+    "method": "FILE",
+    "endpoint_or_location": "mock tờ trinh đề xuất của khách hàng.docx",
+    "authentication": "repository ACL",
+    "sandbox_available": true,
+    "quota": null,
+    "sla": null
+  },
+  "governance": {
+    "legal_basis_or_license": "Project-owned synthetic content",
+    "sensitivity": "RESTRICTED",
+    "retention": "project lifetime",
+    "residency": "local development workspace",
+    "cross_border": false,
+    "approved": true,
+    "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "freshness": {
+    "update_cadence": "manual per demo release",
+    "max_age_seconds": 31536000,
+    "stale_behavior": "BLOCK_DECISION"
+  },
+  "identifiers": {
+    "primary_key": "chunk_id",
+    "join_keys": ["source_id"],
+    "canonical_internal_id": "REF-PROPOSAL-*"
+  },
+  "quality": {
+    "required_checks": ["utf8", "lineage", "prompt_injection"],
+    "publish_gate": "all deterministic checks pass"
+  },
+  "lineage": {
+    "ingestion_job": "app.knowledge.reference_library_service:ReferenceLibraryService.ingest_docx",
+    "raw_location": "mock tờ trinh đề xuất của khách hàng.docx",
+    "silver_location": "data/vector_db/v2_reference_library.sqlite3",
+    "gold_location": "n/a (local index only)",
+    "consumer_artifacts": ["none -- retrieval only, not wired into any AgentToolGateway"]
+  },
+  "lifecycle_status": "ACTIVE",
+  "risks_and_notes": [
+    "This is a synthetic EXAMPLE of a fully-composed credit proposal memo (auto-generated illustrative output), not a real customer document or bank policy.",
+    "Deliberately NOT registered as a tool on any Expert Agent's AgentToolGateway, so it can never appear in an ExpertFinding.evidence_refs or be cited as grounded compliance/credit/insurance/product evidence.",
+    "Intended use: format/structure reference for what an Operations-composed proposal document could look like, and as a manual search/reference asset for RM/specialist workspace tooling."
+  ]
+}

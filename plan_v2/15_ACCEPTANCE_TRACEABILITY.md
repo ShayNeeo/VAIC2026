@@ -47,6 +47,12 @@ MVP may start smaller but cannot claim pilot-ready until minimum sizes and thres
 | Duplicate task/action | 0% | 0% |
 | Correct resume selection | ≥ 90% | ≥ 95% |
 | Cross-scope data leak | 0 | 0 |
+| Unauthorized cross-agent tool call succeeds | 0 | 0 |
+| Hard-block override by Agent/Coordinator | 0% | 0% |
+| Important claim evidence coverage | 100% | 100% |
+| Collaboration convergence within 3 rounds | ≥ 95% | ≥ 99% |
+| Required knowledge metadata completeness | 100% | 100% |
+| Raw PII/secret/CoT in Agent logs | 0 | 0 |
 
 ## 4. Requirement traceability
 
@@ -62,6 +68,11 @@ MVP may start smaller but cannot claim pilot-ready until minimum sizes and thres
 | Payload duyệt = payload chạy | 11–12 | V2-011–013 | payload hash E2E |
 | Audit/trace đầy đủ | 13 | V2-012 | trace/audit tests |
 | UI cho sửa context | 12 | V2-013 | UI/API correction E2E |
+| Expert hoạt động độc lập nhưng đúng boundary | 19 | V2-020–021 | manifest/port/mutation tests |
+| Expert hỗ trợ nhau có kiểm soát | 19 | V2-023 | assistance/dedup/max-loop E2E |
+| Tool đúng Agent, fail closed | 19 | V2-022 | MCP profile + negative permission suite |
+| Metadata giải thích được claim | 07,13,19 | V2-019,024–025 | metadata completeness/citation/Why-this E2E |
+| Coordinator không override hard block | 08,11,19 | V2-024 | hard-block preservation suite |
 
 ## 5. Module Definition of Done
 

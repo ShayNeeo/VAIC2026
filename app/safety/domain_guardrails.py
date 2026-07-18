@@ -10,6 +10,35 @@ class GuardrailViolation(ValueError):
     pass
 
 
+_HIDDEN_REASONING_KEYS = {
+    "cot",
+    "chain_of_thought",
+    "chain-of-thought",
+    "thoughts",
+    "internal_reasoning",
+    "private_reasoning",
+    "scratchpad",
+}
+
+
+def validate_no_hidden_reasoning(value: Any) -> None:
+    """Reject persistence of private reasoning-shaped fields recursively.
+
+    Concise, auditable fields such as ``decision_rationale_summary``, facts,
+    assumptions and unknowns remain allowed.
+    """
+
+    if isinstance(value, dict):
+        for key, child in value.items():
+            normalized = str(key).strip().lower().replace(" ", "_")
+            if normalized in _HIDDEN_REASONING_KEYS:
+                raise GuardrailViolation(f"hidden reasoning field is not allowed: {key}")
+            validate_no_hidden_reasoning(child)
+    elif isinstance(value, (list, tuple)):
+        for child in value:
+            validate_no_hidden_reasoning(child)
+
+
 def validate_product_agent_output(recommendations: List[Dict[str, Any]], allowed_catalog_ids: List[str]):
     """
     Product Agent:

@@ -91,7 +91,7 @@ def create_server(
     profiles: Dict[str, FastMCP] = {
         "product": _new_mcp("SHB Product Knowledge", "ProductExpert", settings),
         "legal": _new_mcp("SHB Legal Knowledge", "LegalExpert", settings),
-        "operations": _new_mcp("SHB Operations Knowledge", "OperationsExpert", settings),
+        "credit": _new_mcp("SHB Credit Knowledge", "CreditExpert", settings),
         "evidence": _new_mcp("SHB Evidence Verification", "EvidenceExpert", settings),
         "admin": _new_mcp("SHB Governed RAG Admin", "KnowledgeAdmin", settings),
     }
@@ -168,43 +168,39 @@ def create_server(
             await _tool_error(ctx, "legal_list_sources", request.trace_id, exc)
             raise ToolError(f"{exc.code}: {exc}") from exc
 
-    operations = profiles["operations"]
+    credit = profiles["credit"]
 
-    @operations.tool(name="operations_search")
-    async def operations_search(request: ExpertSearchRequest, ctx: Context) -> SearchKnowledgeResponse:
-        """Find SOP steps, document checklists, SLA references, RACI and drafting templates."""
+    @credit.tool(name="credit_search")
+    async def credit_search(request: ExpertSearchRequest, ctx: Context) -> SearchKnowledgeResponse:
+        """Find lending policy, credit-file, repayment and collateral guidance."""
         try:
-            result = knowledge.expert_search(
-                request, tool_name="operations_search", domain="operations"
-            )
-            await ctx.info(f"operations_search trace={request.trace_id} chunks={len(result.chunks)}")
+            result = knowledge.expert_search(request, tool_name="credit_search", domain="credit")
+            await ctx.info(f"credit_search trace={request.trace_id} chunks={len(result.chunks)}")
             return result
         except RagServiceError as exc:
-            await _tool_error(ctx, "operations_search", request.trace_id, exc)
+            await _tool_error(ctx, "credit_search", request.trace_id, exc)
             raise ToolError(f"{exc.code}: {exc}") from exc
 
-    @operations.tool(name="operations_get_chunk")
-    async def operations_get_chunk(request: GetChunkRequest, ctx: Context) -> GetChunkResponse:
-        """Read one exact operations chunk after ACL, date and domain checks."""
+    @credit.tool(name="credit_get_chunk")
+    async def credit_get_chunk(request: GetChunkRequest, ctx: Context) -> GetChunkResponse:
+        """Read one exact credit chunk after ACL, date and domain checks."""
         try:
-            return knowledge.get_chunk(
-                request, tool_name="operations_get_chunk", expected_domain="operations"
-            )
+            return knowledge.get_chunk(request, tool_name="credit_get_chunk", expected_domain="credit")
         except RagServiceError as exc:
-            await _tool_error(ctx, "operations_get_chunk", request.trace_id, exc)
+            await _tool_error(ctx, "credit_get_chunk", request.trace_id, exc)
             raise ToolError(f"{exc.code}: {exc}") from exc
 
-    @operations.tool(name="operations_list_sources")
-    async def operations_list_sources(
+    @credit.tool(name="credit_list_sources")
+    async def credit_list_sources(
         request: ExpertListSourcesRequest, ctx: Context
     ) -> ListSourcesResponse:
-        """List approved operations sources visible to Operations Expert."""
+        """List approved synthetic credit sources visible to Credit Expert."""
         try:
             return knowledge.expert_list_sources(
-                request, tool_name="operations_list_sources", domain="operations"
+                request, tool_name="credit_list_sources", domain="credit"
             )
         except RagServiceError as exc:
-            await _tool_error(ctx, "operations_list_sources", request.trace_id, exc)
+            await _tool_error(ctx, "credit_list_sources", request.trace_id, exc)
             raise ToolError(f"{exc.code}: {exc}") from exc
 
     evidence = profiles["evidence"]
@@ -292,7 +288,7 @@ def create_server(
                 "profiles": {
                     "product": sorted(tools_for("ProductExpert")),
                     "legal": sorted(tools_for("LegalExpert")),
-                    "operations": sorted(tools_for("OperationsExpert")),
+                    "credit": sorted(tools_for("CreditExpert")),
                     "evidence": sorted(tools_for("EvidenceExpert")),
                     "admin": sorted(tools_for("KnowledgeAdmin")),
                 },
@@ -314,7 +310,7 @@ def create_server(
             Route("/profiles", profiles_route, methods=["GET"]),
             Mount("/mcp/product", app=profile_apps["product"]),
             Mount("/mcp/legal", app=profile_apps["legal"]),
-            Mount("/mcp/operations", app=profile_apps["operations"]),
+            Mount("/mcp/credit", app=profile_apps["credit"]),
             Mount("/mcp/evidence", app=profile_apps["evidence"]),
             Mount("/mcp", app=profile_apps["admin"]),
         ],

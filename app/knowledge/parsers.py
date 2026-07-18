@@ -57,6 +57,25 @@ def parse_document_bytes(filename: str, data: bytes) -> List[ParsedSection]:
     raise UnsupportedDocumentError(f"unsupported document type: {suffix}")
 
 
+def ocr_pdf_sections(data: bytes, *, lang: str | None = None) -> List[ParsedSection]:
+    """OCR fallback for a scanned/image PDF: one ParsedSection per page,
+    same shape as _parse_pdf_stream() so callers (app/intake/service.py)
+    can run extraction_quality() over the result identically. Raises
+    app.knowledge.ocr.OcrUnavailableError if the OCR toolchain cannot run
+    in this environment -- callers must not treat that the same as "OCR
+    ran and found nothing"."""
+    from app.knowledge.ocr import ocr_pdf_bytes
+
+    pages = ocr_pdf_bytes(data, lang=lang)
+    return [
+        ParsedSection(
+            location=f"page:{page['page']}", text=page["text"],
+            metadata={"page": page["page"], "type": "pdf_ocr", "ocr_confidence": page["mean_confidence"]},
+        )
+        for page in pages
+    ]
+
+
 def extraction_quality(sections: List[ParsedSection]) -> Dict[str, Any]:
     non_empty = sum(bool(section.text.strip()) for section in sections)
     ratio = non_empty / len(sections) if sections else 0.0

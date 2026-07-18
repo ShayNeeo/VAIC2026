@@ -80,12 +80,12 @@ def create_30_case_dataset(cursor: sqlite3.Cursor) -> None:
         ))
 
     # 2. Specialist Tasks (10 items)
-    # 5 Legal, 3 Product, 2 Operations
+    # 5 Legal, 3 Product, 2 Credit
     for i in range(16, 26):
-        role_req = "legal_specialist" if i <= 20 else ("product_specialist" if i <= 23 else "operations_specialist")
+        role_req = "legal_specialist" if i <= 20 else ("product_specialist" if i <= 23 else "credit_specialist")
         work_items.append((
             f"EVAL-TASK-{i}",
-            "SPEC-LEGAL-001" if i <= 20 else "SPEC-PROD-001",
+            "SPEC-LEGAL-001" if i <= 20 else ("SPEC-PROD-001" if i <= 23 else "SPEC-CREDIT-001"),
             f"Specialist Task {i}",
             "pending",
             0.7, 0.5, 0.0, 0.5, 0.5, 1.0, 0.4,

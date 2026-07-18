@@ -214,6 +214,23 @@ class V2Repository:
             ).fetchall()
         return [StoredCase(SharedCaseState.model_validate_json(row["state_json"]), int(row["version"])) for row in rows]
 
+    def list_cases_for_customers(self, customer_ids: List[str]) -> List[StoredCase]:
+        """Cases belonging to any customer in customer_ids, regardless of
+        owning employee_id -- for the Agent Knowledge Console's "what is my
+        department's Agent working on" view (app/api/v2/knowledge_router.py),
+        which scopes by identity.customer_scope (a specialist's assigned
+        customers), not by case ownership like list_cases() above. Empty
+        input returns no rows rather than every case in the table."""
+        if not customer_ids:
+            return []
+        with self._connect() as connection:
+            placeholders = ",".join("?" for _ in customer_ids)
+            rows = connection.execute(
+                f"SELECT state_json, version FROM cases WHERE customer_id IN ({placeholders}) ORDER BY updated_at DESC",
+                tuple(customer_ids),
+            ).fetchall()
+        return [StoredCase(SharedCaseState.model_validate_json(row["state_json"]), int(row["version"])) for row in rows]
+
     def create_intake(self, session: IntakeSession) -> StoredIntake:
         with self._lock, self._connect() as connection:
             connection.execute(

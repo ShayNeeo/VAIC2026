@@ -80,8 +80,9 @@ def test_ubo_or_financial_upload_resumes_only_eligibility_downstream(tmp_path):
             update={"document_id": "DOC-FS", "document_type": "financial_statements"}
         )
     )
-    resumed = engine.resume(state, changes=["document:financial_statements"])
+    resumed = asyncio.run(engine.resume(state, changes=["document:financial_statements"]))
     assert resumed.workflow.resume_from_nodes == ["evaluate_eligibility", "validate_evidence", "prepare_operations"]
+
     assert resumed.product_result == product_before
     assert resumed.operations_result["artifact_version"] == 2
 

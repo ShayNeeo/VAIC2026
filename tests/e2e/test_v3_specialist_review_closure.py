@@ -49,9 +49,14 @@ class MockProductService(ProductService):
     @property
     def knowledge(self):
         import types
+        catalog_chunks = [
+            types.SimpleNamespace(product_id=pid, active=True) for pid in self.expected_bundle
+        ]
         return types.SimpleNamespace(
             index=types.SimpleNamespace(
-                provider=types.SimpleNamespace(name="dummy_provider")
+                provider=types.SimpleNamespace(name="dummy_provider"),
+                exact_lookup_by_chunk_id=lambda chunk_id: None,
+                list_chunks=lambda: catalog_chunks,
             )
         )
 

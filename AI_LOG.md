@@ -69,6 +69,28 @@
 - **Commit / file / evidence:** `app/workflow/submission.py`, `app/observability/audit.py`, `plan_v2/contracts/shared_case_state.schema.json`
 
 ## Additional timeline entries
+
+### 18/07 — Khôi phục giao diện legacy theo yêu cầu
+- **Member:** `Codex AI Agent` (Prompted by Human)
+- **Task:** Bỏ lớp giao diện dashboard/Copilot thử nghiệm và đưa RM/Specialist Workspace về đúng bố cục cũ của repository.
+- **AI output summary:** Hoàn nguyên `app/static/index.html` và `app/static/app.js` về phiên bản Git HEAD; loại bỏ stylesheet override `app/static/brand.css`. Backend API, LangGraph và dữ liệu case không bị thay đổi.
+- **Human decision:** Yêu cầu rõ “build lại như cũ”.
+- **Verification:** `git diff --exit-code` sạch cho hai file legacy; `node --check app/static/app.js` đạt; kiểm thử trực tiếp trên `http://127.0.0.1:8000/` xác nhận đăng nhập RM, stepper 5 bước, case guide, persistent case list và panel evidence hiển thị.
+- **Known unrelated issue:** Bộ `tests/unit/test_v2_workflow.py + tests/contract` có 29 test đạt và 3 contract test lỗi do `insurance_result` đã có trong Pydantic model nhưng chưa được khai báo trong JSON Schema; đây không phải thay đổi giao diện và chưa được tự ý sửa trong task này.
+- **Evidence:** `app/static/index.html`, `app/static/app.js`, browser DOM snapshot và JavaScript syntax check.
+
+### 18/07 21:xx — Repo grading audit, circular-import root cause fix, CI coverage gap closed
+- **Member:** `Claude Code` (Prompted by Human)
+- **Task:** Chấm điểm repo theo yêu cầu người dùng, sau đó xử lý 3 rủi ro lớn nhất được phát hiện: (1) circular import tiềm ẩn, (2) 179/584 test (`tests/guardrails/`, `tests/retrieval/`, `tests/e2e/`) không chạy trong CI, (3) rủi ro va chạm giữa các AI agent cùng sửa một branch.
+- **AI output summary:**
+  - Root-cause circular import: `app/agents/__init__.py` eager-import `CreditExpertAgent`/`LegalComplianceAgent`/`ProductExpertAgent` tạo vòng lặp `app.agents → app.knowledge.*_service → app.data_catalog.registry → app.schemas.v2 → app.agents.contracts → (re-enter) app.agents`. Xác nhận không có call site nào trong repo dùng `from app.agents import X` (đều import trực tiếp submodule) nên loại bỏ eager import an toàn, không phá API nào.
+  - Thêm `tests/guardrails`, `tests/retrieval`, `tests/e2e` vào `.github/workflows/ci.yml` (trước đây chỉ chạy `tests/unit`, `tests/contract`, `tests/rag_mcp`, 1 file e2e — bỏ sót đúng các test fail-closed/guardrail quan trọng nhất).
+- **Human review:** Chưa — đang chờ người dùng xác nhận qua CI run thật trên GitHub.
+- **Human decision:** Người dùng yêu cầu "xử lý hết" + "nâng điểm cao lên" sau khi nhận báo cáo chấm điểm.
+- **Result:** `python -m pytest tests/ -q` → 584 passed, 0 failed (đã xác nhận lại nhiều lần, gồm cả dưới env giả lập CI). `python -c "import app.data_catalog.registry"` / `import app.agents.credit_expert` / `import app.workflow.engine` chạy độc lập thành công (trước đây lỗi).
+- **Commit / file / evidence:** `app/agents/__init__.py`, `.github/workflows/ci.yml`.
+- **Chưa xử lý (rủi ro #3, còn mở):** không có ranh giới sở hữu module rõ ràng giữa các AI agent cùng làm việc trên nhánh này (Claude Code + Codex AI Agent + Gemini AI Agent theo log trên) — thực tế cả 3 đều đụng vào các file lõi chung (`app/workflow/engine.py`, `app/agents/*`, `app/static/*`) nên không thể vẽ ranh giới sạch mà không nói dối. Khuyến nghị thực tế: commit thường xuyên (giảm cửa sổ xung đột), luôn đọc lại file nóng ngay trước khi sửa, và coi log này là nơi thông báo thay đổi lớn cho agent/người tiếp theo.
+
 (Team có thể copy template phía trên để thêm log cho frontend và pitch sau này).
 
 ## 8. Key architecture and product decisions
@@ -96,6 +118,7 @@ AI supported the team with options, analysis, drafts, and implementation assista
 |---|---|---|---|
 | OCR & Anti-fraud Model chưa có thật | Mock logic | Return fixed score | Tích hợp GCP Vision API & fraud ML model thực tế |
 | Windows SQLite Locking Error | Pytest E2E fail `shutil.rmtree` | Bỏ qua ở local Windows / Rely on Contract Test | Đổi teardown pytest script hoặc dùng In-Memory DB |
+| Nhiều AI agent (Claude Code, Codex AI Agent, Gemini AI Agent) cùng sửa `feat/v2-employee-copilot-layer` không có ranh giới sở hữu module | Đã xảy ra ít nhất 1 lần: UI Agent Knowledge Console bị ghi đè mất do agent khác revert `app/static/index.html`/`app.js` | Re-đọc file nóng ngay trước khi sửa; commit thường xuyên để giảm cửa sổ xung đột; ghi mọi thay đổi lớn vào `AI_LOG.md` | Cần con người phân chia rõ module/branch cho từng agent, hoặc chuyển sang PR nhỏ + review liên tục thay vì cùng sửa 1 working tree song song |
 
 ## 14. Integrity statement
 This log documents meaningful AI collaboration during the hackathon. It does not reproduce every minor prompt or autocomplete interaction. It records major AI-assisted decisions, implementation steps, validations, and human reviews. Placeholders indicate information that has not yet been verified; they must not be presented as completed facts.

@@ -44,6 +44,17 @@ def product_expert_principal(*, branch: str = "HN01") -> CallerPrincipal:
     )
 
 
+def credit_expert_principal(*, branch: str = "HN01") -> CallerPrincipal:
+    return CallerPrincipal(
+        employee_id="CR-TEST",
+        branch=branch,
+        agent_type="CreditExpert",
+        agent_instance_id="test-credit-instance-0001",
+        roles=["CreditExpert"],
+        permissions=["knowledge:credit:read"],
+    )
+
+
 @pytest.fixture()
 def service(tmp_path) -> RagKnowledgeService:
     runtime = replace(settings, db_path=tmp_path / "rag.sqlite3", auto_seed=True)
@@ -66,9 +77,9 @@ def search(service: RagKnowledgeService, query: str, *, domain="product", branch
 def test_builtin_corpus_is_persistent_versioned_and_healthy(service):
     health = service.health()
     assert health.status == "ok"
-    assert health.source_count == 3
-    assert health.chunk_count == 189
-    assert health.chunks_by_domain == {"legal": 53, "operations": 59, "product": 77}
+    assert health.source_count == 4
+    assert health.chunk_count == 201
+    assert health.chunks_by_domain == {"credit": 17, "legal": 48, "operations": 59, "product": 77}
     assert health.db_quick_check == "ok"
 
 
@@ -156,6 +167,20 @@ def test_global_and_product_scoped_legal_rules_are_searchable(service):
     assert any(item.chunk_type == "legal_reference_document" for item in result.chunks)
 
 
+def test_credit_expert_has_dedicated_corpus_and_cannot_call_legal_tool(service):
+    request = ExpertSearchRequest(
+        query="nguồn trả nợ và hồ sơ tài chính vốn lưu động",
+        principal=credit_expert_principal(),
+        filters=ScopedSearchFilters(product_ids=["PRD-WC-001"]),
+        trace_id="TRACE-CREDIT-PROFILE",
+    )
+    result = service.expert_search(request, tool_name="credit_search", domain="credit")
+    assert result.grounded is True
+    assert all(item.domain == "credit" for item in result.chunks)
+    with pytest.raises(AccessDenied):
+        service.expert_search(request, tool_name="legal_search", domain="legal")
+
+
 def test_tool_permission_is_fail_closed_and_audited(service):
     request = SearchKnowledgeRequest(
         query="payroll",
@@ -198,6 +223,6 @@ def test_source_inventory_is_governed_and_audited(service):
     result = service.list_sources(
         ListSourcesRequest(principal=principal(), domain="all", trace_id="TRACE-SOURCES")
     )
-    assert {item.domain for item in result.sources} == {"product", "legal", "operations"}
+    assert {item.domain for item in result.sources} == {"product", "legal", "credit", "operations"}
     assert all(item.source_hash and item.dataset_version and item.owner for item in result.sources)
     assert service.store.audit_events("TRACE-SOURCES")[-1]["tool_name"] == "rag_list_sources"
