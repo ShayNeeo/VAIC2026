@@ -41,12 +41,20 @@ jobs:
       - name: Run contract tests
         run: python -m pytest tests/contract -q
 
+      - name: Run guardrail tests (abstention, fail-closed, injection, PII)
+        run: python -m pytest tests/guardrails -q
+
+      - name: Run retrieval tests (fail-closed provider failure, quarantine, supersession)
+        run: python -m pytest tests/retrieval -q
+
       - name: Run RAG MCP tests
         run: python -m pytest tests/rag_mcp -q
 
       - name: Run sales-case E2E tests (includes the hero multi-product scenario)
         run: python -m pytest tests/test_sales_cases_e2e.py -q
 
+      - name: Run remaining E2E tests (V3 golden cases, specialist review closure, controlled retrieval)
+        run: python -m pytest tests/e2e -q
 
       - name: Run golden-case evaluation
         run: python -m app.evaluation.runner --output data/eval/v2/latest_report.json
