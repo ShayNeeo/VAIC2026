@@ -51,15 +51,15 @@ class AppColors {
 
 /// Display + heading face.
 TextTheme _display(TextTheme base) => base.copyWith(
-      displayLarge: base.displayLarge!.copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -1.5),
-      displayMedium: base.displayMedium!.copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -1.0),
-      displaySmall: base.displaySmall!.copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: -0.5),
-      headlineLarge: base.headlineLarge!.copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -0.8),
-      headlineMedium: base.headlineMedium!.copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: -0.5),
-      headlineSmall: base.headlineSmall!.copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600),
-      titleLarge: base.titleLarge!.copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: 0),
-      titleMedium: base.titleMedium!.copyWith(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w600),
-      titleSmall: base.titleSmall!.copyWith(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w600),
+      displayLarge: (base.displayLarge ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -1.5),
+      displayMedium: (base.displayMedium ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -1.0),
+      displaySmall: (base.displaySmall ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: -0.5),
+      headlineLarge: (base.headlineLarge ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -0.8),
+      headlineMedium: (base.headlineMedium ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: -0.5),
+      headlineSmall: (base.headlineSmall ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600),
+      titleLarge: (base.titleLarge ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: 0),
+      titleMedium: (base.titleMedium ?? const TextStyle()).copyWith(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w600),
+      titleSmall: (base.titleSmall ?? const TextStyle()).copyWith(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w600),
     );
 
 const TextTheme _bodyText = TextTheme(
@@ -95,7 +95,7 @@ ThemeData agentTheme(Brightness brightness) {
     ),
     scaffoldBackgroundColor: AppColors.background,
     fontFamily: 'Hanken Grotesk',
-    textTheme: _display(_bodyText),
+    textTheme: _display(ThemeData(brightness: brightness).textTheme),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.cyan,
@@ -165,7 +165,7 @@ ThemeData lightAgentTheme() => agentTheme(Brightness.light).copyWith(
         outline: const Color(0xFFD7E0F0),
       ),
       scaffoldBackgroundColor: const Color(0xFFEEF3FB),
-      textTheme: _display(_bodyText.apply(bodyColor: const Color(0xFF0A1020), displayColor: const Color(0xFF0A1020))),
+      textTheme: _display(ThemeData(brightness: Brightness.light).textTheme.apply(bodyColor: const Color(0xFF0A1020), displayColor: const Color(0xFF0A1020))),
       cardTheme: CardThemeData(
         color: const Color(0xFFFFFFFF),
         elevation: 0,

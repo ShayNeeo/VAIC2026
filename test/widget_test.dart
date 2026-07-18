@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:rm_workspace_core/core/rm_workspace_core.dart';
 
 import '../lib/main.dart';
+import '../lib/core/controllers/case_controller.dart';
+import '../lib/core/controllers/employee_workspace_controller.dart';
 
 void main() {
   testWidgets('agent app builds without throwing', (tester) async {
@@ -20,7 +21,7 @@ void main() {
         child: const AgentApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 50));
     expect(find.byType(AgentApp), findsOneWidget);
   });
 }
