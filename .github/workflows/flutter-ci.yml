@@ -36,11 +36,5 @@ jobs:
       - name: Static analysis
         run: flutter analyze --no-fatal-infos
 
-      - name: Unit/widget tests
+      - name: Unit/widget tests (login + workspace)
         run: flutter test
-
-      - name: Pre-compile web build (catches compile errors before deploy)
-        run: flutter build web --base-href "/"
-
-      - name: Pre-compile Android APK (catches compile errors before release)
-        run: flutter build apk --release

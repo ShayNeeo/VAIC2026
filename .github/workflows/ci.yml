@@ -2,16 +2,17 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
-  test:
+  python-tests:
     runs-on: ubuntu-latest
     env:
-      # Embeddings default to the key-free "local" provider so CI runs offline
-      # with zero API keys and is reproducible. Set KNOWLEDGE_EMBEDDING_PROVIDER
+      # Embeddings default key-free "local" provider so CI runs offline
+      # / zero API keys reproducible. Set KNOWLEDGE_EMBEDDING_PROVIDER
       # / RAG_MCP_EMBEDDING_PROVIDER to "gemini" (Google AI Studio key
-      # GOOGLE_API_KEY, gemini-embedding-2) or "openai" for production semantic
+      # GOOGLE_API_KEY, gemini-embedding-2) or "openai" production semantic
       # recall. Intent extraction stays deterministic (INTENT_USE_LLM=false).
       INTENT_USE_LLM: "false"
       DEFAULT_LLM: "google"
@@ -30,44 +31,40 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          # Optional stack has pinned langchain/chromadb versions that may conflict
-          # with the resolved requirements.txt set; never let it break CI.
+          # Optional stack pinned langchain/chromadb versions may conflict
+          # resolved requirements.txt set; never let it break CI.
           pip install -r requirements-optional.txt || echo "requirements-optional.txt skipped (conflict)"
 
-      - name: Ensure state dir exists for sqlite-backed tests
+      - name: Ensure state dir exists (sqlite-backed tests)
         run: mkdir -p data/state
 
       - name: Validate config imports cleanly
         run: python -c "from app.config import settings; print('RAG_PROVIDER=', settings.RAG_PROVIDER)"
 
-      - name: Run unit tests
-        run: python -m pytest tests/unit -q
+      - name: Unit tests
+        run: pytest -q --ignore=scratch -m tests/unit
 
-      - name: Run contract tests
-        run: python -m pytest tests/contract -q
+      - name: Contract tests
+        run: pytest -q --ignore=scratch -m tests/contract
 
-      - name: Run RAG MCP tests
-        run: python -m pytest tests/rag_mcp -q
+      - name: RAG MCP tests
+        run: pytest -q --ignore=scratch -m tests/rag_mcp
 
-      - name: Run sales-case E2E tests (includes the hero multi-product scenario)
-        run: python -m pytest tests/test_sales_cases_e2e.py -q
+      - name: Sales-case e2e
+        run: pytest -q --ignore=scratch -m tests/test_sales_cases_e2e.py
 
+      - name: Golden evaluation
+        run: pytest -q --ignore=scratch -m app.evaluation.runner --output data/eval/v2/latest_report.json
 
-      - name: Run golden-case evaluation
-        run: python -m app.evaluation.runner --output data/eval/v2/latest_report.json
+      - name: Safety/reliability evaluation
+        run: pytest -q --ignore=scratch -m app.evaluation.safety_reliability_runner --output data/eval/v2/latest_safety_reliability_report.json
 
-      - name: Run safety/reliability evaluation
-        run: python -m app.evaluation.safety_reliability_runner --output data/eval/v2/latest_safety_reliability_report.json
-
-      - name: Run benchmark smoke test (offline, deterministic intent, warm cache, small subset)
-        run: |
-          python -m benchmarks.run --cache-mode warm \
-            --cases BENCH-A01,BENCH-B01,BENCH-D01,BENCH-E01,BENCH-F01 \
-            --output-dir benchmarks/results/ci-smoke
+      - name: Benchmark smoke
+        run: pytest -q --ignore=scratch -m benchmarks.run --cache-mode --cases BENCH-A01,BENCH-B01,BENCH-D01,BENCH-E01,BENCH-F01 --output-dir benchmarks/results/ci-smoke
 
       - name: Upload benchmark smoke results
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: benchmark-ci-smoke
           path: benchmarks/results/ci-smoke/
