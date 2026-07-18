@@ -17,16 +17,44 @@
     "allowed_uses": ["development", "automated_test", "offline_demo", "legal_explanation"],
     "prohibited_uses": ["production_legal_opinion", "production_credit_decision"]
   },
-  "decision_role": "EVIDENCE_ONLY",
+  "decision_role": "VERIFICATION",
+  "access": {
+    "method": "FILE",
+    "endpoint_or_location": "data/raw_csv_json/product_policies.csv + legal mock documents",
+    "authentication": "repository ACL",
+    "sandbox_available": true,
+    "quota": null,
+    "sla": null
+  },
   "governance": {
     "legal_basis_or_license": "Project-owned synthetic content",
-    "sensitivity": "INTERNAL_RESTRICTED",
+    "sensitivity": "RESTRICTED",
+    "retention": "project lifetime",
+    "residency": "local development workspace",
+    "cross_border": false,
     "approved": true,
     "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "freshness": {
+    "update_cadence": "manual per demo release",
+    "max_age_seconds": 31536000,
+    "stale_behavior": "BLOCK_DECISION"
+  },
+  "identifiers": {
+    "primary_key": "policy_id/document_id",
+    "join_keys": ["product_id", "rule_id", "source_id"],
+    "canonical_internal_id": "POL-*"
   },
   "quality": {
     "required_checks": ["utf8", "schema", "uniqueness", "product_reference", "effective_date", "lineage", "prompt_injection"],
     "publish_gate": "all deterministic checks pass"
+  },
+  "lineage": {
+    "ingestion_job": "services.rag_mcp.ingestion:legal_reference_pack",
+    "raw_location": "data/raw_csv_json/product_policies.csv;data/mock_documents",
+    "silver_location": "data/rag_mcp/rag.sqlite3",
+    "gold_location": "MCP /mcp/legal",
+    "consumer_artifacts": ["LegalExpert/ExpertFinding", "EligibilityEngine evidence"]
   },
   "lifecycle_status": "ACTIVE",
   "risks_and_notes": [

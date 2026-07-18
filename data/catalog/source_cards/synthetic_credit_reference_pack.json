@@ -1,0 +1,64 @@
+{
+  "schema_version": "2.0.0",
+  "source_id": "SYNTHETIC-CREDIT-REFERENCE-PACK-V1",
+  "name": "Synthetic corporate lending policy and credit analysis reference pack",
+  "domain": "credit",
+  "tier": "E_SYNTHETIC",
+  "provider": "repository curated synthetic data",
+  "dataset_version": "2026.07-demo-v2",
+  "effective_from": "2026-01-01",
+  "effective_to": "2026-12-31",
+  "owner": {
+    "business_owner": "MVP Credit and Risk Owner",
+    "data_steward": "MVP Credit Data Steward",
+    "technical_owner": "AI Engineering"
+  },
+  "purpose": {
+    "allowed_uses": ["development", "automated_test", "offline_demo", "credit_memo_analysis"],
+    "prohibited_uses": ["production_credit_approval", "automatic_limit_or_pricing_decision"]
+  },
+  "decision_role": "ENRICHMENT",
+  "access": {
+    "method": "FILE",
+    "endpoint_or_location": "data/legal/policies + credit mock documents",
+    "authentication": "repository ACL",
+    "sandbox_available": true,
+    "quota": null,
+    "sla": null
+  },
+  "governance": {
+    "legal_basis_or_license": "Project-owned synthetic content",
+    "sensitivity": "RESTRICTED",
+    "retention": "project lifetime",
+    "residency": "local development workspace",
+    "cross_border": false,
+    "approved": true,
+    "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "freshness": {
+    "update_cadence": "manual per demo release",
+    "max_age_seconds": 31536000,
+    "stale_behavior": "BLOCK_DECISION"
+  },
+  "identifiers": {
+    "primary_key": "document_id/article_id/clause_id",
+    "join_keys": ["product_id", "rule_ref", "source_id"],
+    "canonical_internal_id": "CREDIT-POL-*"
+  },
+  "quality": {
+    "required_checks": ["utf8", "schema", "effective_date", "lineage", "prompt_injection"],
+    "publish_gate": "all deterministic checks pass"
+  },
+  "lineage": {
+    "ingestion_job": "services.rag_mcp.ingestion:credit_reference_pack",
+    "raw_location": "data/legal/policies/shb_credit_policy_manual.json;data/mock_documents/Quy_che_cho_vay_von_luu_dong_KHDN_SHB.md",
+    "silver_location": "data/rag_mcp/rag.sqlite3",
+    "gold_location": "MCP /mcp/credit",
+    "consumer_artifacts": ["CreditExpert/ExpertFinding", "credit memo analysis"]
+  },
+  "lifecycle_status": "ACTIVE",
+  "risks_and_notes": [
+    "Synthetic credit policy for demo only.",
+    "Credit Expert may analyze and draft scenarios but cannot approve, price or set a limit."
+  ]
+}

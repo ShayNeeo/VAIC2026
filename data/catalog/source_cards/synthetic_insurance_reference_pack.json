@@ -1,0 +1,64 @@
+{
+  "schema_version": "2.0.0",
+  "source_id": "SYNTHETIC-INSURANCE-REFERENCE-PACK-V1",
+  "name": "Synthetic corporate insurance policy and readiness reference pack",
+  "domain": "insurance",
+  "tier": "E_SYNTHETIC",
+  "provider": "repository curated synthetic data",
+  "dataset_version": "2026.07-demo-v2",
+  "effective_from": "2026-01-01",
+  "effective_to": "2026-12-31",
+  "owner": {
+    "business_owner": "MVP Insurance and Risk Owner",
+    "data_steward": "MVP Insurance Data Steward",
+    "technical_owner": "AI Engineering"
+  },
+  "purpose": {
+    "allowed_uses": ["development", "automated_test", "offline_demo", "insurance_readiness_analysis"],
+    "prohibited_uses": ["production_underwriting_decision", "automatic_premium_or_coverage_decision"]
+  },
+  "decision_role": "ENRICHMENT",
+  "access": {
+    "method": "FILE",
+    "endpoint_or_location": "data/legal/policies/shb_insurance_policy_manual.json",
+    "authentication": "repository ACL",
+    "sandbox_available": true,
+    "quota": null,
+    "sla": null
+  },
+  "governance": {
+    "legal_basis_or_license": "Project-owned synthetic content",
+    "sensitivity": "RESTRICTED",
+    "retention": "project lifetime",
+    "residency": "local development workspace",
+    "cross_border": false,
+    "approved": true,
+    "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "freshness": {
+    "update_cadence": "manual per demo release",
+    "max_age_seconds": 31536000,
+    "stale_behavior": "BLOCK_DECISION"
+  },
+  "identifiers": {
+    "primary_key": "document_id/article_id/clause_id",
+    "join_keys": ["product_id", "rule_ref", "source_id"],
+    "canonical_internal_id": "INS-POL-*"
+  },
+  "quality": {
+    "required_checks": ["utf8", "schema", "effective_date", "lineage", "prompt_injection"],
+    "publish_gate": "all deterministic checks pass"
+  },
+  "lineage": {
+    "ingestion_job": "app.knowledge.insurance_service:InsuranceKnowledgeService.ingest",
+    "raw_location": "data/legal/policies/shb_insurance_policy_manual.json",
+    "silver_location": "data/vector_db/v2_insurance.sqlite3",
+    "gold_location": "n/a (local index only)",
+    "consumer_artifacts": ["InsuranceExpert/ExpertFinding"]
+  },
+  "lifecycle_status": "ACTIVE",
+  "risks_and_notes": [
+    "Synthetic insurance policy for demo only.",
+    "Insurance Expert may analyze coverage readiness and cite policy text but cannot bind, price or approve a policy."
+  ]
+}

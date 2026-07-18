@@ -26,7 +26,7 @@ class RagMCPSettings:
     service_token: str = _DEFAULT_SERVICE_TOKEN
     product_token: str = os.getenv("RAG_MCP_PRODUCT_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-product")
     legal_token: str = os.getenv("RAG_MCP_LEGAL_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-legal")
-    operations_token: str = os.getenv("RAG_MCP_OPERATIONS_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-operations")
+    credit_token: str = os.getenv("RAG_MCP_CREDIT_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-credit")
     evidence_token: str = os.getenv("RAG_MCP_EVIDENCE_TOKEN", f"{_DEFAULT_SERVICE_TOKEN}-evidence")
     require_auth: bool = _bool("RAG_MCP_REQUIRE_AUTH", True)
     # Default is "local": a deterministic, key-free provider so the suite runs
@@ -46,7 +46,7 @@ class RagMCPSettings:
             "admin": "/mcp",
             "product": "/mcp/product",
             "legal": "/mcp/legal",
-            "operations": "/mcp/operations",
+            "credit": "/mcp/credit",
             "evidence": "/mcp/evidence",
         }.get(profile)
         if suffix is None:
@@ -58,7 +58,7 @@ class RagMCPSettings:
             "admin": self.service_token,
             "product": self.product_token,
             "legal": self.legal_token,
-            "operations": self.operations_token,
+            "credit": self.credit_token,
             "evidence": self.evidence_token,
         }
         if profile not in tokens:
@@ -67,7 +67,7 @@ class RagMCPSettings:
 
     def validate_runtime(self) -> None:
         if self.require_auth:
-            for profile in ("admin", "product", "legal", "operations", "evidence"):
+            for profile in ("admin", "product", "legal", "credit", "evidence"):
                 if len(self.profile_token(profile)) < 16:
                     raise ValueError(f"RAG MCP {profile} token must contain at least 16 characters")
         if not 1 <= self.top_k <= 20:

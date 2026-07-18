@@ -17,16 +17,44 @@
     "allowed_uses": ["development", "automated_test", "offline_demo", "operations_drafting"],
     "prohibited_uses": ["production_sla_commitment", "external_send_without_approval"]
   },
-  "decision_role": "DRAFT_ONLY",
+  "decision_role": "ENRICHMENT",
+  "access": {
+    "method": "FILE",
+    "endpoint_or_location": "data/raw_csv_json operations tables",
+    "authentication": "repository ACL",
+    "sandbox_available": true,
+    "quota": null,
+    "sla": null
+  },
   "governance": {
     "legal_basis_or_license": "Project-owned synthetic content",
     "sensitivity": "INTERNAL",
+    "retention": "project lifetime",
+    "residency": "local development workspace",
+    "cross_border": false,
     "approved": true,
     "approval_reference": "MVP-SYNTHETIC-DATA-ONLY"
+  },
+  "freshness": {
+    "update_cadence": "manual per demo release",
+    "max_age_seconds": 31536000,
+    "stale_behavior": "ALLOW_WITH_WARNING"
+  },
+  "identifiers": {
+    "primary_key": "workflow/checklist/sla/template/raci id",
+    "join_keys": ["product_id", "workflow_id", "source_id"],
+    "canonical_internal_id": "SOP-*"
   },
   "quality": {
     "required_checks": ["utf8", "schema", "uniqueness", "product_reference", "effective_date", "lineage", "prompt_injection"],
     "publish_gate": "all deterministic checks pass"
+  },
+  "lineage": {
+    "ingestion_job": "services.rag_mcp.ingestion:operations_reference_pack",
+    "raw_location": "data/raw_csv_json",
+    "silver_location": "data/rag_mcp/rag.sqlite3",
+    "gold_location": "OperationsComposer local deterministic service",
+    "consumer_artifacts": ["OperationsComposer checklist and draft"]
   },
   "lifecycle_status": "ACTIVE",
   "risks_and_notes": [

@@ -1,4 +1,4 @@
-"""Specialist Review contracts: the action surface Product/Legal/Operations
+"""Specialist Review contracts: the action surface Product/Legal/Credit
 Specialist were missing (see docs/EMPLOYEE_ROLE_DESIGN_EVALUATION_REPORT.md
 gap #1/#2/#3). A review resolves -- or formally cannot resolve -- the exact
 reason app.workflow.risk_gate.RiskGuardrailGate put a case into
@@ -16,7 +16,7 @@ from app.schemas.v2.employee import RoleType
 
 SpecialistDecision = Literal["cleared", "blocked", "needs_more_information"]
 
-_REVIEWER_ROLES = {RoleType.LEGAL_SPECIALIST, RoleType.PRODUCT_SPECIALIST, RoleType.OPERATIONS_SPECIALIST}
+_REVIEWER_ROLES = {RoleType.LEGAL_SPECIALIST, RoleType.PRODUCT_SPECIALIST, RoleType.CREDIT_SPECIALIST}
 
 
 class SpecialistReviewFinding(BaseModel):

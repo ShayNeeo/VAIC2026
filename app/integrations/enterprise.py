@@ -102,13 +102,13 @@ _EMPLOYEE_COPILOT_DEMO_PERSONAS: list[tuple[str, str, str, list[str], dict]] = [
     # knows about every demo employee, instead of two disconnected seed
     # sources for the same five-person demo cast.
     ("SPEC-LEGAL-001", "Specialist", "Legal & Compliance",
-     ["case:read", "case:verify_evidence", "legal:check_issue", "legal:block_non_eligible"],
+     ["case:read", "case:verify_evidence", "legal:check_issue", "legal:block_non_eligible", "legal:manage_knowledge"],
      {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
     ("SPEC-PROD-001", "Specialist", "Product",
-     ["case:read", "product:recommend", "product:verify_fit"],
+     ["case:read", "product:recommend", "product:verify_fit", "product:manage_knowledge"],
      {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
-    ("SPEC-OPS-001", "Specialist", "Operations",
-     ["case:read", "task:update", "ops:update_implementation"],
+    ("SPEC-CREDIT-001", "Specialist", "Credit Risk & Underwriting",
+     ["case:read", "credit:analyze_file", "credit:review_structure", "credit:manage_knowledge"],
      {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
     ("MGR-HN-01", "Manager", "Branch HN Management",
      ["team:view_workload", "case:read"],
@@ -134,6 +134,11 @@ def ensure_employee_copilot_demo_personas(db_path: Path | str | None = None) -> 
     conn = sqlite3.connect(path)
     try:
         cursor = conn.cursor()
+        # V3 expert-role migration: Operations remains a deterministic
+        # composer, but is no longer an Expert Agent. Remove only the old
+        # synthetic persona and replace it with the Credit Specialist.
+        cursor.execute("DELETE FROM permissions WHERE employee_id = ?", ("SPEC-OPS-001",))
+        cursor.execute("DELETE FROM employees WHERE employee_id = ?", ("SPEC-OPS-001",))
         for employee_id, role, org_unit, permissions, access_scope in _EMPLOYEE_COPILOT_DEMO_PERSONAS:
             cursor.execute(
                 "INSERT OR IGNORE INTO employees (employee_id, role, organization_unit) VALUES (?, ?, ?)",
@@ -167,9 +172,10 @@ def map_enterprise_role_to_role_type(role: str, organization_unit: str) -> str:
             return "legal_specialist"
         if "product" in unit_lower:
             return "product_specialist"
-        if "operations" in unit_lower or "credit" in unit_lower:
-            return "operations_specialist"
-        return "operations_specialist"
+        if "credit" in unit_lower or "underwriting" in unit_lower:
+            return "credit_specialist"
+        # Unknown specialist units get no specialist capability by default.
+        return "auditor"
     if role_lower == "datasteward":
         return "auditor"
     return "auditor"

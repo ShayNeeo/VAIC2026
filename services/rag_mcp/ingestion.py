@@ -136,7 +136,7 @@ def _validate_card(card: Dict[str, Any], path: Path, quality: Dict[str, int]) ->
     )
     if any(not card.get(field) for field in required):
         raise IngestionError(f"source card is incomplete: {path}")
-    if card.get("domain") not in {"product", "legal", "operations"}:
+    if card.get("domain") not in {"product", "legal", "credit", "operations"}:
         raise IngestionError(f"unsupported source domain: {card.get('domain')}")
     if not card.get("governance", {}).get("approved"):
         raise IngestionError(f"source card is not approved: {path}")
@@ -458,7 +458,6 @@ def _legal_pack(
 
     legal_docs = {
         "Quy_trinh_KYC_va_Mo_tai_khoan_doanh_nghiep.md": None,
-        "Quy_che_cho_vay_von_luu_dong_KHDN_SHB.md": "PRD-WC-001",
         "Huong_dan_bao_lanh_ngan_hang_B2B.md": "PRD-GU-001",
     }
     for filename, product_id in legal_docs.items():
@@ -470,6 +469,110 @@ def _legal_pack(
                 quality=quality, product_id=product_id, chunk_type="legal_reference_document",
             )
         )
+    return chunks
+
+
+def _credit_pack(
+    card: Dict[str, Any], paths: Sequence[Path], source_hash: str, embedding: EmbeddingProvider,
+    quality: Dict[str, int], known_products: set[str], raw_cache: Dict[Path, tuple[str, bytes]],
+) -> List[Dict[str, Any]]:
+    """Build policy-only credit chunks; customer facilities never enter vector RAG."""
+
+    by_name = {path.name: path for path in paths}
+    chunks: List[Dict[str, Any]] = []
+    product_id = "PRD-WC-001"
+    _validate_references([product_id], known_products, "credit_reference_pack", quality)
+
+    markdown_path = by_name["Quy_che_cho_vay_von_luu_dong_KHDN_SHB.md"]
+    markdown, _ = raw_cache[markdown_path]
+    chunks.extend(
+        _markdown_chunks(
+            card=card,
+            source_hash=source_hash,
+            path=markdown_path,
+            text=markdown,
+            embedding=embedding,
+            quality=quality,
+            product_id=product_id,
+            chunk_type="credit_lending_policy",
+        )
+    )
+
+    manual_path = by_name["shb_credit_policy_manual.json"]
+    manual_text, _ = raw_cache[manual_path]
+    manual = json.loads(manual_text)
+    required = ("document_id", "version", "effective_from", "chapters")
+    if any(not manual.get(field) for field in required):
+        raise IngestionError("credit policy manual is incomplete")
+    if "synthetic" not in str(manual.get("note", "")).lower():
+        raise IngestionError("credit policy manual must disclose synthetic data")
+    for chapter in manual.get("chapters", []):
+        for article in chapter.get("articles", []):
+            article_id = str(article.get("article_id"))
+            text = _safe_text(
+                [
+                    manual.get("title"),
+                    chapter.get("title"),
+                    article_id,
+                    article.get("title"),
+                    article.get("text"),
+                ],
+                quality,
+            )
+            chunks.append(
+                _base_chunk(
+                    card=card,
+                    source_hash=source_hash,
+                    chunk_id=f"credit:manual:{_slug(article_id)}",
+                    document_id=str(manual["document_id"]),
+                    section_path=f"{chapter.get('chapter_id')} / {article_id}",
+                    chunk_type="credit_policy_article",
+                    text=text,
+                    product_id=product_id,
+                    effective_from=str(manual["effective_from"]),
+                    effective_to=manual.get("effective_to"),
+                    embedding=embedding,
+                    metadata={
+                        "source_file": str(manual_path.relative_to(ROOT)).replace("\\", "/"),
+                        "article_id": article_id,
+                        "rule_refs": sorted(
+                            {
+                                str(rule_ref)
+                                for clause in article.get("clauses", [])
+                                for rule_ref in clause.get("rule_refs", [])
+                            }
+                        ),
+                    },
+                )
+            )
+            for clause in article.get("clauses", []):
+                clause_id = str(clause.get("clause_id"))
+                clause_text = _safe_text(
+                    [article_id, clause_id, clause.get("text"), f"Rule refs: {clause.get('rule_refs', [])}"],
+                    quality,
+                )
+                chunks.append(
+                    _base_chunk(
+                        card=card,
+                        source_hash=source_hash,
+                        chunk_id=f"credit:manual:{_slug(article_id)}:{_slug(clause_id)}",
+                        document_id=str(manual["document_id"]),
+                        section_path=f"{chapter.get('chapter_id')} / {article_id} / {clause_id}",
+                        chunk_type="credit_policy_clause",
+                        text=clause_text,
+                        product_id=product_id,
+                        effective_from=str(manual["effective_from"]),
+                        effective_to=manual.get("effective_to"),
+                        embedding=embedding,
+                        metadata={
+                            "source_file": str(manual_path.relative_to(ROOT)).replace("\\", "/"),
+                            "article_id": article_id,
+                            "clause_id": clause_id,
+                            "rule_refs": list(clause.get("rule_refs", [])),
+                        },
+                    )
+                )
+    quality["rows_validated"] += len(chunks)
     return chunks
 
 
@@ -515,6 +618,7 @@ def _operations_pack(
 ADAPTERS = {
     "product_reference_pack": _product_pack,
     "legal_reference_pack": _legal_pack,
+    "credit_reference_pack": _credit_pack,
     "operations_reference_pack": _operations_pack,
 }
 

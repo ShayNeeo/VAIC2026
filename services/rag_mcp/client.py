@@ -15,6 +15,8 @@ from services.rag_mcp.schemas import (
     GetChunkRequest,
     GetChunkResponse,
     HealthResponse,
+    ExpertListSourcesRequest,
+    ExpertSearchRequest,
     ListSourcesRequest,
     ListSourcesResponse,
     SearchKnowledgeRequest,
@@ -75,6 +77,20 @@ class RagMCPClient:
     async def search(self, request: SearchKnowledgeRequest) -> SearchKnowledgeResponse:
         payload = await self._call("rag_search", {"request": request.model_dump(mode="json")})
         return SearchKnowledgeResponse.model_validate(payload)
+
+    async def expert_search(self, tool_name: str, request: ExpertSearchRequest) -> SearchKnowledgeResponse:
+        payload = await self._call(tool_name, {"request": request.model_dump(mode="json")})
+        return SearchKnowledgeResponse.model_validate(payload)
+
+    async def expert_get_chunk(self, tool_name: str, request: GetChunkRequest) -> GetChunkResponse:
+        payload = await self._call(tool_name, {"request": request.model_dump(mode="json")})
+        return GetChunkResponse.model_validate(payload)
+
+    async def expert_list_sources(
+        self, tool_name: str, request: ExpertListSourcesRequest
+    ) -> ListSourcesResponse:
+        payload = await self._call(tool_name, {"request": request.model_dump(mode="json")})
+        return ListSourcesResponse.model_validate(payload)
 
     async def get_chunk(self, request: GetChunkRequest) -> GetChunkResponse:
         payload = await self._call("rag_get_chunk", {"request": request.model_dump(mode="json")})

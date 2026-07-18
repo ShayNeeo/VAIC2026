@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.v2.router import router as v2_router
 from app.api.v2.auth_router import router as auth_router
 from app.api.v2.employee_router import case_action_router
+from app.api.v2.employee_router import knowledge_router
 from app.api.v2.employee_router import recommendation_router
 from app.api.v2.employee_router import router as employee_router
 
@@ -25,6 +26,7 @@ app.include_router(auth_router, prefix="/api/v2")
 app.include_router(employee_router, prefix="/api/v2")
 app.include_router(recommendation_router, prefix="/api/v2")
 app.include_router(case_action_router, prefix="/api/v2")
+app.include_router(knowledge_router, prefix="/api/v2")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 @app.get("/health")

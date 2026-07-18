@@ -8,11 +8,11 @@ from typing import Any, Dict, List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-KnowledgeDomain = Literal["product", "legal", "operations", "all"]
+KnowledgeDomain = Literal["product", "legal", "credit", "operations", "all"]
 ExpertAgentType = Literal[
     "ProductExpert",
     "LegalExpert",
-    "OperationsExpert",
+    "CreditExpert",
     "EvidenceExpert",
     "KnowledgeAdmin",
 ]
@@ -119,7 +119,7 @@ class ChunkCitation(StrictModel):
 
 class RetrievedChunk(StrictModel):
     chunk_id: str
-    domain: Literal["product", "legal", "operations"]
+    domain: Literal["product", "legal", "credit", "operations"]
     chunk_type: str
     text: str
     product_id: Optional[str] = None
@@ -156,7 +156,7 @@ class GetChunkResponse(StrictModel):
 class KnowledgeSource(StrictModel):
     source_id: str
     name: str
-    domain: Literal["product", "legal", "operations"]
+    domain: Literal["product", "legal", "credit", "operations"]
     tier: str
     sensitivity: str
     owner: Dict[str, Any]

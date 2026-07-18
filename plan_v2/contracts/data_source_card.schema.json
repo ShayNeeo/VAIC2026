@@ -31,6 +31,9 @@
     },
     "tier": {"type": "string", "enum": ["A_INTERNAL", "A_OFFICIAL", "B_LICENSED", "C_OPEN", "D_DERIVED", "E_SYNTHETIC"]},
     "provider": {"type": ["string", "null"]},
+    "dataset_version": {"type": "string"},
+    "effective_from": {"type": "string", "format": "date"},
+    "effective_to": {"type": ["string", "null"], "format": "date"},
     "owner": {
       "type": "object",
       "additionalProperties": false,

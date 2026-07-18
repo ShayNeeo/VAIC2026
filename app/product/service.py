@@ -30,13 +30,21 @@ class ProductService:
         # Unconstrained semantic search keeps the tighter default so a vague
         # query doesn't flood the bundle with low-relevance tail matches.
         effective_top_k = max(top_k, len(requested_product_ids)) if requested_product_ids else top_k
-        hits = self.knowledge.search(
-            query,
-            branch=branch,
-            segment=segment,
-            product_ids=requested_product_ids,
-            top_k=max(effective_top_k * 2, 5),
-        )
+        try:
+            hits = self.knowledge.search(
+                query,
+                branch=branch,
+                segment=segment,
+                product_ids=requested_product_ids,
+                top_k=max(effective_top_k * 2, 5),
+            )
+        except Exception:
+            # Embedding/MCP failures must not break the deterministic demo or
+            # collaboration loop. The keyword path still returns exact,
+            # governed catalog chunks and is recorded by the expert as a
+            # fallback rather than being represented as semantic retrieval.
+            self.knowledge.ensure_index()
+            hits = []
         if not hits:
             # Graceful degradation: vector retrieval (key-free "local" provider
             # especially) can miss on a small synthetic corpus. Fall back to a
@@ -51,6 +59,7 @@ class ProductService:
         for product_id, hit in list(grouped.items())[:effective_top_k]:
             context_bonus = self._context_bonus(product_id, attrs)
             match_score = round(min(1.0, 0.8 * hit.score + context_bonus), 6)
+            metadata = self.knowledge.product_metadata(product_id)
             recommendations.append(
                 {
                     "product_id": product_id,
@@ -63,6 +72,7 @@ class ProductService:
                     "matching_reason": self._reason(product_id, attrs),
                     "prerequisites": self._documents_from_chunk(hit),
                     "eligibility": "unknown",
+                    **metadata,
                     "evidences": [self.knowledge.evidence(hit)],
                 }
             )

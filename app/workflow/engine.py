@@ -31,6 +31,12 @@ from app.safety.domain_guardrails import (
     validate_operations_agent_output,
     GuardrailViolation,
 )
+from app.agents.expert_agents import ProductExpertAgent, CreditExpertAgent
+from app.agents.insurance_expert import InsuranceExpertAgent
+from app.agents.coordinator import CoordinatorAgent
+from app.agents.contracts import canonical_hash
+from app.workflow.agent_node import apply_coordination_result
+
 
 
 def _hash(value: Any) -> str:
@@ -61,11 +67,26 @@ class V2WorkflowEngine:
         self.next_best = next_best or NextBestService()
         self.router = router or ComplexityRouter()
         self.risk_gate = risk_gate or RiskGuardrailGate()
-        # Independent source-of-truth for evidence validation (see
-        # _product_evidence/_legal_evidence): the SAME index that serves
-        # legal/eligibility RAG search, so a claimed quote is checked against
-        # what the system actually has indexed, not re-trusted at face value.
         self.legal_knowledge = legal_knowledge or LegalKnowledgeService()
+        
+        # Independent expert runtimes: Product, Credit, Insurance -- none
+        # reads another's finding (see app/agents/langgraph_workflow.py's
+        # module docstring). Eligibility/hard-rule checking is a plain
+        # deterministic graph step calling self.eligibility.evaluate()
+        # directly, not an LLM-wrapped "LegalExpert" Agent -- LegalComplianceAgent
+        # is kept (app/agents/legal_expert.py) for any other direct caller
+        # but is no longer part of the live coordinator graph. Operations
+        # remains a deterministic composer after synthesis.
+        self.product_agent = ProductExpertAgent(self.product.knowledge, service=self.product)
+        self.credit_agent = CreditExpertAgent()
+        self.insurance_agent = InsuranceExpertAgent()
+        self.coordinator = CoordinatorAgent(
+            product_agent=self.product_agent,
+            credit_agent=self.credit_agent,
+            insurance_agent=self.insurance_agent,
+            eligibility_engine=self.eligibility,
+        )
+
 
     async def run(self, state: SharedCaseState, *, force_route: str | None = None) -> SharedCaseState:
         """force_route ("simple"|"complex") bypasses ComplexityRouter for
@@ -150,7 +171,7 @@ class V2WorkflowEngine:
         self._event(state, "Planner", "planner_plan_created", {"plan_version": initial_plan.plan_version})
         state.workflow.tasks = self._tasks(state)
         state.status = transition(state.status, CaseStatus.IN_ANALYSIS)
-        return self._analysis(state, start_at="retrieve_products")
+        return await self._analysis(state, start_at="retrieve_products")
 
     async def rerun_with_message(
         self,
@@ -177,10 +198,17 @@ class V2WorkflowEngine:
         state.intent_result = None
         state.product_result = None
         state.eligibility_result = None
+        state.credit_result = None
         state.operations_result = None
         state.execution_plan = None
         state.next_best_questions = []
         state.next_best_actions = []
+        state.collaboration_session = None
+        state.agent_task_assignments = []
+        state.expert_findings = []
+        state.assistance_requests = []
+        state.constraint_notices = []
+        state.synthesis_result = None
         state.evidences = []
         state.approval = Approval(status=ApprovalStatus.NOT_REQUIRED)
         state.workflow = state.workflow.model_copy(
@@ -188,7 +216,7 @@ class V2WorkflowEngine:
         )
         return await self.run(state)
 
-    def resume(self, state: SharedCaseState, *, changes: Iterable[str]) -> SharedCaseState:
+    async def resume(self, state: SharedCaseState, *, changes: Iterable[str]) -> SharedCaseState:
         nodes = impacted_nodes(changes)
         if state.workflow.loop_count >= 3:
             state.status = CaseStatus.FAILED
@@ -204,224 +232,304 @@ class V2WorkflowEngine:
         start = nodes[0]
         if start in {"collect_context", "extract_intent", "resolve_slots"}:
             raise ValueError("context/request changes require async full run with a new message")
-        return self._analysis(state, start_at=start)
+        return await self._analysis(state, start_at=start)
 
-    def _analysis(self, state: SharedCaseState, *, start_at: str) -> SharedCaseState:
-        nodes = ["retrieve_products", "evaluate_eligibility", "validate_evidence", "prepare_operations"]
-        start_index = nodes.index(start_at)
-        if start_index <= 0:
-            started = perf_counter()
-            requested = state.intent_result.entities.get("product_ids") if state.intent_result else None
-            branch = str(state.context.employee.access_scope.get("branch") or "*")
-            state.product_result = self.product.recommend(
-                state.request.text,
-                branch=branch,
-                requested_product_ids=requested,
-                customer_attributes=state.context.customer.attributes,
+    async def _analysis(self, state: SharedCaseState, *, start_at: str) -> SharedCaseState:
+        branch = str(state.context.employee.access_scope.get("branch") or "*")
+        requested = state.intent_result.entities.get("product_ids") if state.intent_result else None
+        documents = [
+            {
+                "document_type": item.document_type,
+                "status": item.status.value,
+                "document_id": item.document_id,
+                "version": item.version,
+            }
+            for item in state.context.documents
+        ]
+        result = await self.coordinator.coordinate(
+            case_id=state.case_id,
+            trace_id=state.trace_id,
+            query=state.request.text,
+            branch=branch,
+            customer_attributes={
+                **state.context.customer.attributes,
+                **self._flatten_confirmed_profile(state.customer_business_snapshot or {}),
+            },
+            documents=documents,
+            business_snapshot=state.customer_business_snapshot,
+            requested_product_ids=requested,
+            intent_entities=state.intent_result.entities if state.intent_result else {},
+            start_at=start_at,
+            existing_product_result=state.product_result,
+            existing_eligibility_result=state.eligibility_result,
+            existing_credit_result=state.credit_result,
+            existing_insurance_result=state.insurance_result,
+        )
+        apply_coordination_result(state, result)
+
+        try:
+            allowed_catalog_ids = [
+                chunk.product_id for chunk in self.product.knowledge.index.list_chunks() if chunk.active
+            ]
+            validate_product_agent_output(
+                state.product_result.get("recommendations", []),
+                allowed_catalog_ids=allowed_catalog_ids,
             )
-            # Enforce P0.4 Domain Guardrails: Product Agent
-            try:
-                # Allowed catalog IDs: mock for MVP + SYNTH for V3 tests
-                validate_product_agent_output(
-                    state.product_result.get("recommendations", []), 
-                    allowed_catalog_ids=[
-                        "PROD-PAYROLL", "PROD-CASH-MGMT", "PROD-WORKING-CAPITAL", "PROD-BULK-PAYMENT",
-                        "SYNTH-PROD-PAYROLL", "SYNTH-PROD-CASH-MGMT", "SYNTH-PROD-WORKING-CAPITAL", "SYNTH-PROD-BULK-PAYMENT",
-                    ]
-                )
-            except GuardrailViolation as e:
-                self._event(state, "ProductAgent", "guardrail_violation", {"reason": str(e)})
-                raise
-                
-            self._complete_task(state, "product", state.product_result)
-            self._product_evidence(state)
-            recommendations = state.product_result.get("recommendations", [])
-            self._ai_log(
-                state,
-                component="ProductRAG",
-                event="products_retrieved_and_ranked",
-                mode="persistent_hybrid_retrieval",
-                model=self.product.knowledge.index.provider.name,
-                prompt_version="product-matcher-v2.1",
-                latency_ms=self._elapsed_ms(started),
-                output_summary={
-                    "product_ids": [item.get("product_id") for item in recommendations],
-                    "match_scores": {
-                        item.get("product_id"): item.get("match_score") for item in recommendations
-                    },
-                },
-                sources=[
-                    {
-                        "document_id": source.get("source_document_id"),
-                        "version": source.get("source_version"),
-                        "location": source.get("location"),
-                        "retrieval_score": source.get("retrieval_score"),
-                    }
-                    for item in recommendations
-                    for source in item.get("evidences", [])
+            validate_legal_agent_output(state.eligibility_result)
+        except GuardrailViolation as exc:
+            self._event(state, "AgentGuardrail", "guardrail_violation", {"reason": str(exc)})
+            raise
+
+        eligibility_products = (state.eligibility_result or {}).get("products", [])
+        self._ai_log(
+            state,
+            component="EligibilityEngine",
+            event="hard_rules_evaluated",
+            mode="deterministic_workflow",
+            model="no_llm",
+            prompt_version="eligibility-rules-v1",
+            latency_ms=0,
+            output_summary={
+                "overall_status": (state.eligibility_result or {}).get("overall_status"),
+                "product_count": len(eligibility_products),
+                "blocked_product_ids": [
+                    item.get("product_id") for item in eligibility_products
+                    if str(item.get("status")) in {"failed", "pending_review"}
                 ],
-            )
+            },
+        )
+
         if not state.product_result or not state.product_result.get("recommendations"):
             state.status = transition(state.status, CaseStatus.PENDING_REVIEW)
-            self._event(state, "Product", "no_grounded_product", {})
+            self._event(state, "ProductExpert", "no_grounded_product", {})
             return self._touch(state)
-        if start_index <= 1:
-            started = perf_counter()
-            product_ids = [item["product_id"] for item in state.product_result["recommendations"]]
-            documents = [
-                {"document_type": item.document_type, "status": item.status.value, "document_id": item.document_id}
-                for item in state.context.documents
-            ]
-            state.eligibility_result = self.eligibility.evaluate(
-                product_ids,
-                customer={**state.context.customer.attributes, **(state.customer_business_snapshot or {})},
-                documents=documents,
-            )
-            # Enforce P0.4 Domain Guardrails: Legal Agent
-            try:
-                validate_legal_agent_output(state.eligibility_result)
-            except GuardrailViolation as e:
-                self._event(state, "LegalAgent", "guardrail_violation", {"reason": str(e)})
-                raise
-                
-            self._complete_task(state, "eligibility", state.eligibility_result)
-            self._legal_evidence(state)
+
+        self._complete_task(state, "product", state.product_result)
+        self._complete_task(state, "eligibility", state.eligibility_result)
+        self._complete_task(state, "credit", state.credit_result or {})
+        self._complete_task(state, "insurance", state.insurance_result or {})
+        self._product_evidence(state)
+        self._legal_evidence(state)
+        self._ai_log(
+            state,
+            component="EvidenceValidator",
+            event="claims_validated",
+            mode="deterministic_workflow",
+            model="no_llm",
+            prompt_version="evidence-validator-v1",
+            latency_ms=0,
+            output_summary={
+                "total": len(state.evidences),
+                "valid": sum(item.is_valid for item in state.evidences),
+                "invalid": sum(not item.is_valid for item in state.evidences),
+            },
+        )
+
+        for finding in result.findings:
             self._ai_log(
                 state,
-                component="EligibilityEngine",
-                event="rules_evaluated",
-                mode="deterministic_fail_closed",
-                model="no_llm",
-                prompt_version=f"rule-registry-{state.eligibility_result.get('registry_version', 'unknown')}",
-                latency_ms=self._elapsed_ms(started),
+                component=finding.agent_type.value,
+                event="expert_finding_committed",
+                mode=finding.agent_run.mode,
+                model=finding.agent_run.model,
+                prompt_version=finding.agent_run.prompt_version,
+                latency_ms=finding.agent_run.latency_ms,
                 output_summary={
-                    "overall_status": state.eligibility_result.get("overall_status"),
-                    "rules": [
-                        {
-                            "rule_id": rule.get("rule_id"),
-                            "version": rule.get("rule_version"),
-                            "status": rule.get("status"),
-                        }
-                        for product in state.eligibility_result.get("products", [])
-                        for rule in product.get("rules", [])
-                    ],
+                    "finding_id": finding.finding_id,
+                    "task_id": finding.task_id,
+                    "revision": finding.revision,
+                    "conclusion": finding.conclusion,
+                    "stop_reason": finding.stop_reason.value,
+                    "fallback_used": finding.fallback_used,
+                    "output_hash": finding.output_hash,
+                    "tools_called": list(finding.agent_run.tools_called),
+                    "denied_tools": list(finding.agent_run.denied_tools),
+                    "unknown_count": len(finding.unknowns),
                 },
                 sources=[
                     {
-                        "document_id": item.source_document_id,
-                        "version": item.source_version,
+                        "document_id": item.document_id,
+                        "version": item.document_version,
                         "location": item.location,
+                        "content_hash": item.content_hash,
+                        "support_status": item.support_status.value,
                     }
-                    for item in state.evidences
-                    if item.module == "Eligibility"
+                    for item in finding.evidence_refs
                 ],
             )
-        questions, actions = self.next_best.build(state.eligibility_result or {})
-        state.next_best_questions = [item.model_dump(mode="json") for item in questions]
-        state.next_best_actions = [item.model_dump(mode="json") for item in actions]
-        replanned = self.planner.replan(
-            state.execution_plan,
-            eligibility_result=state.eligibility_result or {},
+        self._ai_log(
+            state,
+            component="PlannerCoordinator",
+            event="collaboration_converged",
+            mode="deterministic_coordination",
+            model="no_llm",
+            prompt_version=result.synthesis_result.synthesis_policy_version,
+            latency_ms=0,
+            output_summary={
+                "session_id": result.collaboration_session.session_id,
+                "status": result.collaboration_session.status,
+                "rounds": result.collaboration_session.current_round,
+                "finding_ids": result.collaboration_session.finding_ids,
+                "assistance_request_ids": result.collaboration_session.assistance_request_ids,
+                "constraint_ids": result.collaboration_session.constraint_ids,
+                "synthesis_id": result.synthesis_result.synthesis_id,
+                "graph_engine": "langgraph",
+                "graph_node_trace": list(result.graph_node_trace),
+                "blocked_product_ids": [
+                    item.get("product_id") for item in result.synthesis_result.blocked_candidates
+                ],
+                "alternative_product_ids": [
+                    item.get("product_id") for item in result.synthesis_result.alternative_solutions
+                ],
+                "output_quality": {
+                    "aggregate_confidence": result.synthesis_result.evidence_validation_summary.get(
+                        "aggregate_confidence"
+                    ),
+                    "min_confidence": result.synthesis_result.evidence_validation_summary.get("min_confidence"),
+                    "low_confidence_agents": result.synthesis_result.evidence_validation_summary.get(
+                        "low_confidence_agents", []
+                    ),
+                    "unresolved_conflicts": len(result.synthesis_result.unresolved_conflicts),
+                },
+            },
         )
-        state.execution_plan = replanned.model_dump(mode="json")
+
+        started = perf_counter()
+        next_plan = self.planner.replan(
+            state.execution_plan,
+            eligibility_result=state.eligibility_result,
+        )
+        state.execution_plan = next_plan.model_dump(mode="json")
+        self._complete_task(state, "replan", state.execution_plan)
         self._ai_log(
             state,
             component="Planner",
             event="plan_revised_from_eligibility",
-            mode="deterministic_workflow",
+            mode="deterministic_replanning",
             model="planner-rules-v1",
             prompt_version="planner-contract-v1",
-            latency_ms=0,
+            latency_ms=self._elapsed_ms(started),
+            output_summary={"plan_version": next_plan.plan_version, "changed_because": next_plan.changed_because},
+        )
+
+        started = perf_counter()
+        questions, actions = self.next_best.build(state.eligibility_result or {})
+        state.next_best_questions = [item.model_dump(mode="json") for item in questions]
+        state.next_best_actions = [item.model_dump(mode="json") for item in actions]
+        self._ai_log(
+            state,
+            component="NextBestService",
+            event="next_best_derived",
+            mode="deterministic_workflow",
+            model="no_llm",
+            prompt_version="next-best-v1",
+            latency_ms=self._elapsed_ms(started),
             output_summary={
-                "plan_version": replanned.plan_version,
-                "reason": replanned.changed_because,
                 "question_count": len(state.next_best_questions),
                 "action_count": len(state.next_best_actions),
+                "target_fields": [item.get("target_field") for item in state.next_best_questions],
             },
         )
-        self._event(
-            state,
-            "Planner",
-            "planner_replanned",
-            {"plan_version": replanned.plan_version, "reason": replanned.changed_because},
-        )
-        if start_index <= 2:
-            all_valid = all(item.is_valid and item.quote for item in state.evidences)
-            self._ai_log(
-                state,
-                component="EvidenceValidator",
-                event="claims_validated",
-                mode="deterministic_guardrail",
-                model="no_llm",
-                prompt_version="evidence-policy-v1",
-                latency_ms=0,
-                output_summary={"valid": all_valid, "claim_count": len(state.evidences)},
-                sources=[{"claim_id": item.claim_id, "valid": item.is_valid} for item in state.evidences],
-            )
-            self._event(state, "EvidenceValidator", "evidence_validated", {"valid": all_valid, "count": len(state.evidences)})
-            if not all_valid:
-                self._apply_risk_gate(state)
-                state.status = transition(state.status, CaseStatus.PENDING_REVIEW)
-                return self._touch(state)
-        if start_index <= 3:
-            started = perf_counter()
-            state.operations_result = self.operations.prepare(
-                organization=state.context.employee.organization_unit,
-                customer_id=str(state.context.customer.customer_id),
-                case_id=state.case_id,
-                customer_name=str(state.context.customer.attributes.get("name", state.context.customer.customer_id)),
-                product_result=state.product_result,
-                eligibility_result=state.eligibility_result or {},
-                available_documents=[
-                    {
-                        "document_type": item.document_type,
-                        "status": item.status.value,
-                        "document_id": item.document_id,
-                    }
-                    for item in state.context.documents
-                ],
-                previous_result=state.operations_result,
-                execution_plan=state.execution_plan,
-                next_best_questions=state.next_best_questions,
-                next_best_actions=state.next_best_actions,
-                evidence_ids=[item.claim_id for item in state.evidences],
-            )
-            # Enforce P0.4 Domain Guardrails: Operations Agent
-            try:
-                validate_operations_agent_output(state.operations_result)
-            except GuardrailViolation as e:
-                self._event(state, "OperationsAgent", "guardrail_violation", {"reason": str(e)})
-                raise
-                
-            self._complete_task(state, "operations", state.operations_result)
-            self._ai_log(
-                state,
-                component="OperationsComposer",
-                event="drafts_prepared",
-                mode="template_plus_rules",
-                model="no_llm",
-                prompt_version="operations-template-v1",
-                latency_ms=self._elapsed_ms(started),
-                output_summary={
-                    "artifact_version": state.operations_result.get("artifact_version"),
-                    "action_readiness": state.operations_result.get("action_readiness"),
-                    "missing_count": len(state.operations_result.get("missing_information", [])),
-                    "external_side_effect_count": len(state.operations_result.get("external_side_effects", [])),
-                },
-            )
+
         decision = self._apply_risk_gate(state)
+        started = perf_counter()
+        state.operations_result = self.operations.prepare(
+            organization=state.context.employee.organization_unit,
+            customer_id=str(state.context.customer.customer_id),
+            case_id=state.case_id,
+            customer_name=str(
+                state.context.customer.attributes.get("name", state.context.customer.customer_id)
+            ),
+            product_result=state.product_result,
+            eligibility_result=state.eligibility_result,
+            available_documents=documents,
+            previous_result=state.operations_result,
+            execution_plan=state.execution_plan,
+            next_best_questions=state.next_best_questions,
+            next_best_actions=state.next_best_actions,
+            evidence_ids=[item.claim_id for item in state.evidences],
+        )
+        validate_operations_agent_output(state.operations_result)
+        self._complete_task(state, "operations", state.operations_result)
+        self._ai_log(
+            state,
+            component="OperationsComposer",
+            event="operations_drafts_prepared",
+            mode="deterministic_composer",
+            model="no_llm",
+            prompt_version=f"sop-{state.operations_result.get('sop_version', 'unknown')}",
+            latency_ms=self._elapsed_ms(started),
+            output_summary={
+                "artifact_version": state.operations_result.get("artifact_version"),
+                "action_readiness": state.operations_result.get("action_readiness"),
+                "external_side_effects": state.operations_result.get("external_side_effects", []),
+            },
+        )
+        state.case_checklist = {
+            "checklist_version": state.operations_result.get("artifact_version", 1),
+            "items": state.operations_result.get("required_document_checklist", []),
+        }
+        if state.synthesis_result:
+            synthesis_update = {
+                "operations_plan": {
+                    "checklist": state.operations_result.get("required_document_checklist", []),
+                    "task_drafts": state.operations_result.get("task_drafts", []),
+                    "action_readiness": state.operations_result.get("action_readiness"),
+                },
+                "customer_draft": state.operations_result.get("customer_message_draft"),
+                "evidence_validation_summary": {
+                    # Merge, don't replace: preserve the expert-finding
+                    # confidence/conflict quality signals computed in
+                    # app/workflow/synthesis.py._assess_findings_quality
+                    # alongside these document-evidence counts.
+                    **state.synthesis_result.evidence_validation_summary,
+                    "total": len(state.evidences),
+                    "valid": sum(item.is_valid for item in state.evidences),
+                    "invalid": sum(not item.is_valid for item in state.evidences),
+                    "validation_status": "document_evidence_validated",
+                },
+            }
+            synthesis_update["output_hash"] = canonical_hash(
+                {**state.synthesis_result.model_dump(mode="json"), **synthesis_update, "output_hash": None}
+            )
+            state.synthesis_result = state.synthesis_result.model_copy(update=synthesis_update)
+
+        state.workflow.tasks = self._tasks(state)
+        # Re-mark completed tasks after rebuilding dependency views.
+        self._complete_task(state, "product", state.product_result)
+        self._complete_task(state, "eligibility", state.eligibility_result)
+        self._complete_task(state, "credit", state.credit_result or {})
+        self._complete_task(state, "operations", state.operations_result)
         if decision.outcome == "approve":
             state.status = transition(state.status, CaseStatus.PENDING_APPROVAL)
             state.approval = Approval(
                 status=ApprovalStatus.PENDING,
-                payload_hash=_hash(state.operations_result.get("action_payload") or state.operations_result["crm_case_draft"]),
+                payload_hash=_hash(
+                    state.operations_result.get("action_payload")
+                    or state.operations_result.get("crm_case_draft")
+                    or {}
+                ),
             )
+            state.workflow.current_node = "await_approval"
         elif decision.outcome == "need_information":
             state.status = transition(state.status, CaseStatus.PENDING_INFORMATION)
+            state.workflow.current_node = "await_information"
         else:
             state.status = transition(state.status, CaseStatus.PENDING_REVIEW)
-        state.workflow.current_node = "await_approval" if decision.outcome == "approve" else "await_information"
+            state.workflow.current_node = "await_specialist_review"
         return self._touch(state)
+
+    @staticmethod
+    def _flatten_confirmed_profile(snapshot: Dict[str, Any]) -> Dict[str, Any]:
+        merged: Dict[str, Any] = {}
+        for section in (
+            "company_identity", "business_profile", "operating_model", "transaction_profile",
+            "cash_flow_profile", "financing_profile", "legal_profile",
+        ):
+            value = snapshot.get(section)
+            if isinstance(value, dict):
+                merged.update(value)
+        return merged
 
     def clear_specialist_block(self, state: SharedCaseState) -> SharedCaseState:
         """A human specialist (Legal/Product) has resolved every reason the
@@ -490,7 +598,8 @@ class V2WorkflowEngine:
         definitions = [
             ("product", "product_matching", "Product", []),
             ("eligibility", "eligibility_check", "Compliance", ["product"]),
-            ("evidence", "evidence_validation", "Safety", ["eligibility"]),
+            ("credit", "credit_analysis", "Credit", ["product", "eligibility"]),
+            ("evidence", "evidence_validation", "Safety", ["eligibility", "credit"]),
             ("operations", "operations_draft", "Operations", ["evidence"]),
         ]
         return [

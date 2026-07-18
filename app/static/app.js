@@ -275,7 +275,7 @@ async function loadEmployeeContext() {
     const role = data.authorization_context?.roles?.[0];
     routeWorkspace(role);
 
-    const roleLabel = { relationship_manager:"RM", legal_specialist:"Legal Specialist", product_specialist:"Product Specialist", operations_specialist:"Operations Specialist", manager:"Manager" }[role] || role;
+    const roleLabel = { relationship_manager:"RM", legal_specialist:"Legal Specialist", product_specialist:"Product Specialist", credit_specialist:"Credit Specialist", manager:"Manager" }[role] || role;
     $("roleBadge").textContent = `Role: ${roleLabel}`;
     toast(`SSO <b>${esc(empId)}</b> · Role: <b>${esc(roleLabel)}</b>`);
   } catch (error) {
@@ -321,6 +321,8 @@ function routeWorkspace(role) {
     $("specialistWorkspace").classList.remove("hidden");
     $("workspaceTitle").textContent = `${role.toUpperCase().replaceAll("_", " ")} Workspace`;
     loadSpecialistQueue();
+    loadAgentKnowledgeConsole();
+    loadAgentActivity();
   } else if (role === "manager") {
     $("managerWorkspace").classList.remove("hidden");
     $("workspaceTitle").textContent = "Manager Console · Aggregate Metrics Only";
@@ -400,6 +402,110 @@ async function loadSpecialistQueue() {
     `).join("");
   } catch (error) {
     toast(`Lỗi tải Specialist queue: ${esc(error.message)}`, "error");
+  }
+}
+
+// Agent Knowledge Console: lets a department Specialist feed/update/retire
+// the knowledge their own domain's Agent (Product/Legal/Operations)
+// retrieves, and see a metadata summary of what that Agent has been doing
+// on cases in their scope. Backed by app/api/v2/knowledge_router.py
+// (/api/v2/me/agent-knowledge). Domain is decided server-side from the
+// specialist's role -- never sent from this UI.
+const akDomainLabel = {product: "Product Agent", legal: "Legal Agent", operations: "Operations Agent"};
+
+async function loadAgentKnowledgeConsole() {
+  const dateField = $("akEffectiveFrom");
+  if (dateField && !dateField.value) dateField.value = new Date().toISOString().slice(0, 10);
+  try {
+    const list = await api("/api/v2/me/agent-knowledge");
+    if (list.length) $("akTitle").textContent = `Tri thức của ${akDomainLabel[list[0].domain] || "Agent phòng ban"}`;
+    renderAgentKnowledgeEntries(list);
+  } catch (error) {
+    $("akEntryList").innerHTML = `<p class="muted">Lỗi tải tri thức: ${esc(error.message)}</p>`;
+  }
+}
+
+function renderAgentKnowledgeEntries(list) {
+  const container = $("akEntryList");
+  if (!list.length) { container.innerHTML = '<p class="muted">Chưa có tri thức nào được nạp cho Agent này.</p>'; return; }
+  container.innerHTML = list.map(item => {
+    const statusChips = [
+      item.is_superseded ? '<span class="ak-chip superseded">SUPERSEDED</span>' : '<span class="ak-chip active">ACTIVE</span>',
+      item.is_quarantined ? '<span class="ak-chip quarantined">QUARANTINED</span>' : "",
+    ].join("");
+    return `
+      <div class="ak-entry ${item.is_superseded ? "superseded" : ""} ${item.is_quarantined ? "quarantined" : ""}">
+        <h4>${esc(item.product_id)} · ${esc(item.section_path)}</h4>
+        <p>${statusChips}</p>
+        <p>${esc(item.text)}</p>
+        <p class="muted">Nạp bởi ${esc(item.contributed_by)} · ${esc(item.contributed_at ? new Date(item.contributed_at).toLocaleString("vi-VN") : "—")}</p>
+        ${!item.is_superseded ? `
+        <div class="ak-entry-actions">
+          <button class="button ghost" type="button" onclick="editAgentKnowledgeEntry('${item.chunk_id}')">Sửa nội dung</button>
+          <button class="button ghost" type="button" onclick="toggleAgentKnowledgeQuarantine('${item.chunk_id}', ${!item.is_quarantined})">${item.is_quarantined ? "Bật lại" : "Ẩn khỏi Agent"}</button>
+        </div>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+async function submitAgentKnowledgeEntry(event) {
+  event.preventDefault();
+  const body = {
+    product_id: $("akProductId").value.trim(),
+    section_path: $("akSectionPath").value.trim(),
+    text: $("akText").value.trim(),
+    effective_from: $("akEffectiveFrom").value,
+  };
+  try {
+    await api("/api/v2/me/agent-knowledge", {method: "POST", body: JSON.stringify(body)});
+    $("akText").value = "";
+    toast("Đã nạp tri thức mới cho Agent.", "success");
+    loadAgentKnowledgeConsole();
+    loadAgentActivity();
+  } catch (error) {
+    toast(`<b>${esc(error.code || "API_ERROR")}:</b> ${esc(error.message)}`, "error");
+  }
+  return false;
+}
+
+async function editAgentKnowledgeEntry(chunkId) {
+  const text = prompt("Nội dung tri thức mới (sẽ tạo phiên bản mới, giữ lại bản cũ):");
+  if (!text || !text.trim()) return;
+  try {
+    await api(`/api/v2/me/agent-knowledge/${encodeURIComponent(chunkId)}`, {method: "PATCH", body: JSON.stringify({text: text.trim()})});
+    toast("Đã cập nhật tri thức (phiên bản mới).", "success");
+    loadAgentKnowledgeConsole();
+  } catch (error) {
+    toast(`<b>${esc(error.code || "API_ERROR")}:</b> ${esc(error.message)}`, "error");
+  }
+}
+
+async function toggleAgentKnowledgeQuarantine(chunkId, next) {
+  try {
+    await api(`/api/v2/me/agent-knowledge/${encodeURIComponent(chunkId)}`, {method: "PATCH", body: JSON.stringify({is_quarantined: next})});
+    toast(next ? "Đã ẩn tri thức khỏi Agent." : "Đã bật lại tri thức cho Agent.", "success");
+    loadAgentKnowledgeConsole();
+  } catch (error) {
+    toast(`<b>${esc(error.code || "API_ERROR")}:</b> ${esc(error.message)}`, "error");
+  }
+}
+
+async function loadAgentActivity() {
+  try {
+    const data = await api("/api/v2/me/agent-knowledge/activity");
+    $("akActivitySummary").innerHTML = `<b>${data.active_knowledge_entry_count}/${data.knowledge_entry_count}</b> mục tri thức đang hoạt động · <b>${data.cases.length}</b> case trong phạm vi.`;
+    const container = $("akActivityCases");
+    if (!data.cases.length) { container.innerHTML = '<p class="muted">Chưa có case nào trong phạm vi khách hàng của bạn.</p>'; return; }
+    container.innerHTML = data.cases.map(item => `
+      <div class="ak-case-row">
+        <b>${esc(item.case_id)}</b> · <code>${esc(item.case_status)}</code> · KH ${esc(item.customer_id)}<br>
+        Agent đã chạy: <b>${item.agent_has_run ? "Có" : "Chưa"}</b> · Bằng chứng: <b>${item.evidence_count}</b>
+        ${item.last_ai_log_event ? `<br><small class="muted">Nhật ký AI gần nhất: ${esc(item.last_ai_log_event.event || "—")}</small>` : ""}
+      </div>
+    `).join("");
+  } catch (error) {
+    $("akActivitySummary").innerHTML = `<p class="muted">Lỗi tải hoạt động Agent: ${esc(error.message)}</p>`;
   }
 }
 

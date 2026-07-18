@@ -117,7 +117,7 @@ def init_employee_db() -> None:
     """)
 
     # 7. Specialist Review table -- the action surface Product/Legal/
-    # Operations Specialist previously lacked entirely (every case-mutating
+    # Credit Specialist needs for governed human review (every case-mutating
     # endpoint in app/api/v2/router.py is RM-owned-only). case_version pins
     # a review to the exact case state it resolved, so a stale clearance
     # from a previous PENDING_REVIEW episode can never silently satisfy a
@@ -173,8 +173,8 @@ def init_employee_db() -> None:
             ("SPEC-PROD-001", "product_specialist", "Product Development Dept", 
              json.dumps(["case:read", "product:recommend"]), 
              json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"])),
-            ("SPEC-OPS-001", "operations_specialist", "Central Operations HN", 
-             json.dumps(["case:read", "task:update"]), 
+            ("SPEC-CREDIT-001", "credit_specialist", "Credit Risk & Underwriting", 
+             json.dumps(["case:read", "credit:analyze_file", "credit:review_structure"]), 
              json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"])),
             ("MGR-HN-01", "manager", "Branch HN Management", 
              json.dumps(["team:view_workload", "case:read"]), 
@@ -202,6 +202,10 @@ def init_employee_db() -> None:
         cursor.execute(
             "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
             ("SPEC-LEGAL-001", 1, 0, json.dumps(["ui_preferences"]), "v1", datetime.utcnow().isoformat())
+        )
+        cursor.execute(
+            "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+            ("SPEC-CREDIT-001", 1, 0, json.dumps(["ui_preferences"]), "v1", datetime.utcnow().isoformat())
         )
         cursor.execute(
             "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
@@ -247,6 +251,12 @@ def init_employee_db() -> None:
              datetime.utcnow().isoformat(), datetime.utcnow().isoformat(),
              json.dumps([]), "product_specialist", "COMP-MP"),
 
+            # Credit Specialist Task (Assigned to Credit Expert owner)
+            ("TASK-401", "SPEC-CREDIT-001", "Phân tích khả năng trả nợ và cấu trúc vốn lưu động Minh Phát", "pending",
+             0.95, 0.8, 0.7, 0.85, 0.8, 1.0, 0.6,
+             datetime.utcnow().isoformat(), datetime.utcnow().isoformat(),
+             json.dumps([]), "credit_specialist", "COMP-MP"),
+
             # Task blocked by dependency (Should be filtered out)
             ("TASK-105", "RM-999", "Thực thi giải ngân tài chính Minh Phát", "pending",
              1.0, 0.9, 1.0, 0.8, 1.0, 1.0, 0.8, 
@@ -273,6 +283,51 @@ def init_employee_db() -> None:
         )
 
         conn.commit()
+
+    # Idempotent role migration for existing demo databases. Historical
+    # specialist_reviews/audit records are intentionally retained, while
+    # the active identity, consent and queue are moved to Credit Specialist.
+    cursor.execute("DELETE FROM employee_work_items WHERE employee_id = ?", ("SPEC-OPS-001",))
+    cursor.execute("DELETE FROM employee_preferences WHERE employee_id = ?", ("SPEC-OPS-001",))
+    cursor.execute("DELETE FROM employee_consent WHERE employee_id = ?", ("SPEC-OPS-001",))
+    cursor.execute("DELETE FROM employee_habits WHERE employee_id = ?", ("SPEC-OPS-001",))
+    cursor.execute("DELETE FROM employees WHERE employee_id = ?", ("SPEC-OPS-001",))
+    cursor.execute(
+        """
+        INSERT INTO employees (employee_id, role, organization_unit, permissions, customer_scope)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(employee_id) DO UPDATE SET
+            role = excluded.role,
+            organization_unit = excluded.organization_unit,
+            permissions = excluded.permissions,
+            customer_scope = excluded.customer_scope
+        """,
+        (
+            "SPEC-CREDIT-001", "credit_specialist", "Credit Risk & Underwriting",
+            json.dumps(["case:read", "credit:analyze_file", "credit:review_structure", "credit:manage_knowledge"]),
+            json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"]),
+        ),
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            "SPEC-CREDIT-001", 1, 0, json.dumps(["ui_preferences"]),
+            "v1", datetime.utcnow().isoformat(),
+        ),
+    )
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO employee_work_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            "TASK-401", "SPEC-CREDIT-001",
+            "Phân tích khả năng trả nợ và cấu trúc vốn lưu động Minh Phát", "pending",
+            0.95, 0.8, 0.7, 0.85, 0.8, 1.0, 0.6,
+            datetime.utcnow().isoformat(), datetime.utcnow().isoformat(),
+            json.dumps([]), "credit_specialist", "COMP-MP",
+        ),
+    )
+    conn.commit()
 
     conn.close()
 

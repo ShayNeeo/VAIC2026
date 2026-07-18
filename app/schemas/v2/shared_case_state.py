@@ -12,6 +12,14 @@ from .common import SCHEMA_VERSION
 from .context_snapshot import ContextSnapshot
 from .intent_result import IntentResult
 from app.metadata.models import MetadataEnvelope
+from app.agents.contracts import (
+    AssistanceRequest,
+    CollaborationSession,
+    ConstraintNotice,
+    ExpertFinding,
+    SynthesisResult,
+    TaskAssignment,
+)
 
 Score = Annotated[float, Field(ge=0.0, le=1.0)]
 
@@ -139,6 +147,8 @@ class SharedCaseState(BaseModel):
     workflow: Workflow
     product_result: Optional[Dict[str, Any]] = None
     eligibility_result: Optional[Dict[str, Any]] = None
+    credit_result: Optional[Dict[str, Any]] = None
+    insurance_result: Optional[Dict[str, Any]] = None
     risk_gate_result: Optional[Dict[str, Any]] = None
     operations_result: Optional[Dict[str, Any]] = None
     case_checklist: Optional[Dict[str, Any]] = None
@@ -147,6 +157,12 @@ class SharedCaseState(BaseModel):
     next_best_questions: List[Dict[str, Any]] = Field(default_factory=list)
     next_best_actions: List[Dict[str, Any]] = Field(default_factory=list)
     ai_decision_log: List[Dict[str, Any]] = Field(default_factory=list)
+    collaboration_session: Optional[CollaborationSession] = None
+    agent_task_assignments: List[TaskAssignment] = Field(default_factory=list)
+    expert_findings: List[ExpertFinding] = Field(default_factory=list)
+    assistance_requests: List[AssistanceRequest] = Field(default_factory=list)
+    constraint_notices: List[ConstraintNotice] = Field(default_factory=list)
+    synthesis_result: Optional[SynthesisResult] = None
     evidences: List[Evidence]
     approval: Approval
     audit_events: List[Dict[str, Any]]

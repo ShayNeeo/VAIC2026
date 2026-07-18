@@ -69,6 +69,16 @@
 - **Commit / file / evidence:** `app/workflow/submission.py`, `app/observability/audit.py`, `plan_v2/contracts/shared_case_state.schema.json`
 
 ## Additional timeline entries
+
+### 18/07 — Khôi phục giao diện legacy theo yêu cầu
+- **Member:** `Codex AI Agent` (Prompted by Human)
+- **Task:** Bỏ lớp giao diện dashboard/Copilot thử nghiệm và đưa RM/Specialist Workspace về đúng bố cục cũ của repository.
+- **AI output summary:** Hoàn nguyên `app/static/index.html` và `app/static/app.js` về phiên bản Git HEAD; loại bỏ stylesheet override `app/static/brand.css`. Backend API, LangGraph và dữ liệu case không bị thay đổi.
+- **Human decision:** Yêu cầu rõ “build lại như cũ”.
+- **Verification:** `git diff --exit-code` sạch cho hai file legacy; `node --check app/static/app.js` đạt; kiểm thử trực tiếp trên `http://127.0.0.1:8000/` xác nhận đăng nhập RM, stepper 5 bước, case guide, persistent case list và panel evidence hiển thị.
+- **Known unrelated issue:** Bộ `tests/unit/test_v2_workflow.py + tests/contract` có 29 test đạt và 3 contract test lỗi do `insurance_result` đã có trong Pydantic model nhưng chưa được khai báo trong JSON Schema; đây không phải thay đổi giao diện và chưa được tự ý sửa trong task này.
+- **Evidence:** `app/static/index.html`, `app/static/app.js`, browser DOM snapshot và JavaScript syntax check.
+
 (Team có thể copy template phía trên để thêm log cho frontend và pitch sau này).
 
 ## 8. Key architecture and product decisions

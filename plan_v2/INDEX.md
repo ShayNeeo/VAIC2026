@@ -41,6 +41,8 @@ Không đọc và sửa toàn bộ repo theo suy đoán. Không thêm field vào
 | Intent output | `contracts/intent_result.schema.json` |
 | Tool input/output và quyền gọi | `contracts/tool_contracts.json` |
 | Data source inventory, availability và preparation | `18_DATA_STRATEGY_MARKET_SOURCES.md` + `contracts/data_source_card.schema.json` |
+| Expert Agent task/finding/collaboration/synthesis | `19_INTELLIGENT_EXPERT_AGENT_COLLABORATION.md` + `contracts/agent_collaboration.schema.json` |
+| Source/document/chunk/retrieval/claim/agent metadata | `contracts/knowledge_metadata.schema.json` |
 | Trách nhiệm module | Module plan tương ứng |
 | Thứ tự triển khai | `14_BUILD_ORDER.md` |
 | Tiêu chí hoàn thành | `15_ACCEPTANCE_TRACEABILITY.md` |
@@ -71,6 +73,7 @@ Nếu markdown và JSON contract mâu thuẫn, JSON contract thắng. Nếu code
 | `16_EVALUATION_DATASETS.md` | Dataset schema, labeling, regression | 04–13 |
 | `17_ASSUMPTIONS_OPEN_QUESTIONS.md` | Giả định, data required, quyết định mở | 01–16 |
 | `18_DATA_STRATEGY_MARKET_SOURCES.md` | Internal/official/open/vendor data, quality, preparation | 01–17 |
+| `19_INTELLIGENT_EXPERT_AGENT_COLLABORATION.md` | Expert autonomy có giới hạn, collaboration, synthesis, tool isolation và evidence-grade metadata | 03, 07–13, 18 |
 
 ## 5. Dependency graph
 
@@ -93,6 +96,13 @@ graph TD
     Data --> RAG
     Data --> Eligibility
     Data --> Eval
+    Context --> Collaboration[Expert Agent Collaboration]
+    RAG --> Collaboration
+    Eligibility --> Collaboration
+    Operations --> Collaboration
+    Collaboration --> Safety
+    Collaboration --> Storage
+    Collaboration --> Eval
 ```
 
 ## 6. Trạng thái chuẩn

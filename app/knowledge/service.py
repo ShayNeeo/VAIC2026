@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -48,6 +49,33 @@ class ProductKnowledgeService:
         # inspect provider_used/fallback_used without changing the public
         # List[RetrievalHit] return type of search().
         self.last_search_outcome: Optional[SearchOutcome[List[RetrievalHit]]] = None
+        self._product_metadata_cache: Optional[Dict[str, Dict[str, Any]]] = None
+
+    def product_metadata(self, product_id: str) -> Dict[str, Any]:
+        """Return governed catalog metadata used for policy filters.
+
+        Alternative selection must use metadata such as ``family`` instead
+        of hard-coded product IDs. Only serving-approved synthetic catalog
+        fields are exposed here.
+        """
+
+        if self._product_metadata_cache is None:
+            payload = json.loads(DEFAULT_PRODUCTS.read_text(encoding="utf-8"))
+            self._product_metadata_cache = {
+                str(item["product_id"]): {
+                    "product_family": item.get("family"),
+                    "credit_flag": str(item.get("family", "")).lower() == "credit",
+                    "segments": list(item.get("segments", [])),
+                    "effective_from": item.get("effective_from"),
+                    "effective_to": item.get("effective_to"),
+                    "active": bool(item.get("active")),
+                    "data_classification": "SYNTHETIC_DEMO",
+                    "source_document_id": item.get("document_id"),
+                    "source_version": item.get("document_version"),
+                }
+                for item in payload.get("products", [])
+            }
+        return dict(self._product_metadata_cache.get(product_id, {}))
 
     def ingest(
         self,
@@ -106,7 +134,7 @@ class ProductKnowledgeService:
     ) -> List[RetrievalHit]:
         from services.rag_mcp.client import RagMCPClient
         from services.rag_mcp.config import RagMCPSettings
-        from services.rag_mcp.schemas import SearchKnowledgeRequest, CallerPrincipal
+        from services.rag_mcp.schemas import CallerPrincipal, ExpertSearchRequest, ScopedSearchFilters
 
         mcp_settings = RagMCPSettings(
             url=settings.RAG_MCP_PRODUCT_URL,
@@ -114,31 +142,45 @@ class ProductKnowledgeService:
             require_auth=True,
         )
         async with RagMCPClient(mcp_settings) as client:
-            principal = CallerPrincipal(employee_id="SYSTEM", branch=branch, roles=["ProductExpert"])
-            req = SearchKnowledgeRequest(
+            principal = CallerPrincipal(
+                employee_id="SYSTEM-PRODUCT",
+                branch=branch,
+                agent_type="ProductExpert",
+                agent_instance_id="product-expert-runtime-v1",
+                roles=["ProductExpert"],
+                permissions=["knowledge:product:read"],
+            )
+            req = ExpertSearchRequest(
                 query=query,
                 principal=principal,
-                filters={"product_ids": list(product_ids) if product_ids else []},
+                filters=ScopedSearchFilters(product_ids=list(product_ids) if product_ids else []),
                 top_k=top_k,
+                trace_id=f"TRACE-PRODUCT-{__import__('hashlib').sha256(query.encode('utf-8')).hexdigest()[:12]}",
             )
-            resp = await client.search(req)
-
-            from app.knowledge.models import ProductChunk
+            resp = await client.expert_search("product_search", req)
 
             hits: List[RetrievalHit] = []
             for chunk in resp.chunks:
                 hits.append(
                     RetrievalHit(
-                        chunk=ProductChunk(
+                        chunk=__import__("app.knowledge.models", fromlist=["KnowledgeChunk"]).KnowledgeChunk(
+                            chunk_id=chunk.chunk_id,
                             document_id=chunk.citation.document_id,
                             document_version=chunk.citation.document_version,
                             section_path=chunk.citation.section_path,
                             text=chunk.text,
                             product_id=chunk.product_id or "",
                             chunk_type=chunk.chunk_type,
-                            branches=chunk.citation.branches or [],
+                            effective_from=chunk.effective_from,
+                            effective_to=chunk.effective_to,
+                            active=True,
+                            segments=chunk.segments,
+                            access_scope={"branches": [branch]},
+                            content_hash=chunk.citation.content_hash,
                         ),
                         score=chunk.score,
+                        dense_score=chunk.dense_score,
+                        sparse_score=chunk.sparse_score,
                     )
                 )
             return hits

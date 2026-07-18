@@ -518,6 +518,16 @@ class PersistentHybridIndex:
         )
         return len(rows), len(eligible), reasons
 
+    def list_chunks(self) -> List[KnowledgeChunk]:
+        """All chunks currently in this index, newest-insertion-order not
+        guaranteed (SQLite makes no ordering promise without ORDER BY).
+        Small-corpus-only (this repo's indexes hold single/double-digit
+        chunk counts) -- for the Agent Knowledge Console listing view
+        (app/api/v2/knowledge_router.py), not a paginated bulk-export API."""
+        with self._connect() as connection:
+            rows = connection.execute("SELECT payload FROM knowledge_chunks").fetchall()
+        return [KnowledgeChunk.model_validate_json(row["payload"]) for row in rows]
+
     def exact_lookup_by_chunk_id(self, chunk_id: str) -> Optional[KnowledgeChunk]:
         """Exact Structured Lookup (Phase 1 / prompt section 4): a request
         that already names a specific chunk_id must be answered by a direct

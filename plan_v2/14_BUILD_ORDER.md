@@ -38,6 +38,28 @@ Data readiness là dependency xuyên suốt. Trước V2-002/V2-006/V2-008, ph�
 | DATA-006 | Official/vendor source POC shadow mode | Pilot | coverage/cost/legal report |
 | DATA-007 | Retention/deletion/lineage verification | V2-012, pilot | lifecycle tests/audit |
 
+## 2.2. Expert Agent collaboration expansion
+
+Không coi prototype `app/agents/*` là hoàn thành chỉ vì unit workflow pass. Agentic mode chỉ được bật sau khi contract, tool isolation, no-CoT, evidence và hard-block regression cùng đạt gate.
+
+| ID | Task | Depends on | Primary artifacts | Required tests | Done when |
+|---|---|---|---|---|---|
+| V2-018 | Collaboration + metadata contracts | V2-001,009 | `contracts/agent_collaboration.schema.json`, `contracts/knowledge_metadata.schema.json`, SharedCaseState 2.1 migration plan | JSON/Pydantic contract tests | task/finding/message/synthesis/metadata thống nhất |
+| V2-019 | Governed metadata-rich corpus | V2-006,008,018, DATA-003–005 | corpus manifest, valid Source Cards, ingest/quality report | schema/FK/effective-date/atomic-publish tests | source/document/chunk metadata completeness 100% |
+| V2-020 | Immutable Agent manifests + ports | V2-018 | manifests, provider-neutral base port, deterministic fallback | role/output/fallback tests | role không đến từ prompt/request |
+| V2-021 | Product/Legal/Operations Expert refactor | V2-019,020 | independent Expert runtimes + typed findings | domain/grounding/no-CoT tests | không mutate state, output schema-valid |
+| V2-022 | MCP/tool profile isolation | V2-018,020 | Product/Legal/Ops/Evidence/Admin profiles | transport + unauthorized cross-tool tests | mỗi profile chỉ discover/call tool cần thiết |
+| V2-023 | Coordinator collaboration loop | V2-021,022 | typed message bus, assistance/revision/dedup/convergence | collaboration/replay/max-loop tests | hội tụ ≤3 vòng, one-writer state |
+| V2-024 | Evidence-aware synthesis | V2-019,023 | claim validator, conflict policy, primary/alternative/blocked synthesis | hard-block/citation/conflict tests | hard block không bị override, claim quan trọng có evidence |
+| V2-025 | UI/log/eval hardening | V2-024 | Why-this metadata panel, Agent Run/Collaboration log, 40 cases | E2E/security/privacy/eval | metadata dễ hiểu, no PII/secret/CoT, full regression pass |
+
+Data task bổ sung:
+
+| ID | Data task | Phải hoàn thành trước | Artifact |
+|---|---|---|---|
+| DATA-008 | Evidence-grade metadata enrichment + canonical cross-reference validation | V2-019 | knowledge metadata records + completeness report |
+| DATA-009 | Collaboration golden/adversarial set | V2-023–025 | tối thiểu 40 versioned cases |
+
 ## 3. Suggested implementation file tree
 
 ```text

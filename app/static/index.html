@@ -152,6 +152,37 @@
       font-size: 11px;
       margin-top: 10px;
     }
+
+    /* Agent Knowledge Console styling */
+    .ak-shell {
+      max-width: 1780px;
+      margin: 0 auto 16px;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .ak-shell .panel { padding: 16px; }
+    .ak-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .ak-form textarea, .ak-form input { width: 100%; }
+    .ak-form .span-2 { grid-column: span 2; }
+    .ak-entry {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .ak-entry.superseded { opacity: 0.55; }
+    .ak-entry.quarantined { border-left: 4px solid var(--red); }
+    .ak-entry h4 { margin: 0 0 4px 0; font-size: 12.5px; color: var(--navy); }
+    .ak-entry p { margin: 2px 0; color: var(--muted); }
+    .ak-chip { display:inline-block; font-size:9px; font-weight:900; padding:1px 6px; border-radius:3px; margin-right:4px; }
+    .ak-chip.active { background: var(--sky); color: var(--blue); }
+    .ak-chip.superseded { background: #eee; color: #666; }
+    .ak-chip.quarantined { background: var(--danger-bg); color: var(--danger); }
+    .ak-entry-actions { margin-top: 6px; display:flex; gap:6px; }
+    .ak-case-row { border-bottom: 1px solid var(--line); padding: 6px 0; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -165,7 +196,7 @@
           <option value="RM-999">RM-999 · Relationship Manager</option>
           <option value="SPEC-LEGAL-001">SPEC-LEGAL-001 · Legal Specialist</option>
           <option value="SPEC-PROD-001">SPEC-PROD-001 · Product Specialist</option>
-          <option value="SPEC-OPS-001">SPEC-OPS-001 · Operations Specialist</option>
+          <option value="SPEC-CREDIT-001">SPEC-CREDIT-001 · Credit Specialist</option>
           <option value="MGR-HN-01">MGR-HN-01 · Sales Manager</option>
         </select>
       </label>
@@ -187,7 +218,7 @@
           <option value="RM-999">RM-999 (Relationship Manager)</option>
           <option value="SPEC-LEGAL-001">SPEC-LEGAL-001 (Legal Specialist)</option>
           <option value="SPEC-PROD-001">SPEC-PROD-001 (Product Specialist)</option>
-          <option value="SPEC-OPS-001">SPEC-OPS-001 (Operations Specialist)</option>
+          <option value="SPEC-CREDIT-001">SPEC-CREDIT-001 (Credit Specialist)</option>
           <option value="MGR-HN-01">MGR-HN-01 (Sales Manager)</option>
           <option value="EXPIRED_TOKEN">Simulate Expired Token (401)</option>
           <option value="IAM_ERROR">Simulate IAM Service Outage (503)</option>
@@ -408,6 +439,40 @@
         <h2>Chi tiết nhiệm vụ chuyên viên</h2>
         <p class="muted">Chọn một nhiệm vụ từ danh sách hàng đợi để thẩm định.</p>
       </main>
+    </div>
+
+    <div class="ak-shell">
+      <section class="panel">
+        <div class="panel-title">
+          <div>
+            <span class="eyebrow">AGENT KNOWLEDGE CONSOLE</span>
+            <h2 id="akTitle">Tri thức của Agent phòng ban</h2>
+            <p class="muted">Nạp, cập nhật hoặc rút tri thức mà Agent chuyên môn của bạn dùng để trả lời. Cập nhật có hiệu lực ngay và luôn giữ lại phiên bản cũ (audit trail).</p>
+          </div>
+        </div>
+        <form id="akCreateForm" class="ak-form" onsubmit="return submitAgentKnowledgeEntry(event)">
+          <input id="akProductId" placeholder="Product/Rule/SOP ID (vd: SYNTH-PROD-WORKING-CAPITAL)" required>
+          <input id="akSectionPath" placeholder="Vị trí/section (vd: dieu-kien-von-luu-dong)" required>
+          <textarea id="akText" class="span-2" rows="3" placeholder="Nội dung tri thức nạp cho Agent..." required></textarea>
+          <input id="akEffectiveFrom" type="date" required>
+          <button class="button primary" type="submit">Nạp tri thức cho Agent →</button>
+        </form>
+        <div id="akEntryList" style="margin-top:12px;max-height:420px;overflow-y:auto;">
+          <p class="muted">Đang tải tri thức...</p>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <div>
+            <span class="eyebrow">AGENT ACTIVITY</span>
+            <h2>Agent của tôi đang làm gì</h2>
+            <p class="muted">Case trong phạm vi khách hàng của bạn mà Agent đã tạo kết quả, kèm bằng chứng và nhật ký AI gần nhất.</p>
+          </div>
+        </div>
+        <div id="akActivitySummary" class="muted">Đang tải hoạt động Agent...</div>
+        <div id="akActivityCases" style="margin-top:8px;max-height:420px;overflow-y:auto;"></div>
+      </section>
     </div>
   </div>
 

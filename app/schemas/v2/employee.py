@@ -12,7 +12,7 @@ class RoleType(str, Enum):
     RM = "relationship_manager"
     PRODUCT_SPECIALIST = "product_specialist"
     LEGAL_SPECIALIST = "legal_specialist"
-    OPERATIONS_SPECIALIST = "operations_specialist"
+    CREDIT_SPECIALIST = "credit_specialist"
     MANAGER = "manager"
     AUDITOR = "auditor"
     ADMIN = "admin"

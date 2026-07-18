@@ -125,7 +125,7 @@ def test_payroll_journey_reaches_approval_executes_mock_and_exposes_ai_log(tmp_p
     ai_log = http.get(f"/api/v2/sales-cases/{case_id}/ai-log", headers=HEADERS)
     assert ai_log.status_code == 200
     assert {item["component"] for item in ai_log.json()["entries"]} >= {
-        "RequirementExtractor", "ProductRAG", "EligibilityEngine", "EvidenceValidator", "OperationsComposer"
+        "RequirementExtractor", "ProductExpert", "EligibilityEngine", "EvidenceValidator", "OperationsComposer"
     }
     assert ai_log.json()["summary"]["raw_pii_logged"] is False
 
