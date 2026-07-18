@@ -160,6 +160,7 @@ problem-statetement-to-solution.jpg
 __pycache__/
 *.py[cod]
 .pytest_cache/
+/tmp_test/
 .coverage
 htmlcov/
 .venv/

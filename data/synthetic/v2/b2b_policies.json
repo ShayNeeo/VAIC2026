@@ -1,0 +1,55 @@
+{
+  "dataset_version": "2026.07.18-v1",
+  "synthetic": true,
+  "disclaimer": "SYNTHETIC_DEMO_DATA - không phải chính sách SHB thật và không dùng cho quyết định production.",
+  "policies": [
+    {
+      "policy_id": "SYN-B2B-KYC-001", "title": "Chính sách KYC, AML và hồ sơ pháp lý doanh nghiệp synthetic", "policy_type": "kyc_aml",
+      "product_ids": ["*"], "document_id": "SYN-KYC-POLICY", "document_version": "2026.1", "effective_from": "2026-01-01", "effective_to": null, "active": true,
+      "owner": "Synthetic Legal/Compliance Owner", "synthetic": true, "access_scope": {"branches": ["*"]},
+      "sections": [
+        {"section_id": "KYC-3", "product_ids": ["*"], "title": "Định danh doanh nghiệp", "summary": "Yêu cầu đăng ký kinh doanh hợp lệ cho mọi sản phẩm B2B.", "source_quote": "Hồ sơ doanh nghiệp phải có đăng ký kinh doanh hợp lệ."},
+        {"section_id": "KYC-5", "product_ids": ["*"], "title": "Người đại diện pháp luật", "summary": "Thông tin đại diện và thẩm quyền phải được xác minh.", "source_quote": "Người đại diện hoặc người được ủy quyền phải có thông tin định danh và căn cứ thẩm quyền hợp lệ."},
+        {"section_id": "KYC-8", "product_ids": ["PROD-WORKING-CAPITAL"], "title": "Chủ sở hữu hưởng lợi", "summary": "Sản phẩm tín dụng yêu cầu UBO đã xác minh.", "source_quote": "Hồ sơ cấp tín dụng phải có thông tin chủ sở hữu hưởng lợi đã xác minh."},
+        {"section_id": "KYC-9", "product_ids": ["*"], "title": "AML và watchlist", "summary": "Trường hợp khớp watchlist phải chuyển Compliance review.", "source_quote": "Kết quả AML, PEP hoặc watchlist không rõ ràng không được tự động kết luận đủ điều kiện."},
+        {"section_id": "KYC-10", "product_ids": ["*"], "title": "Hiệu lực hồ sơ", "summary": "Tài liệu dùng để thẩm định phải còn hiệu lực.", "source_quote": "Tài liệu pháp lý hết hiệu lực phải được thay thế hoặc chuyển chuyên viên xem xét."}
+      ]
+    },
+    {
+      "policy_id": "SYN-B2B-PAYROLL-001", "title": "Chính sách dịch vụ chi trả lương doanh nghiệp synthetic", "policy_type": "product_eligibility",
+      "product_ids": ["PROD-PAYROLL"], "document_id": "SYN-PRODUCT-CATALOG", "document_version": "2026.1", "effective_from": "2026-01-01", "effective_to": null, "active": true,
+      "owner": "Synthetic Transaction Banking Owner", "synthetic": true, "access_scope": {"branches": ["*"]},
+      "sections": [{"section_id": "PAYROLL-3.1", "title": "Điều kiện dịch vụ Payroll", "summary": "Doanh nghiệp cần tối thiểu 10 nhân sự và hồ sơ dịch vụ hợp lệ.", "source_quote": "Doanh nghiệp cần có tối thiểu 10 nhân sự."}]
+    },
+    {
+      "policy_id": "SYN-B2B-CASH-001", "title": "Chính sách quản lý dòng tiền doanh nghiệp synthetic", "policy_type": "product_eligibility",
+      "product_ids": ["PROD-CASH-MGMT"], "document_id": "SYN-CASH-MGMT-POLICY", "document_version": "2026.1", "effective_from": "2025-10-15", "effective_to": null, "active": true,
+      "owner": "Synthetic Cash Management Owner", "synthetic": true, "access_scope": {"branches": ["*"]},
+      "sections": [
+        {"section_id": "CASH-12-REV", "title": "Ngưỡng doanh thu", "summary": "Doanh thu năm tối thiểu 50 tỷ VND.", "source_quote": "Doanh thu năm tối thiểu 50 tỷ VND."},
+        {"section_id": "CASH-12-ACC", "title": "Phạm vi tài khoản", "summary": "Có từ ba tài khoản hoặc đơn vị thành viên.", "source_quote": "Doanh nghiệp có từ 3 tài khoản hoặc đơn vị thành viên."},
+        {"section_id": "CASH-13-AUTH", "title": "Phân quyền và nghị quyết", "summary": "Cấu hình điều chuyển tiền cần đúng thẩm quyền.", "source_quote": "Thiết lập quản lý dòng tiền phải có phê duyệt và phân quyền hợp lệ của doanh nghiệp."}
+      ]
+    },
+    {
+      "policy_id": "SYN-B2B-BULK-001", "title": "Chính sách thu hộ, chi hộ và tích hợp API synthetic", "policy_type": "product_eligibility",
+      "product_ids": ["PROD-BULK-PAYMENT"], "document_id": "SYN-TRANSACTION-HANDBOOK", "document_version": "2026.1", "effective_from": "2026-02-01", "effective_to": null, "active": true,
+      "owner": "Synthetic Payments Owner", "synthetic": true, "access_scope": {"branches": ["*"]},
+      "sections": [
+        {"section_id": "BULK-4-TECH", "title": "Đầu mối tích hợp", "summary": "Cần đầu mối kỹ thuật cho tích hợp API.", "source_quote": "Cần đầu mối kỹ thuật khi doanh nghiệp tích hợp API."},
+        {"section_id": "BULK-4-CONTROL", "title": "Kiểm soát giao dịch theo lô", "summary": "Luồng duyệt và đối soát phải được xác định.", "source_quote": "Giao dịch theo lô phải có cơ chế phân quyền, phê duyệt và đối soát phù hợp."}
+      ]
+    },
+    {
+      "policy_id": "SYN-B2B-CREDIT-001", "title": "Chính sách tài trợ vốn lưu động synthetic", "policy_type": "credit_eligibility",
+      "product_ids": ["PROD-WORKING-CAPITAL"], "document_id": "SYN-CREDIT-POLICY", "document_version": "2026.1", "effective_from": "2025-12-01", "effective_to": null, "active": true,
+      "owner": "Synthetic Credit Policy Owner", "synthetic": true, "access_scope": {"branches": ["HN01", "HCM01"]},
+      "sections": [
+        {"section_id": "CREDIT-5-YEARS", "title": "Lịch sử hoạt động", "summary": "Doanh nghiệp hoạt động liên tục tối thiểu hai năm.", "source_quote": "Doanh nghiệp hoạt động liên tục tối thiểu 2 năm."},
+        {"section_id": "CREDIT-5-FS", "title": "Báo cáo tài chính", "summary": "Yêu cầu báo cáo tài chính năm gần nhất.", "source_quote": "Hồ sơ tín dụng phải có báo cáo tài chính năm gần nhất."},
+        {"section_id": "CREDIT-5-DEBT", "title": "Lịch sử nợ", "summary": "Không có nợ xấu trong 12 tháng theo nguồn được phép.", "source_quote": "Không có nợ xấu trong 12 tháng gần nhất theo nguồn được phép."},
+        {"section_id": "CREDIT-5-PURPOSE", "title": "Mục đích sử dụng vốn", "summary": "Phương án sử dụng vốn phải hợp pháp và có hồ sơ chứng minh.", "source_quote": "Mục đích sử dụng vốn phải hợp pháp, phù hợp hoạt động kinh doanh và có chứng từ chứng minh."}
+      ]
+    }
+  ]
+}

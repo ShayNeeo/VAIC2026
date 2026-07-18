@@ -1,7 +1,7 @@
 {
   "dataset_id": "corporate-sales-v2-golden",
   "dataset_version": "2026.07.17-v1",
-  "evaluated_at": "2026-07-17T21:59:07.614499+00:00",
+  "evaluated_at": "2026-07-18T05:08:57.669565+00:00",
   "case_count": 40,
   "metrics": {
     "intent_accuracy": 1.0,
@@ -9,7 +9,9 @@
     "retrieval_hit_at_3": 1.0,
     "oos_precision": 1.0,
     "eligibility_accuracy": 1.0,
-    "unsafe_approval_rate": 0.0
+    "unsafe_approval_rate": 0.0,
+    "relevant_policy_precision": 1.0,
+    "relevant_policy_recall": 1.0
   },
   "counters": {
     "intent_total": 15,
@@ -22,7 +24,10 @@
     "oos_correct": 3,
     "eligibility_total": 10,
     "eligibility_correct": 10,
-    "unsafe_pass": 0
+    "unsafe_pass": 0,
+    "policy_true_positive": 20,
+    "policy_false_positive": 0,
+    "policy_false_negative": 0
   },
   "failures": [],
   "passed": true
