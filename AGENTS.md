@@ -21,7 +21,6 @@ The goal is not to force every problem into "RAG" or "agent". The goal is to hel
 - For V2 implementation tasks, read `plan_v2/INDEX.md`, `plan_v2/PROGRESS.md`, `plan_v2/00_AI_BUILD_PROTOCOL.md`, and the relevant contract/module before coding.
 - Do not mix fields, status enums, or tool permissions from the archived `plan/` plan into V2. The `plan_v2/contracts/` JSON files are the V2 source of truth.
 - SHB hackathon problem brief: `docs/SHB_Corporate_Expert_Workspace_Multi_Agent_Proposal.docx`
-- Implementation plan, build status and living build log: `plan/` (start at `plan/INDEX.md`)
 
 When the user asks about a practical AI/software problem, product workflow, automation, data-driven assistant, AI agents, RAG, tool calling, MCP, guardrails, evaluation, observability, fine-tuning, alignment, GraphRAG, or HITL, read the relevant parts of `docs/AI_Agent_RAG_Study_Guide.md` before designing or coding.
 
