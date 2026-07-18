@@ -273,3 +273,50 @@ def test_tool_registry_allowed_caller_check():
     registry = load_tool_registry()
     assert registry.is_caller_allowed("create_crm_case", "ActionExecutor") is True
     assert registry.is_caller_allowed("create_crm_case", "ProductAgent") is False
+
+
+def test_expert_findings_and_synthesis_result_validate_against_agent_collaboration_schema(tmp_path):
+    """agent_collaboration.schema.json (ExpertFinding/SynthesisResult/etc, used
+    by app/agents/contracts.py) had zero contract-test coverage before this --
+    the same blind spot that let data_source_card.schema.json silently drift
+    from its Pydantic mirror (dataset_version/effective_from/effective_to were
+    valid JSON Schema properties Pydantic rejected as extra_forbidden) go
+    undetected until it was hit by accident. Runs one real case end-to-end
+    (not hand-built fixtures -- ExpertFinding has too many nested required
+    objects to safely hand-author without missing something) and validates
+    every emitted ExpertFinding plus the SynthesisResult against the JSON
+    schema, the same way test_data_source_card_valid_example_accepted_by_both
+    does for DataSourceCard."""
+    import asyncio
+    from copy import deepcopy
+
+    from app.schemas.v2.context_snapshot import ContextSnapshot
+    from app.schemas.v2.shared_case_state import SharedCaseState
+    from app.workflow.engine import V2WorkflowEngine
+
+    payload = deepcopy(ex.MINIMAL_SHARED_CASE_STATE)
+    context = deepcopy(ex.FULL_CONTEXT_SNAPSHOT)
+    context["conflicts"] = []
+    context["customer"]["attributes"].update(
+        {"operating_years": 8, "has_bad_debt_12m": False, "ubo_status": "verified", "account_or_unit_count": 4}
+    )
+    context["documents"].append(
+        {
+            "document_id": "DOC-FS", "document_type": "financial_statements", "version": "1",
+            "status": "verified", "access_scope": {"branch": "HN01"},
+        }
+    )
+    payload["context"] = ContextSnapshot.model_validate(context).model_dump(mode="json")
+    payload["request"]["text"] = "Tìm vốn lưu động"
+    payload["request"]["message_id"] = "MSG-CONTRACT-PROBE"
+    state = SharedCaseState.model_validate(payload)
+
+    engine = V2WorkflowEngine(index_path=str(tmp_path / "index.sqlite3"))
+    state = asyncio.run(engine.run(state))
+
+    assert state.expert_findings, "expected at least one ExpertFinding from a full engine run"
+    for finding in state.expert_findings:
+        validate_instance(finding.model_dump(mode="json"), "agent_collaboration.schema.json")
+
+    assert state.synthesis_result is not None
+    validate_instance(state.synthesis_result.model_dump(mode="json"), "agent_collaboration.schema.json")
