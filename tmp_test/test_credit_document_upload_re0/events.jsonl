@@ -1,2 +1,0 @@
-{"at": "2026-07-18T11:02:10.224678+00:00", "event_code": "case_created", "case_id": "CASE-A8A301785752", "trace_id": "TRACE-9D9E1FD0D50C48489CF9AC3F8C6BA099", "status": "pending_information"}
-{"at": "2026-07-18T11:02:10.236274+00:00", "event_code": "case_resumed", "case_id": "CASE-A8A301785752", "trace_id": "TRACE-9D9E1FD0D50C48489CF9AC3F8C6BA099", "resume_nodes": ["evaluate_eligibility", "validate_evidence", "prepare_operations"]}

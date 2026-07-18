@@ -1,3 +1,0 @@
-{"at": "2026-07-18T11:02:11.445561+00:00", "event_code": "sales_case_draft_created", "case_id": "CASE-7ECF8B052A88", "employee_id": "RM-999"}
-{"at": "2026-07-18T11:02:11.454470+00:00", "event_code": "case_documents_uploaded", "case_id": "CASE-7ECF8B052A88", "count": 1}
-{"at": "2026-07-18T11:02:11.474296+00:00", "event_code": "intake_extraction_completed", "case_id": "CASE-7ECF8B052A88", "fields": 15}

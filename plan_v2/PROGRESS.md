@@ -7,7 +7,7 @@
 | Plan version | `2.0.0` |
 | Cập nhật cuối | `2026-07-18` |
 | Giai đoạn | `Local/sandbox MVP complete; production integration pending` |
-| Test/eval | `172 tests`; `40 business + 25 security + 20 reliability cases` |
+| Test/eval | `275 tests`; `40 business + 25 security + 20 reliability cases` |
 | API | `39 /api/v2 routes`; `19` public sales-case facade routes |
 | Blocker production | Thiếu data/API/SSO-IAM/policy owner/security sign-off thật |
 
@@ -34,6 +34,7 @@
 | V2-015 | E2E hardening | Done | 172 tests, prior 92% app coverage, intake→profile→analysis→approval→execute browser journey | Done cho sandbox; production checklist còn mở |
 | V2-016 | Independent RAG MCP server | Done | Official MCP client/server transport, 4 tools, persistent 3-source/19-chunk index, ACL/auth/audit tests | Hash embedding + SQLite + synthetic corpus; production backend/auth/data còn mở |
 | V2-017 | Complexity Router + Risk & Guardrail Gate as named components | Done | `app/workflow/router.py` (`ComplexityRouter`), `app/workflow/risk_gate.py` (`RiskGuardrailGate`), `risk_gate_result` in `SharedCaseState`/JSON contract, `tests/unit/test_v2_risk_gate_and_router.py`, `docs/SHB_MULTI_AGENT_WORKFLOW_DIAGRAM_MAPPING.md` | Product/Compliance/Operations stay sequential by design (Compliance genuinely needs Product's product_ids first — see mapping doc section 3); this is a scoped, spec-aligned deviation from a literal reading of the diagram's parallel boxes, not an oversight |
+| V2-018 | Product-scoped synthetic B2B policies + Legal output/UI | Done | `B2BPolicyRegistry`, governed policy pack, Product → Rule → Policy → Section output, Web/Flutter projection, `tests/unit/test_v2_b2b_policies.py` | Synthetic only; policy thật và SME/Legal sign-off còn mở |
 
 ## Decision log
 

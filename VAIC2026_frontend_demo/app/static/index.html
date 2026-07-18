@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>SHB Opportunity OS — Demo giao diện RM doanh nghiệp</title>
+  <style>
+    :root {
+      --font-sans: Inter, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-display: Inter, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --navy-950:#071a33;
+      --navy-900:#0a2446;
+      --navy-800:#10335d;
+      --navy-700:#174777;
+      --blue-600:#1f67c1;
+      --blue-500:#2d7bdd;
+      --blue-100:#e9f2ff;
+      --orange-600:#d95613;
+      --orange-500:#ed6b1a;
+      --orange-100:#fff1e8;
+      --green-700:#18784f;
+      --green-600:#1f9160;
+      --green-100:#e8f7ef;
+      --amber-700:#9a6500;
+      --amber-600:#bd7d00;
+      --amber-100:#fff5d9;
+      --red-700:#ad2e2e;
+      --red-600:#cb3f3f;
+      --red-100:#fdecec;
+      --cyan-700:#0e7184;
+      --cyan-100:#e5f7fa;
+      --ink-950:#111827;
+      --ink-800:#253247;
+      --ink-700:#39475c;
+      --ink-600:#536176;
+      --ink-500:#6f7d90;
+      --ink-400:#93a0b1;
+      --line:#dce3eb;
+      --line-strong:#c9d3df;
+      --surface:#ffffff;
+      --surface-2:#f7f9fc;
+      --surface-3:#eef2f7;
+      --shadow-sm:0 1px 2px rgba(15, 35, 65, .06), 0 1px 3px rgba(15,35,65,.04);
+      --shadow-md:0 12px 30px rgba(10,36,70,.10);
+      --shadow-lg:0 24px 64px rgba(7,26,51,.18);
+      --radius-sm:6px;
+      --radius:10px;
+      --radius-lg:14px;
+      --sidebar:244px;
+      --topbar:68px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height:100%; }
+    body {
+      margin:0;
+      font-family:var(--font-sans);
+      color:var(--ink-950);
+      background:var(--surface-2);
+      font-size:14px;
+      line-height:1.45;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+    button, input, textarea, select { font:inherit; }
+    button { cursor:pointer; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+      outline:3px solid rgba(45,123,221,.22);
+      outline-offset:2px;
+    }
+    a { color:inherit; }
+    svg { width:18px; height:18px; flex:0 0 auto; }
+
+    .app-shell { display:grid; grid-template-columns:var(--sidebar) minmax(0,1fr); min-height:100vh; }
+    .sidebar {
+      position:fixed; inset:0 auto 0 0; width:var(--sidebar); z-index:30;
+      color:#fff; background:
+        radial-gradient(circle at 20% 0%, rgba(45,123,221,.22), transparent 34%),
+        linear-gradient(180deg,var(--navy-950),#091f3c 60%,#06172d);
+      display:flex; flex-direction:column; border-right:1px solid rgba(255,255,255,.08);
+    }
+    .brand { height:var(--topbar); display:flex; align-items:center; gap:11px; padding:0 20px; border-bottom:1px solid rgba(255,255,255,.09); }
+    .brand-mark {
+      width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+      font-weight:900;letter-spacing:-.04em;background:linear-gradient(135deg,var(--orange-500),#ff8a38);box-shadow:0 8px 22px rgba(237,107,26,.25);
+    }
+    .brand-copy strong { display:block; font-size:14px; letter-spacing:.01em; }
+    .brand-copy span { display:block; color:#9fb3ca; font-size:11px; margin-top:1px; }
+    .nav { padding:18px 12px; display:flex; flex-direction:column; gap:5px; }
+    .nav-section { color:#7891ad; text-transform:uppercase; font-size:10px; font-weight:800; letter-spacing:.12em; padding:15px 10px 7px; }
+    .nav-item {
+      display:flex; align-items:center; gap:11px; padding:10px 11px; border-radius:9px; color:#c8d4e2;
+      border:1px solid transparent; background:transparent; width:100%; text-align:left; transition:.18s ease;
+    }
+    .nav-item:hover { background:rgba(255,255,255,.06); color:#fff; }
+    .nav-item.active { color:#fff; background:linear-gradient(90deg,rgba(45,123,221,.30),rgba(45,123,221,.12)); border-color:rgba(113,173,245,.20); }
+    .nav-item .count { margin-left:auto; min-width:21px;height:21px;border-radius:999px;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:11px;font-weight:800; }
+    .sidebar-footer { margin-top:auto; padding:14px 12px 18px; }
+    .demo-mode {
+      border:1px solid rgba(255,255,255,.11); background:rgba(255,255,255,.055); border-radius:10px; padding:12px;
+    }
+    .demo-mode strong { display:flex; align-items:center; gap:8px; font-size:12px; }
+    .demo-mode p { color:#9fb3ca; font-size:11px; margin:6px 0 0; }
+    .live-dot { width:8px;height:8px;border-radius:50%;background:#45d68b;box-shadow:0 0 0 4px rgba(69,214,139,.12); }
+
+    .main { grid-column:2; min-width:0; }
+    .topbar {
+      position:sticky; top:0; z-index:20; height:var(--topbar); background:rgba(255,255,255,.94); backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--line); display:flex; align-items:center; padding:0 24px; gap:16px;
+    }
+    .breadcrumbs { display:flex;align-items:center;gap:8px;color:var(--ink-500);font-size:12px;min-width:0; }
+    .breadcrumbs strong { color:var(--ink-800);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .topbar-spacer { flex:1; }
+    .searchbox { position:relative; width:min(310px,28vw); }
+    .searchbox svg { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--ink-400); }
+    .searchbox input { width:100%; border:1px solid var(--line); border-radius:9px; background:var(--surface-2); padding:9px 12px 9px 36px; color:var(--ink-800); }
+    .icon-btn { width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink-600);position:relative; }
+    .icon-btn:hover { background:var(--surface-2); color:var(--navy-800); }
+    .notif-dot { position:absolute;right:8px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--orange-500);border:2px solid #fff; }
+    .user-chip { display:flex;align-items:center;gap:10px;padding-left:6px; }
+    .avatar { width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--navy-900);color:#fff;font-weight:800;font-size:12px; }
+    .user-copy { line-height:1.2; }
+    .user-copy strong { display:block;font-size:12px; }
+    .user-copy span { display:block;color:var(--ink-500);font-size:10px;margin-top:3px; }
+
+    .view { display:none; padding:24px; min-height:calc(100vh - var(--topbar)); }
+    .view.active { display:block; animation:fadeIn .18s ease; }
+    @keyframes fadeIn { from{opacity:.4;transform:translateY(3px)} to{opacity:1;transform:none} }
+    .page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:20px; }
+    .page-title h1 { font-family:var(--font-display);font-size:25px;letter-spacing:-.025em;line-height:1.2;margin:0;color:var(--navy-950); }
+    .page-title p { margin:6px 0 0;color:var(--ink-600);font-size:13px; }
+    .head-actions { display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end; }
+
+    .btn { border:1px solid transparent;border-radius:8px;padding:9px 13px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.16s ease;white-space:nowrap; }
+    .btn-primary { background:var(--orange-500);color:#fff;box-shadow:0 4px 12px rgba(237,107,26,.20); }
+    .btn-primary:hover { background:var(--orange-600);transform:translateY(-1px); }
+    .btn-secondary { background:#fff;color:var(--ink-800);border-color:var(--line-strong); }
+    .btn-secondary:hover { background:var(--surface-2);border-color:#aebbc9; }
+    .btn-blue { background:var(--navy-800);color:#fff; }
+    .btn-blue:hover { background:var(--navy-700); }
+    .btn-danger { background:#fff;color:var(--red-700);border-color:#efb8b8; }
+    .btn-danger:hover { background:var(--red-100); }
+    .btn-ghost { background:transparent;color:var(--ink-600);padding:7px 8px; }
+    .btn-ghost:hover { background:var(--surface-3);color:var(--ink-950); }
+    .btn:disabled { opacity:.48;cursor:not-allowed;transform:none;box-shadow:none; }
+
+    .metric-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px; }
+    .metric-card { background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;box-shadow:var(--shadow-sm); }
+    .metric-top { display:flex;align-items:center;justify-content:space-between;color:var(--ink-500);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.055em; }
+    .metric-icon { width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--blue-100);color:var(--blue-600); }
+    .metric-icon.orange { background:var(--orange-100);color:var(--orange-600); }
+    .metric-icon.green { background:var(--green-100);color:var(--green-700); }
+    .metric-icon.amber { background:var(--amber-100);color:var(--amber-700); }
+    .metric-value { font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.035em;margin-top:7px;color:var(--navy-950); }
+    .metric-foot { margin-top:2px;color:var(--ink-500);font-size:11px; }
+    .delta { color:var(--green-700);font-weight:750; }
+
+    .panel { background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm); }
+    .panel-head { min-height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 15px;border-bottom:1px solid var(--line); }
+    .panel-head h2,.panel-head h3 { margin:0;font-size:14px;color:var(--navy-950); }
+    .panel-head p { margin:3px 0 0;font-size:11px;color:var(--ink-500); }
+    .panel-body { padding:15px; }
+
+    .filter-row { display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:var(--radius) var(--radius) 0 0;border-bottom:none; }
+    .filter-search { position:relative; min-width:260px; flex:1;max-width:440px; }
+    .filter-search input { width:100%;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:9px 10px 9px 35px; }
+    .filter-search svg { position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-400); }
+    .select { border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 29px 9px 10px;color:var(--ink-700); }
+    .filter-spacer { flex:1; }
+    .toggle { display:flex;background:var(--surface-3);border-radius:8px;padding:3px; }
+    .toggle button { border:0;background:transparent;border-radius:6px;padding:6px 9px;color:var(--ink-500); }
+    .toggle button.active { background:#fff;color:var(--navy-800);box-shadow:var(--shadow-sm); }
+
+    .case-table { width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:0 0 var(--radius) var(--radius);overflow:hidden; }
+    .case-table th { text-align:left;padding:11px 13px;background:var(--surface-2);color:var(--ink-500);font-size:10px;text-transform:uppercase;letter-spacing:.065em;border-bottom:1px solid var(--line); }
+    .case-table td { padding:13px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--ink-700); }
+    .case-table tr:last-child td { border-bottom:0; }
+    .case-table tbody tr { transition:.14s ease; }
+    .case-table tbody tr:hover { background:#fbfcfe; }
+    .company-cell { display:flex;align-items:center;gap:11px;min-width:250px; }
+    .company-logo { width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--navy-800),var(--blue-500));color:#fff;display:grid;place-items:center;font-size:11px;font-weight:850;letter-spacing:.02em; }
+    .company-name { font-weight:800;color:var(--ink-950); }
+    .company-meta { color:var(--ink-500);font-size:11px;margin-top:3px; }
+    .op-count { font-weight:850;color:var(--navy-900);font-size:15px; }
+    .status-stack { display:flex;gap:5px;flex-wrap:wrap; }
+    .badge { display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:800;white-space:nowrap; }
+    .badge.green { background:var(--green-100);color:var(--green-700); }
+    .badge.amber { background:var(--amber-100);color:var(--amber-700); }
+    .badge.red { background:var(--red-100);color:var(--red-700); }
+    .badge.blue { background:var(--blue-100);color:var(--blue-600); }
+    .badge.gray { background:var(--surface-3);color:var(--ink-600); }
+    .badge.orange { background:var(--orange-100);color:var(--orange-600); }
+    .badge .dot { width:6px;height:6px;border-radius:50%;background:currentColor; }
+    .sla { display:flex;align-items:center;gap:6px;font-weight:750;color:var(--ink-700); }
+    .sla.urgent { color:var(--red-700); }
+    .row-actions { display:flex;justify-content:flex-end;gap:5px; }
+
+    .context-strip { background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:15px;margin-bottom:14px;box-shadow:var(--shadow-sm); }
+    .context-company { display:flex;align-items:center;gap:11px;min-width:260px; }
+    .context-company h2 { margin:0;font-size:15px; }
+    .context-company p { margin:3px 0 0;color:var(--ink-500);font-size:11px; }
+    .context-divider { width:1px;height:38px;background:var(--line); }
+    .context-field { min-width:105px; }
+    .context-label { color:var(--ink-500);font-size:9px;text-transform:uppercase;letter-spacing:.075em;font-weight:800; }
+    .context-value { color:var(--ink-800);font-size:11px;font-weight:750;margin-top:3px; }
+    .context-right { margin-left:auto;display:flex;align-items:center;gap:8px; }
+
+    .workspace-grid { display:grid;grid-template-columns:minmax(220px, .78fr) minmax(440px, 1.75fr) minmax(260px,.92fr);gap:14px;align-items:start; }
+    .sticky-col { position:sticky;top:calc(var(--topbar) + 14px); }
+    .compact-section + .compact-section { border-top:1px solid var(--line);margin-top:13px;padding-top:13px; }
+    .section-kicker { color:var(--ink-500);font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:800;margin-bottom:8px; }
+    .kv { display:grid;grid-template-columns:1fr auto;gap:7px 10px;font-size:11px; }
+    .kv dt { color:var(--ink-500); }
+    .kv dd { margin:0;color:var(--ink-800);font-weight:750;text-align:right; }
+    .product-pills { display:flex;flex-wrap:wrap;gap:6px; }
+    .product-pill { padding:5px 8px;border:1px solid var(--line);background:var(--surface-2);border-radius:7px;font-size:10px;color:var(--ink-700); }
+    .readiness { display:grid;gap:8px; }
+    .readiness-row { display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:11px; }
+    .readiness-track { grid-column:1 / -1;height:5px;background:var(--surface-3);border-radius:999px;overflow:hidden; }
+    .readiness-track span { display:block;height:100%;border-radius:999px;background:var(--green-600); }
+    .source-note { margin-top:10px;padding:9px;background:var(--surface-2);border-radius:8px;color:var(--ink-500);font-size:10px;display:flex;gap:8px;align-items:flex-start; }
+
+    .decision-hero { border:1px solid #c9d7e7;background:linear-gradient(135deg,#f7fbff,#fff);border-radius:var(--radius);padding:16px;margin-bottom:12px; }
+    .decision-title { display:flex;align-items:flex-start;gap:12px; }
+    .decision-icon { width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--navy-900);color:#fff; }
+    .decision-title h2 { margin:0;font-size:16px;color:var(--navy-950); }
+    .decision-title p { margin:5px 0 0;color:var(--ink-600);font-size:12px; }
+    .intent-row { display:flex;gap:6px;flex-wrap:wrap;margin-top:13px; }
+    .intent-chip { display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;background:var(--blue-100);color:var(--blue-600);font-size:10px;font-weight:800; }
+    .intent-chip .confidence { color:var(--ink-500);font-weight:700; }
+    .fact-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px; }
+    .fact-card { border:1px solid var(--line);border-radius:8px;padding:9px;background:#fff; }
+    .fact-card small { display:block;color:var(--ink-500);font-size:9px;text-transform:uppercase;letter-spacing:.055em;font-weight:800; }
+    .fact-card strong { display:block;font-size:13px;color:var(--navy-950);margin-top:4px; }
+    .fact-source { display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:7px;color:var(--ink-500);font-size:9px; }
+    .source-tag { background:var(--surface-3);border-radius:5px;padding:2px 5px;font-weight:800;color:var(--ink-600); }
+
+    .opportunity-section-head { display:flex;align-items:center;justify-content:space-between;margin:16px 2px 9px; }
+    .opportunity-section-head h3 { margin:0;font-size:13px;color:var(--navy-950); }
+    .opportunity-section-head span { color:var(--ink-500);font-size:10px; }
+    .op-list { display:grid;gap:9px; }
+    .op-card { border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;transition:.18s ease; }
+    .op-card.selected { border-color:#9fc3ed;box-shadow:0 0 0 2px rgba(45,123,221,.08); }
+    .op-card.pending { border-color:#ecd28d; }
+    .op-card-top { display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:start;padding:13px 14px; }
+    .check-wrap { padding-top:2px; }
+    .checkbox { width:18px;height:18px;border:1.5px solid var(--line-strong);border-radius:5px;display:grid;place-items:center;background:#fff;transition:.15s; }
+    .op-card.selected .checkbox { background:var(--blue-600);border-color:var(--blue-600);color:#fff; }
+    .op-card.selected .checkbox svg { width:13px;height:13px; }
+    .op-main h4 { margin:0;font-size:13px;color:var(--ink-950);display:flex;align-items:center;gap:7px;flex-wrap:wrap; }
+    .op-main p { margin:5px 0 0;color:var(--ink-600);font-size:11px; }
+    .score-box { min-width:62px;text-align:right; }
+    .score-box strong { display:block;font-size:18px;color:var(--navy-900);line-height:1; }
+    .score-box span { color:var(--ink-500);font-size:9px;text-transform:uppercase;letter-spacing:.05em; }
+    .op-reasons { padding:0 14px 12px 43px;display:grid;grid-template-columns:1.2fr .8fr;gap:12px; }
+    .reason-list { display:grid;gap:5px; }
+    .reason { display:flex;gap:7px;align-items:flex-start;color:var(--ink-700);font-size:10px; }
+    .reason svg { width:14px;height:14px;color:var(--green-700);margin-top:1px; }
+    .reason.warn svg { color:var(--amber-700); }
+    .op-next { background:var(--surface-2);border-radius:7px;padding:8px 9px;font-size:10px; }
+    .op-next small { color:var(--ink-500);font-weight:800;text-transform:uppercase;letter-spacing:.05em; }
+    .op-next strong { display:block;color:var(--ink-800);margin-top:4px; }
+    .op-card-foot { border-top:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:8px 12px 8px 43px;background:#fbfcfe; }
+    .link-btn { border:0;background:transparent;color:var(--blue-600);font-weight:750;font-size:10px;padding:4px 0;display:flex;align-items:center;gap:5px; }
+    .link-btn:hover { color:var(--navy-800); }
+    .op-card-foot .spacer { flex:1; }
+
+    .action-summary { display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px; }
+    .summary-tile { border:1px solid var(--line);border-radius:8px;padding:9px;background:var(--surface-2); }
+    .summary-tile strong { display:block;font-size:18px;color:var(--navy-950); }
+    .summary-tile span { font-size:9px;color:var(--ink-500);text-transform:uppercase;letter-spacing:.055em;font-weight:800; }
+    .action-list { display:grid;gap:8px; }
+    .action-item { display:flex;gap:9px;align-items:flex-start;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff; }
+    .action-status { width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:var(--green-100);color:var(--green-700); }
+    .action-status.pending { background:var(--amber-100);color:var(--amber-700); }
+    .action-status.no { background:var(--surface-3);color:var(--ink-500); }
+    .action-status svg { width:13px;height:13px; }
+    .action-copy strong { display:block;font-size:10px;color:var(--ink-800); }
+    .action-copy span { display:block;font-size:9px;color:var(--ink-500);margin-top:3px; }
+    .do-not { margin-top:12px;border-top:1px solid var(--line);padding-top:11px; }
+    .do-not h4 { margin:0 0 7px;font-size:10px;text-transform:uppercase;letter-spacing:.055em;color:var(--ink-500); }
+    .do-not-row { display:flex;gap:7px;align-items:center;color:var(--ink-600);font-size:10px;margin:5px 0; }
+    .do-not-row svg { width:13px;height:13px;color:var(--red-600); }
+    .action-buttons { display:grid;gap:8px;margin-top:14px; }
+    .action-buttons .btn { width:100%; }
+    .security-note { margin-top:10px;color:var(--ink-500);font-size:9px;text-align:center; }
+
+    .tabs { display:flex;gap:3px;background:var(--surface-3);border-radius:8px;padding:3px; }
+    .tab { border:0;border-radius:6px;background:transparent;padding:6px 9px;color:var(--ink-500);font-size:10px;font-weight:750; }
+    .tab.active { background:#fff;color:var(--navy-800);box-shadow:var(--shadow-sm); }
+
+    .management-grid { display:grid;grid-template-columns:1.2fr .8fr;gap:14px; }
+    .chart-panel { padding:16px; }
+    .chart-title { display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:15px; }
+    .chart-title h3 { margin:0;font-size:13px; }
+    .chart-title p { margin:4px 0 0;color:var(--ink-500);font-size:10px; }
+    .funnel { display:grid;gap:9px; }
+    .funnel-row { display:grid;grid-template-columns:110px 1fr 48px;gap:10px;align-items:center;font-size:10px; }
+    .funnel-bar { height:12px;border-radius:4px;background:var(--surface-3);overflow:hidden; }
+    .funnel-bar span { display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--blue-600),#69a8ef); }
+    .funnel-row strong { text-align:right;color:var(--navy-900); }
+    .control-list { display:grid;gap:9px; }
+    .control-row { display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px; }
+    .control-row span { color:var(--ink-600);font-size:10px; }
+    .control-row strong { color:var(--navy-950); }
+    .sparkline { height:90px;display:flex;align-items:flex-end;gap:6px;padding-top:10px; }
+    .sparkline i { flex:1;background:linear-gradient(180deg,var(--blue-500),var(--navy-800));border-radius:4px 4px 1px 1px;opacity:.88; }
+
+    .drawer-backdrop, .modal-backdrop { position:fixed;inset:0;background:rgba(7,26,51,.46);z-index:80;display:none;backdrop-filter:blur(2px); }
+    .drawer-backdrop.open, .modal-backdrop.open { display:block; }
+    .drawer { position:fixed;top:0;right:0;width:min(520px,96vw);height:100vh;background:#fff;z-index:90;box-shadow:var(--shadow-lg);transform:translateX(100%);transition:.22s ease;display:flex;flex-direction:column; }
+    .drawer.open { transform:translateX(0); }
+    .drawer-head { min-height:68px;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid var(--line); }
+    .drawer-head h2 { margin:0;font-size:15px; }
+    .drawer-head p { margin:2px 0 0;color:var(--ink-500);font-size:10px; }
+    .drawer-close { margin-left:auto; }
+    .drawer-body { padding:16px 18px;overflow:auto; }
+    .trace-list { position:relative;display:grid;gap:0; }
+    .trace-list:before { content:"";position:absolute;left:14px;top:17px;bottom:18px;width:1px;background:var(--line-strong); }
+    .trace-step { position:relative;display:grid;grid-template-columns:29px 1fr;gap:11px;padding-bottom:15px; }
+    .trace-node { width:29px;height:29px;border-radius:9px;display:grid;place-items:center;background:var(--green-100);color:var(--green-700);z-index:1;border:3px solid #fff;box-shadow:0 0 0 1px var(--line); }
+    .trace-node.warn { background:var(--amber-100);color:var(--amber-700); }
+    .trace-content { border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff; }
+    .trace-top { display:flex;align-items:center;justify-content:space-between;gap:8px; }
+    .trace-top strong { font-size:11px; }
+    .trace-time { color:var(--ink-500);font-size:9px;font-family:var(--font-mono); }
+    .trace-content p { margin:5px 0 0;color:var(--ink-600);font-size:10px; }
+    .trace-meta { display:flex;gap:6px;flex-wrap:wrap;margin-top:7px; }
+    .trace-meta span { background:var(--surface-3);border-radius:5px;padding:3px 5px;font-size:8px;color:var(--ink-600);font-weight:750; }
+    .evidence-block { border:1px solid var(--line);border-radius:9px;margin-bottom:10px;overflow:hidden; }
+    .evidence-head { display:flex;align-items:flex-start;gap:9px;padding:11px;background:var(--surface-2); }
+    .evidence-head h4 { margin:0;font-size:11px; }
+    .evidence-head p { margin:3px 0 0;color:var(--ink-500);font-size:9px; }
+    .evidence-body { padding:11px; }
+    .evidence-quote { border-left:3px solid var(--blue-500);padding:7px 9px;background:#f8fbff;color:var(--ink-700);font-size:10px; }
+    .evidence-meta { display:grid;grid-template-columns:1fr auto;gap:5px;margin-top:9px;color:var(--ink-500);font-size:9px; }
+
+    .modal { position:fixed;left:50%;top:50%;transform:translate(-50%,-46%) scale(.98);width:min(720px,94vw);max-height:90vh;background:#fff;border-radius:14px;z-index:100;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.18s ease;overflow:hidden;display:flex;flex-direction:column; }
+    .modal.open { transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto; }
+    .modal-head { padding:16px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start; }
+    .modal-title-icon { width:38px;height:38px;border-radius:10px;background:var(--navy-900);color:#fff;display:grid;place-items:center; }
+    .modal-head h2 { margin:0;font-size:16px; }
+    .modal-head p { margin:4px 0 0;color:var(--ink-500);font-size:10px; }
+    .modal-head .icon-btn { margin-left:auto; }
+    .modal-body { padding:16px 18px;overflow:auto; }
+    .approval-overview { display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px; }
+    .approval-overview div { border:1px solid var(--line);border-radius:8px;padding:9px;background:var(--surface-2); }
+    .approval-overview strong { display:block;font-size:18px;color:var(--navy-950); }
+    .approval-overview span { color:var(--ink-500);font-size:9px; }
+    .diff-table { width:100%;border-collapse:collapse;font-size:10px;border:1px solid var(--line);border-radius:8px;overflow:hidden; }
+    .diff-table th { text-align:left;background:var(--surface-2);color:var(--ink-500);padding:8px;border-bottom:1px solid var(--line);font-size:9px;text-transform:uppercase;letter-spacing:.05em; }
+    .diff-table td { padding:8px;border-bottom:1px solid var(--line); }
+    .diff-table tr:last-child td { border-bottom:0; }
+    .confirm-list { display:grid;gap:8px;margin-top:14px; }
+    .confirm-item { display:flex;align-items:flex-start;gap:9px;padding:9px;border:1px solid var(--line);border-radius:8px;cursor:pointer; }
+    .confirm-item input { margin-top:2px;accent-color:var(--blue-600); }
+    .confirm-item strong { display:block;font-size:10px;color:var(--ink-800); }
+    .confirm-item span { display:block;font-size:9px;color:var(--ink-500);margin-top:2px; }
+    .field-label { display:block;color:var(--ink-700);font-size:10px;font-weight:800;margin:13px 0 6px; }
+    .textarea { width:100%;min-height:70px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:9px;color:var(--ink-800); }
+    .modal-foot { display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;border-top:1px solid var(--line);background:var(--surface-2); }
+    .approval-security { color:var(--ink-500);font-size:9px;display:flex;align-items:center;gap:6px; }
+    .modal-actions { display:flex;gap:8px; }
+
+    .toast-wrap { position:fixed;right:20px;bottom:20px;z-index:140;display:grid;gap:9px; }
+    .toast { min-width:290px;max-width:380px;background:var(--navy-950);color:#fff;border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-lg);display:flex;gap:10px;align-items:flex-start;animation:toastIn .2s ease; }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    .toast strong { display:block;font-size:11px; }
+    .toast span { display:block;color:#b5c4d5;font-size:9px;margin-top:3px; }
+    .toast svg { color:#45d68b; }
+
+    .receipt { max-width:920px;margin:0 auto; }
+    .receipt-hero { border:1px solid #b9ddca;border-radius:14px;background:linear-gradient(135deg,#f4fff8,#fff);padding:24px;text-align:center; }
+    .receipt-icon { width:58px;height:58px;border-radius:17px;background:var(--green-100);color:var(--green-700);display:grid;place-items:center;margin:0 auto 12px; }
+    .receipt-icon svg { width:28px;height:28px; }
+    .receipt-hero h1 { margin:0;color:var(--navy-950);font-size:24px; }
+    .receipt-hero p { margin:7px auto 0;color:var(--ink-600);max-width:600px; }
+    .receipt-meta { display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:14px;color:var(--ink-500);font-size:10px; }
+    .receipt-grid { display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-top:14px; }
+    .receipt-actions { display:grid;gap:8px; }
+    .receipt-action { display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px; }
+    .receipt-action svg { color:var(--green-700); }
+    .receipt-action strong { font-size:10px; }
+    .receipt-action span { color:var(--ink-500);font-size:9px;margin-left:auto;font-family:var(--font-mono); }
+    .audit-line { display:grid;grid-template-columns:95px 1fr;gap:10px;font-size:10px;padding:8px 0;border-bottom:1px solid var(--line); }
+    .audit-line:last-child { border-bottom:0; }
+    .audit-line time { color:var(--ink-500);font-family:var(--font-mono); }
+
+    .empty { padding:50px 20px;text-align:center;color:var(--ink-500); }
+    .empty svg { width:34px;height:34px;color:var(--ink-400); }
+    .empty h3 { color:var(--ink-800);margin:10px 0 4px; }
+    .hidden { display:none !important; }
+
+    @media (max-width:1180px) {
+      :root { --sidebar:220px; }
+      .workspace-grid { grid-template-columns:230px minmax(420px,1fr); }
+      .action-column { grid-column:1 / -1;position:static; }
+      .action-column .panel-body { display:grid;grid-template-columns:1fr 1fr;gap:15px; }
+      .action-buttons { margin-top:0;align-self:end; }
+      .metric-grid { grid-template-columns:repeat(2,1fr); }
+    }
+    @media (max-width:880px) {
+      :root { --sidebar:0px; }
+      .sidebar { transform:translateX(-100%); }
+      .main { grid-column:1; }
+      .topbar { padding:0 14px; }
+      .searchbox { display:none; }
+      .view { padding:16px; }
+      .workspace-grid,.management-grid,.receipt-grid { grid-template-columns:1fr; }
+      .sticky-col { position:static; }
+      .context-strip { overflow-x:auto; }
+      .fact-grid { grid-template-columns:repeat(2,1fr); }
+      .user-copy { display:none; }
+      .case-table { display:block;overflow:auto;white-space:nowrap; }
+    }
+    @media (max-width:560px) {
+      .page-head { align-items:flex-start;flex-direction:column; }
+      .metric-grid,.approval-overview { grid-template-columns:repeat(2,1fr); }
+      .fact-grid { grid-template-columns:1fr; }
+      .op-reasons { grid-template-columns:1fr;padding-left:14px; }
+      .op-card-foot { padding-left:14px; }
+      .action-column .panel-body { grid-template-columns:1fr; }
+      .context-divider,.context-field { display:none; }
+      .filter-row { align-items:stretch; }
+      .filter-search { min-width:100%; }
+      .select { flex:1; }
+      .modal-foot { align-items:stretch;flex-direction:column; }
+      .modal-actions { width:100%; }
+      .modal-actions .btn { flex:1; }
+    }
+  </style>
+</head>
+<body>
+  <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M9 6V4h6v2m-12 4h18v10H3zM3 13h18M9 13v2h6v-2"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 21V4h10v17M14 8h6v13M8 8h2m-2 4h2m-2 4h2m9-4h-2m2 4h-2M2 21h20"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 20V10m6 10V4m6 16v-7m4 7H2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 6v6c0 5 3.4 8.3 8 9.8 4.6-1.5 8-4.8 8-9.8V6zM9 12l2 2 4-4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.5 1A7 7 0 0 0 15 6l-.4-2.7h-4L10 6a7 7 0 0 0-1.4 1L6 6 4 9.5 6 11a7 7 0 0 0 0 2l-2 1.5L6 18l2.6-1a7 7 0 0 0 1.4 1l.5 2.7h4L15 18a7 7 0 0 0 1.4-1l2.5 1 2-3.5-2-1.5a7 7 0 0 0 .1-1z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v4m0 3h.01" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h5M9 13h6m-6 4h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 20v-2c0-3 2.4-5 6-5s6 2 6 5v2M16 5a3 3 0 0 1 0 6m1 3c2.6.5 4 2 4 4v2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 7-8m-5 0h5v5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m14 5 5 5M4 20l3.5-.7L20 6.8 17.2 4 4.7 16.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="m3 11 18-8-8 18-2-8zM11 13l10-10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M9 5h6m-7-2h8v4H8zM6 5H4v16h16V5h-2M8 12h8m-8 4h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M18 10a7 7 0 0 0-12-3l-2 2m2 5a7 7 0 0 0 12 3l2-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div class="brand-copy"><strong>SHB Opportunity OS</strong><span>Corporate Banking · Demo</span></div>
+      </div>
+      <nav class="nav">
+        <div class="nav-section">Bán hàng doanh nghiệp</div>
+        <button class="nav-item active" data-view="queue"><svg><use href="#i-briefcase"/></svg>Cơ hội hôm nay<span class="count">6</span></button>
+        <button class="nav-item" data-view="workspace"><svg><use href="#i-building"/></svg>Case đang xử lý</button>
+        <button class="nav-item" data-view="approvals"><svg><use href="#i-shield"/></svg>Chờ phê duyệt<span class="count">2</span></button>
+        <div class="nav-section">Quản trị</div>
+        <button class="nav-item" data-view="performance"><svg><use href="#i-chart"/></svg>Hiệu suất & kiểm soát</button>
+        <button class="nav-item" data-action="trace"><svg><use href="#i-bot"/></svg>Agent trace</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="demo-mode">
+          <strong><span class="live-dot"></span><span id="connectionLabel">Demo độc lập</span></strong>
+          <p>Toàn bộ dữ liệu, chính sách và hành động đều là synthetic; không kết nối Core Banking/CRM thật.</p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Corporate Banking</span><svg><use href="#i-chevron"/></svg><strong id="breadcrumbCurrent">Cơ hội hôm nay</strong></div>
+        <div class="topbar-spacer"></div>
+        <div class="searchbox"><svg><use href="#i-search"/></svg><input aria-label="Tìm kiếm" placeholder="Tìm doanh nghiệp, case, mã số thuế…" /></div>
+        <button class="icon-btn" aria-label="Thông báo"><svg><use href="#i-bell"/></svg><span class="notif-dot"></span></button>
+        <button class="icon-btn" aria-label="Cài đặt"><svg><use href="#i-settings"/></svg></button>
+        <div class="user-chip"><div class="avatar">NA</div><div class="user-copy"><strong>Nguyễn Minh Anh</strong><span>RM Doanh nghiệp · CN Hà Nội</span></div></div>
+      </header>
+
+      <section id="view-queue" class="view active">
+        <div class="page-head">
+          <div class="page-title"><h1>Cơ hội hôm nay</h1><p>Ưu tiên case theo giá trị, độ sẵn sàng và SLA — không theo số điểm AI đơn lẻ.</p></div>
+          <div class="head-actions"><button class="btn btn-secondary"><svg><use href="#i-upload"/></svg>Nhập ghi chú cuộc họp</button><button class="btn btn-primary" data-open-abc><svg><use href="#i-briefcase"/></svg>Mở case ABC</button></div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric-card"><div class="metric-top">Cơ hội đang mở<span class="metric-icon"><svg><use href="#i-briefcase"/></svg></span></div><div class="metric-value">18</div><div class="metric-foot"><span class="delta">+4</span> từ 7 ngày gần nhất</div></div>
+          <div class="metric-card"><div class="metric-top">Sẵn sàng tiếp cận<span class="metric-icon green"><svg><use href="#i-check"/></svg></span></div><div class="metric-value">11</div><div class="metric-foot">61% opportunity pipeline</div></div>
+          <div class="metric-card"><div class="metric-top">Cần bổ sung hồ sơ<span class="metric-icon amber"><svg><use href="#i-file"/></svg></span></div><div class="metric-value">5</div><div class="metric-foot">2 case gần quá SLA</div></div>
+          <div class="metric-card"><div class="metric-top">Thời gian chuẩn bị TB<span class="metric-icon orange"><svg><use href="#i-clock"/></svg></span></div><div class="metric-value">12m</div><div class="metric-foot"><span class="delta">−41%</span> so với baseline</div></div>
+        </div>
+
+        <div class="filter-row">
+          <div class="filter-search"><svg><use href="#i-search"/></svg><input id="caseSearch" placeholder="Tìm trong pipeline của tôi…" /></div>
+          <select id="statusFilter" class="select"><option value="all">Tất cả trạng thái</option><option value="ready">Có thể xử lý</option><option value="pending">Cần bổ sung</option><option value="review">Cần chuyên gia</option></select>
+          <select class="select"><option>SLA gần nhất</option><option>Giá trị tiềm năng</option><option>Mới cập nhật</option></select>
+          <div class="filter-spacer"></div><div class="toggle"><button class="active">Danh sách</button><button>Kanban</button></div>
+        </div>
+        <table class="case-table" aria-label="Danh sách case">
+          <thead><tr><th>Doanh nghiệp / Case</th><th>Cơ hội</th><th>Trạng thái nhánh</th><th>Next-best-action</th><th>SLA</th><th></th></tr></thead>
+          <tbody id="caseRows"></tbody>
+        </table>
+      </section>
+
+      <section id="view-workspace" class="view">
+        <div class="page-head">
+          <div class="page-title"><h1>Decision Brief</h1><p>RM duyệt cách hiểu nhu cầu, từng opportunity và chính xác payload sẽ được tạo.</p></div>
+          <div class="head-actions"><button class="btn btn-secondary" id="traceBtn"><svg><use href="#i-bot"/></svg>Xem agent trace</button><button class="btn btn-secondary" id="rerunBtn"><svg><use href="#i-refresh"/></svg>Phân tích lại</button></div>
+        </div>
+        <div class="context-strip">
+          <div class="context-company"><div class="company-logo">ABC</div><div><h2>Công ty TNHH Sản xuất ABC</h2><p>COMP-ABC · MST 0123456789 · Khách hàng hiện hữu</p></div></div>
+          <div class="context-divider"></div>
+          <div class="context-field"><div class="context-label">Case</div><div class="context-value">CORP-ABC-2607</div></div>
+          <div class="context-field"><div class="context-label">RM phụ trách</div><div class="context-value">Nguyễn Minh Anh</div></div>
+          <div class="context-field"><div class="context-label">Dữ liệu cập nhật</div><div class="context-value">5 phút trước</div></div>
+          <div class="context-field"><div class="context-label">Phạm vi quyền</div><div class="context-value">Xem · Sửa · Tạo draft</div></div>
+          <div class="context-right"><span class="badge blue"><span class="dot"></span>Context đã xác minh</span><button class="icon-btn" title="Chỉnh context"><svg><use href="#i-edit"/></svg></button></div>
+        </div>
+
+        <div class="workspace-grid">
+          <aside class="sticky-col">
+            <div class="panel">
+              <div class="panel-head"><div><h3>Bối cảnh quan hệ</h3><p>Tại sao đây là cơ hội phù hợp lúc này</p></div><span class="badge gray">CRM</span></div>
+              <div class="panel-body">
+                <div class="compact-section">
+                  <div class="section-kicker">Hồ sơ doanh nghiệp</div>
+                  <dl class="kv"><dt>Ngành</dt><dd>Sản xuất</dd><dt>Doanh thu</dt><dd>120 tỷ/năm</dd><dt>Nhân sự</dt><dd>500</dd><dt>Thời gian quan hệ</dt><dd>4,2 năm</dd><dt>Pháp lý</dt><dd><span class="badge green">Đang hoạt động</span></dd></dl>
+                </div>
+                <div class="compact-section">
+                  <div class="section-kicker">Sản phẩm đang sử dụng</div>
+                  <div class="product-pills"><span class="product-pill">Tài khoản thanh toán</span><span class="product-pill">eBanking doanh nghiệp</span><span class="product-pill">Chuyển tiền nội địa</span></div>
+                </div>
+                <div class="compact-section">
+                  <div class="section-kicker">Mức độ sẵn sàng dữ liệu</div>
+                  <div class="readiness">
+                    <div class="readiness-row"><span>Thông tin doanh nghiệp</span><strong>100%</strong><div class="readiness-track"><span style="width:100%"></span></div></div>
+                    <div class="readiness-row"><span>Hồ sơ giao dịch</span><strong>82%</strong><div class="readiness-track"><span style="width:82%"></span></div></div>
+                    <div class="readiness-row"><span>Hồ sơ tín dụng</span><strong id="creditReadiness">46%</strong><div class="readiness-track"><span id="creditReadinessBar" style="width:46%;background:var(--amber-600)"></span></div></div>
+                  </div>
+                </div>
+                <div class="compact-section">
+                  <div class="section-kicker">Người quyết định phía khách hàng</div>
+                  <dl class="kv"><dt>Đầu mối</dt><dd>Trần Thu Hà</dd><dt>Vai trò</dt><dd>Giám đốc Tài chính</dd><dt>Tương tác cuối</dt><dd>Hôm nay, 09:20</dd></dl>
+                </div>
+                <div class="source-note"><svg><use href="#i-lock"/></svg><span>Chỉ dữ liệu trong phạm vi RM được phép mới được đưa vào case. Không hiển thị PII không cần thiết.</span></div>
+              </div>
+            </div>
+          </aside>
+
+          <section>
+            <div class="decision-hero">
+              <div class="decision-title"><div class="decision-icon"><svg><use href="#i-clipboard"/></svg></div><div><h2>Hệ thống hiểu nhu cầu như sau</h2><p>ABC muốn chuẩn hóa chi lương và thanh toán nhà cung cấp, tập trung dòng tiền, đồng thời chuẩn bị nguồn vốn 20 tỷ đồng cho mùa cao điểm trong 6 tháng.</p></div></div>
+              <div class="intent-row"><span class="intent-chip">Chi lương <span class="confidence">98%</span></span><span class="intent-chip">Thanh toán nhà cung cấp <span class="confidence">96%</span></span><span class="intent-chip">Quản lý dòng tiền <span class="confidence">93%</span></span><span class="intent-chip">Vốn lưu động <span class="confidence">RM xác nhận</span></span></div>
+              <div class="fact-grid">
+                <div class="fact-card"><small>Quy mô nhân sự</small><strong>500 người</strong><div class="fact-source"><span class="source-tag">CRM</span><span>5 phút trước</span></div></div>
+                <div class="fact-card"><small>Lệnh chi NCC</small><strong>1.200/tháng</strong><div class="fact-source"><span class="source-tag">RM xác nhận</span><span>Hôm nay</span></div></div>
+                <div class="fact-card"><small>Tài khoản vận hành</small><strong>6 tại 3 ngân hàng</strong><div class="fact-source"><span class="source-tag">Biên bản họp</span><span>Hôm nay</span></div></div>
+                <div class="fact-card"><small>Nhu cầu vốn</small><strong>20 tỷ · 6 tháng</strong><div class="fact-source"><span class="source-tag">RM xác nhận</span><span>Hôm nay</span></div></div>
+              </div>
+            </div>
+
+            <div class="opportunity-section-head"><h3>4 opportunity được đề xuất</h3><span>Chọn phạm vi sẽ đưa vào payload phê duyệt</span></div>
+            <div id="opportunityList" class="op-list"></div>
+          </section>
+
+          <aside class="sticky-col action-column">
+            <div class="panel">
+              <div class="panel-head"><div><h3>Action Center</h3><p>Những gì xảy ra sau khi RM duyệt</p></div><span class="badge orange">Draft only</span></div>
+              <div class="panel-body">
+                <div>
+                  <div class="action-summary"><div class="summary-tile"><strong id="selectedCount">4</strong><span>Opportunity</span></div><div class="summary-tile"><strong id="taskCount">4</strong><span>Task nội bộ</span></div></div>
+                  <div id="actionList" class="action-list"></div>
+                  <div class="do-not"><h4>Hệ thống sẽ không</h4><div class="do-not-row"><svg><use href="#i-x"/></svg>Gửi email tự động cho khách hàng</div><div class="do-not-row"><svg><use href="#i-x"/></svg>Phê duyệt hoặc cam kết hạn mức tín dụng</div><div class="do-not-row"><svg><use href="#i-x"/></svg>Ghi dữ liệu ngoài phạm vi payload đã xem</div></div>
+                </div>
+                <div class="action-buttons"><button class="btn btn-primary" id="openApproval"><svg><use href="#i-shield"/></svg>Duyệt phạm vi hành động</button><button class="btn btn-secondary" id="addDocs"><svg><use href="#i-upload"/></svg>Bổ sung UBO + BCTC</button><button class="btn btn-ghost" id="requestRevision">Yêu cầu AI chỉnh đề xuất</button><div class="security-note">Approval token có thời hạn 5 phút · gắn với payload hash · chống replay</div></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="view-approvals" class="view">
+        <div class="page-head"><div class="page-title"><h1>Chờ phê duyệt</h1><p>Các case đã có decision brief và payload sẵn sàng để RM kiểm tra.</p></div></div>
+        <div class="panel"><div class="panel-head"><div><h2>2 case đang chờ</h2><p>Approval không đồng nghĩa với phê duyệt tín dụng.</p></div></div><div class="panel-body"><div class="action-list"><div class="action-item"><div class="action-status pending"><svg><use href="#i-clock"/></svg></div><div class="action-copy"><strong>Công ty TNHH Sản xuất ABC · 4 opportunity</strong><span>3 nhánh sẵn sàng, 1 nhánh chờ hồ sơ · cập nhật 5 phút trước</span></div><button class="btn btn-secondary" data-open-abc style="margin-left:auto">Xem brief</button></div><div class="action-item"><div class="action-status pending"><svg><use href="#i-clock"/></svg></div><div class="action-copy"><strong>Công ty Logistics DEF · 2 opportunity</strong><span>Cần xác nhận người nhận email và ma trận phê duyệt</span></div><button class="btn btn-secondary" style="margin-left:auto">Xem brief</button></div></div></div></div>
+      </section>
+
+      <section id="view-performance" class="view">
+        <div class="page-head"><div class="page-title"><h1>Hiệu suất & kiểm soát</h1><p>Góc nhìn Sales Lead: đo outcome workflow, không đo số lượt chatbot trả lời.</p></div><div class="head-actions"><select class="select"><option>7 ngày gần nhất</option><option>30 ngày gần nhất</option></select></div></div>
+        <div class="metric-grid"><div class="metric-card"><div class="metric-top">RM acceptance<span class="metric-icon green"><svg><use href="#i-check"/></svg></span></div><div class="metric-value">78%</div><div class="metric-foot">Draft được duyệt với chỉnh sửa nhỏ</div></div><div class="metric-card"><div class="metric-top">Evidence coverage<span class="metric-icon"><svg><use href="#i-file"/></svg></span></div><div class="metric-value">100%</div><div class="metric-foot">Claim quan trọng có nguồn hợp lệ</div></div><div class="metric-card"><div class="metric-top">Unsafe actions<span class="metric-icon green"><svg><use href="#i-shield"/></svg></span></div><div class="metric-value">0</div><div class="metric-foot">Tamper/replay/không đủ quyền</div></div><div class="metric-card"><div class="metric-top">Task trùng đã ngăn<span class="metric-icon orange"><svg><use href="#i-refresh"/></svg></span></div><div class="metric-value">14</div><div class="metric-foot">Nhờ dedup và existing-task reuse</div></div></div>
+        <div class="management-grid">
+          <div class="panel chart-panel"><div class="chart-title"><div><h3>Opportunity funnel</h3><p>Từ tín hiệu được phát hiện đến opportunity đã thắng</p></div><span class="badge blue">Synthetic pilot</span></div><div class="funnel"><div class="funnel-row"><span>Được phát hiện</span><div class="funnel-bar"><span style="width:100%"></span></div><strong>184</strong></div><div class="funnel-row"><span>RM chấp nhận</span><div class="funnel-bar"><span style="width:78%"></span></div><strong>144</strong></div><div class="funnel-row"><span>Đã tiếp cận</span><div class="funnel-bar"><span style="width:57%"></span></div><strong>105</strong></div><div class="funnel-row"><span>Qualified</span><div class="funnel-bar"><span style="width:35%"></span></div><strong>65</strong></div><div class="funnel-row"><span>Đề xuất chính thức</span><div class="funnel-bar"><span style="width:23%"></span></div><strong>42</strong></div><div class="funnel-row"><span>Won</span><div class="funnel-bar"><span style="width:11%"></span></div><strong>20</strong></div></div></div>
+          <div class="panel chart-panel"><div class="chart-title"><div><h3>Thời gian tạo Decision Brief</h3><p>Trung vị theo ngày, đơn vị phút</p></div><strong style="color:var(--green-700)">−41%</strong></div><div class="sparkline"><i style="height:88%"></i><i style="height:81%"></i><i style="height:74%"></i><i style="height:67%"></i><i style="height:61%"></i><i style="height:51%"></i><i style="height:43%"></i></div></div>
+          <div class="panel chart-panel"><div class="chart-title"><div><h3>Control health</h3><p>Các chỉ số không được thỏa hiệp</p></div></div><div class="control-list"><div class="control-row"><span>Important claims có evidence</span><strong>100%</strong></div><div class="control-row"><span>Unsafe external action rate</span><strong>0%</strong></div><div class="control-row"><span>Duplicate task/action rate</span><strong>0%</strong></div><div class="control-row"><span>Unnecessary clarification rate</span><strong>7,4%</strong></div></div></div>
+          <div class="panel chart-panel"><div class="chart-title"><div><h3>Top lý do RM chỉnh sửa</h3><p>Feedback loop để cải thiện signal và workflow</p></div></div><div class="control-list"><div class="control-row"><span>Thay đổi next-best-action</span><strong>31%</strong></div><div class="control-row"><span>Điều chỉnh owner/SLA</span><strong>24%</strong></div><div class="control-row"><span>Bỏ opportunity không phù hợp</span><strong>18%</strong></div><div class="control-row"><span>Sửa dữ kiện khách hàng</span><strong>11%</strong></div></div></div>
+        </div>
+      </section>
+
+      <section id="view-receipt" class="view">
+        <div class="receipt">
+          <div class="receipt-hero"><div class="receipt-icon"><svg><use href="#i-check"/></svg></div><h1>Payload đã được phê duyệt và thực thi an toàn</h1><p>Hệ thống chỉ tạo draft và task trong môi trường mô phỏng. Không có email được gửi và không có quyết định tín dụng được thực hiện.</p><div class="receipt-meta"><span>Receipt: <strong id="receiptId">RCPT-260717-1042</strong></span><span>Approver: <strong>RM-999</strong></span><span>Payload hash: <strong>8b7f…1c2a</strong></span></div></div>
+          <div class="receipt-grid"><div class="panel"><div class="panel-head"><div><h3>Hành động đã thực thi</h3><p>Idempotent · có thể audit</p></div></div><div class="panel-body"><div id="receiptActions" class="receipt-actions"></div></div></div><div class="panel"><div class="panel-head"><div><h3>Audit timeline</h3><p>Correlation ID TRACE-ABC-2607</p></div></div><div class="panel-body"><div class="audit-line"><time>10:42:08</time><div>RM xác nhận payload version 3</div></div><div class="audit-line"><time>10:42:09</time><div>Approval token được xác minh</div></div><div class="audit-line"><time>10:42:09</time><div>RBAC + evidence + idempotency gate: PASS</div></div><div class="audit-line"><time>10:42:10</time><div>Mock CRM executor hoàn tất 6 action</div></div></div></div></div>
+          <div style="display:flex;justify-content:center;gap:9px;margin-top:14px"><button class="btn btn-secondary" data-view-target="queue">Về Opportunity Queue</button><button class="btn btn-blue" data-view-target="workspace">Mở lại Decision Brief</button></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="drawer" id="sideDrawer" aria-hidden="true">
+    <div class="drawer-head"><div><h2 id="drawerTitle">Agent trace</h2><p id="drawerSubtitle">TRACE-ABC-2607 · 8 bước · 2,4 giây</p></div><button class="icon-btn drawer-close" id="drawerClose"><svg><use href="#i-x"/></svg></button></div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <section class="modal" id="approvalModal" role="dialog" aria-modal="true" aria-labelledby="approvalTitle">
+    <div class="modal-head"><div class="modal-title-icon"><svg><use href="#i-shield"/></svg></div><div><h2 id="approvalTitle">Duyệt phạm vi hành động</h2><p>Kiểm tra chính xác dữ liệu sẽ được tạo. Đây không phải phê duyệt tín dụng.</p></div><button class="icon-btn" id="closeApproval"><svg><use href="#i-x"/></svg></button></div>
+    <div class="modal-body"><div class="approval-overview"><div><strong id="approvalOpCount">4</strong><span>Opportunity</span></div><div><strong id="approvalReadyCount">3</strong><span>Nhánh sẵn sàng</span></div><div><strong id="approvalPendingCount">1</strong><span>Nhánh chờ</span></div><div><strong id="approvalTaskCount">4</strong><span>Task nội bộ</span></div></div><table class="diff-table"><thead><tr><th>Đối tượng</th><th>Hành động</th><th>Trạng thái sau duyệt</th></tr></thead><tbody id="payloadDiff"></tbody></table><div class="confirm-list"><label class="confirm-item"><input class="approval-check" type="checkbox"><span><strong>Tôi đã kiểm tra đúng doanh nghiệp và case</strong><span>COMP-ABC · CORP-ABC-2607</span></span></label><label class="confirm-item"><input class="approval-check" type="checkbox"><span><strong>Tôi đồng ý với cách hệ thống hiểu nhu cầu</strong><span>Các fact có nguồn và phần RM xác nhận được hiển thị trong Decision Brief.</span></span></label><label class="confirm-item"><input class="approval-check" type="checkbox"><span><strong>Tôi hiểu nhánh vốn lưu động chưa phải quyết định tín dụng</strong><span>Nhánh này chỉ tạo opportunity chờ bổ sung/chuyển thẩm định.</span></span></label><label class="confirm-item"><input class="approval-check" type="checkbox"><span><strong>Tôi đã xem các draft và payload sẽ được tạo</strong><span>Không có email được gửi tự động.</span></span></label></div><label class="field-label" for="approvalComment">Ghi chú phê duyệt</label><textarea class="textarea" id="approvalComment">Đồng ý tạo opportunity và task theo phạm vi đã chọn. Không cam kết hạn mức với khách hàng.</textarea></div>
+    <div class="modal-foot"><div class="approval-security"><svg><use href="#i-lock"/></svg>Token 5 phút · payload-bound · chống replay</div><div class="modal-actions"><button class="btn btn-secondary" id="cancelApproval">Hủy</button><button class="btn btn-primary" id="confirmApproval" disabled><svg><use href="#i-shield"/></svg>Xác nhận và thực thi</button></div></div>
+  </section>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script>
+    const $ = (s, root=document) => root.querySelector(s);
+    const $$ = (s, root=document) => [...root.querySelectorAll(s)];
+    const icon = id => `<svg><use href="#i-${id}"/></svg>`;
+
+    const state = {
+      currentView: 'queue',
+      documentsCompleted: false,
+      apiConnected: false,
+      selectedOpIds: new Set(['payroll','supplier','cash','credit']),
+      cases: [
+        {id:'ABC', name:'Công ty TNHH Sản xuất ABC', meta:'Sản xuất · COMP-ABC', opportunities:4, statuses:[['green','3 sẵn sàng'],['amber','1 chờ hồ sơ']], action:'Duyệt gói giải pháp', sla:'1 giờ 42 phút', urgent:true, type:'ready'},
+        {id:'DEF', name:'Công ty Logistics DEF', meta:'Vận tải & Logistics · COMP-DEF', opportunities:2, statuses:[['amber','Cần bổ sung']], action:'Xác nhận ma trận duyệt', sla:'6 giờ', type:'pending'},
+        {id:'XYZ', name:'Công ty Phân phối XYZ', meta:'Bán buôn · COMP-XYZ', opportunities:1, statuses:[['red','Legal review']], action:'Chờ Compliance', sla:'11 giờ', type:'review'},
+        {id:'MNO', name:'Công ty Thực phẩm MNO', meta:'FMCG · COMP-MNO', opportunities:3, statuses:[['green','2 sẵn sàng'],['gray','1 khảo sát']], action:'Chuẩn bị gặp CFO', sla:'1 ngày', type:'ready'},
+        {id:'PQR', name:'Công ty Công nghệ PQR', meta:'Phần mềm · COMP-PQR', opportunities:2, statuses:[['blue','Đang phân tích']], action:'Xác nhận dòng tiền', sla:'1 ngày 4 giờ', type:'pending'},
+        {id:'HJK', name:'Công ty Xây dựng HJK', meta:'Xây dựng · COMP-HJK', opportunities:2, statuses:[['amber','Thiếu tài liệu']], action:'Thu thập UBO', sla:'2 ngày', type:'pending'}
+      ],
+      opportunities: [
+        {id:'payroll', title:'Dịch vụ chi trả lương doanh nghiệp', short:'Payroll', score:92, status:'ready', statusLabel:'Sẵn sàng trao đổi', description:'Tự động hóa chi lương cho 500 nhân viên và mở rộng hệ sinh thái tài khoản cá nhân.', reasons:['Quy mô 500 nhân sự vượt điều kiện tối thiểu','Nhu cầu chi lương được RM xác nhận','Chưa ghi nhận dịch vụ Payroll đang hoạt động'], next:'Xác nhận ngày trả lương và tỷ lệ nhân viên tham gia', source:'SHB_Product_Catalog_2026.pdf', section:'Chương III · Mục 3.1', quote:'Doanh nghiệp có số lượng nhân sự tối thiểu từ 10 người trở lên và có đăng ký kinh doanh hợp pháp.'},
+        {id:'supplier', title:'Thanh toán nhà cung cấp số lượng lớn', short:'Supplier Payment', score:89, status:'ready', statusLabel:'Sẵn sàng chuẩn bị', description:'Chuẩn hóa 1.200 lệnh chi/tháng và giảm xử lý thủ công trong đối soát.', reasons:['Khối lượng thanh toán lặp lại cao','ERP có thể xuất file thanh toán','Tạo nền tảng tích hợp API ở giai đoạn sau'], next:'Thu thập định dạng file và ma trận phê duyệt', source:'SHB_Transactional_Banking_Handbook.pdf', section:'Phần IV · Dịch vụ chi hộ', quote:'Giải pháp hỗ trợ doanh nghiệp có nhu cầu thu chi khối lượng giao dịch lớn và hệ thống quản lý công nợ/ERP.'},
+        {id:'cash', title:'Quản lý dòng tiền thông minh', short:'Cash Management', score:86, status:'ready', statusLabel:'Sẵn sàng khảo sát', description:'Tập trung số dư từ nhiều tài khoản, cải thiện khả năng quan sát và điều phối dòng tiền.', reasons:['Dòng tiền hiện đang phân tán','Doanh thu 120 tỷ vượt ngưỡng demo','Có 6 tài khoản vận hành tại 3 ngân hàng'], next:'Khảo sát cấu trúc tài khoản và quy tắc cash sweeping', source:'SHB_Cash_Management_Policy.pdf', section:'Điều 12 · Cash Sweeping', quote:'Doanh nghiệp có từ 3 tài khoản phụ hoặc đơn vị vận hành trở lên và doanh thu tối thiểu 50 tỷ đồng.'},
+        {id:'credit', title:'Tài trợ vốn lưu động doanh nghiệp', short:'Working Capital', score:82, status:'pending', statusLabel:'Chờ bổ sung thông tin', description:'Chuẩn bị nhu cầu vốn 20 tỷ đồng trong 6 tháng; chưa được phép cam kết với khách hàng.', reasons:['Nhu cầu vốn mùa vụ được RM xác nhận','Thiếu thông tin UBO','Thiếu báo cáo tài chính năm gần nhất'], next:'Thu thập UBO và BCTC trước khi chuyển thẩm định', source:'SHB_Credit_Policy_Manual', section:'Điều 15 và Điều 25', quote:'Hồ sơ vốn lưu động phải có thông tin UBO đầy đủ và báo cáo tài chính năm gần nhất. Thiếu dữ liệu dẫn đến pending_information.'}
+      ]
+    };
+
+    function renderCaseRows() {
+      const q = ($('#caseSearch')?.value || '').toLowerCase();
+      const filter = $('#statusFilter')?.value || 'all';
+      const rows = state.cases.filter(c => (!q || `${c.name} ${c.meta} ${c.action}`.toLowerCase().includes(q)) && (filter==='all' || c.type===filter));
+      $('#caseRows').innerHTML = rows.map(c => `<tr>
+        <td><div class="company-cell"><div class="company-logo">${c.id}</div><div><div class="company-name">${c.name}</div><div class="company-meta">${c.meta}</div></div></div></td>
+        <td><span class="op-count">${c.opportunities}</span><div class="company-meta">opportunity</div></td>
+        <td><div class="status-stack">${c.statuses.map(s=>`<span class="badge ${s[0]}"><span class="dot"></span>${s[1]}</span>`).join('')}</div></td>
+        <td><strong style="font-size:11px;color:var(--ink-800)">${c.action}</strong></td>
+        <td><div class="sla ${c.urgent?'urgent':''}">${icon('clock')}${c.sla}</div></td>
+        <td><div class="row-actions"><button class="btn btn-secondary" ${c.id==='ABC'?'data-open-abc':''}>Mở case</button><button class="icon-btn">${icon('more')}</button></div></td>
+      </tr>`).join('') || `<tr><td colspan="6"><div class="empty">${icon('search')}<h3>Không tìm thấy case</h3><p>Thử thay đổi từ khóa hoặc bộ lọc.</p></div></td></tr>`;
+      $$('[data-open-abc]').forEach(b=>b.addEventListener('click',()=>switchView('workspace')));
+    }
+
+    function renderOpportunities() {
+      $('#opportunityList').innerHTML = state.opportunities.map(op => {
+        const selected = state.selectedOpIds.has(op.id);
+        const statusClass = op.status==='ready'?'green':op.status==='pending'?'amber':'blue';
+        const reasonRows = op.reasons.map((r,i)=>`<div class="reason ${op.status==='pending' && i>0?'warn':''}">${icon(op.status==='pending' && i>0?'alert':'check')}<span>${r}</span></div>`).join('');
+        return `<article class="op-card ${selected?'selected':''} ${op.status==='pending'?'pending':''}" data-op="${op.id}">
+          <div class="op-card-top"><button class="check-wrap btn-ghost" data-toggle-op="${op.id}" aria-label="Chọn opportunity"><span class="checkbox">${selected?icon('check'):''}</span></button><div class="op-main"><h4>${op.title}<span class="badge ${statusClass}"><span class="dot"></span>${op.statusLabel}</span></h4><p>${op.description}</p></div><div class="score-box"><strong>${op.score}</strong><span>Fit score</span></div></div>
+          <div class="op-reasons"><div class="reason-list">${reasonRows}</div><div class="op-next"><small>Next-best-action</small><strong>${op.next}</strong></div></div>
+          <div class="op-card-foot"><button class="link-btn" data-evidence="${op.id}">${icon('file')}Xem bằng chứng</button><button class="link-btn" data-score="${op.id}">${icon('chart')}Cấu phần điểm</button><span class="spacer"></span><span class="badge gray">${op.id==='credit'?'Legal + Product':'Product Agent'}</span></div>
+        </article>`;
+      }).join('');
+      $$('[data-toggle-op]').forEach(b=>b.addEventListener('click',()=>toggleOpportunity(b.dataset.toggleOp)));
+      $$('[data-evidence]').forEach(b=>b.addEventListener('click',()=>openEvidence(b.dataset.evidence)));
+      $$('[data-score]').forEach(b=>b.addEventListener('click',()=>openScore(b.dataset.score)));
+      renderActions();
+    }
+
+    function toggleOpportunity(id) {
+      if (state.selectedOpIds.has(id)) state.selectedOpIds.delete(id); else state.selectedOpIds.add(id);
+      renderOpportunities();
+    }
+
+    function renderActions() {
+      const selected = state.opportunities.filter(o=>state.selectedOpIds.has(o.id));
+      const ready = selected.filter(o=>o.status==='ready').length;
+      const pending = selected.filter(o=>o.status!=='ready').length;
+      $('#selectedCount').textContent = selected.length;
+      $('#taskCount').textContent = state.documentsCompleted ? Math.max(3,selected.length) : 4;
+      const rows = [];
+      if (selected.length) rows.push({status:'ok',title:`Tạo ${selected.length} opportunity trong CRM mô phỏng`,meta:`${ready} ready · ${pending} pending/review`});
+      if (state.selectedOpIds.has('payroll')) rows.push({status:'ok',title:'Tạo task xác nhận lịch chi lương',meta:'Owner: RM-999 · SLA 8 giờ'});
+      if (state.selectedOpIds.has('supplier')) rows.push({status:'ok',title:'Tạo task thu thập ma trận phê duyệt',meta:'Owner: Implementation · SLA 24 giờ'});
+      if (state.selectedOpIds.has('credit')) rows.push({status: state.documentsCompleted?'ok':'pending',title: state.documentsCompleted?'Chuyển hồ sơ sang thẩm định sơ bộ':'Yêu cầu UBO và BCTC',meta:state.documentsCompleted?'Không phải phê duyệt tín dụng':'Tái sử dụng task UBO hiện có'});
+      rows.push({status:'ok',title:'Lưu email phản hồi ở trạng thái draft',meta:'Không gửi tự động'});
+      $('#actionList').innerHTML = rows.map(r=>`<div class="action-item"><div class="action-status ${r.status==='pending'?'pending':''}">${icon(r.status==='pending'?'clock':'check')}</div><div class="action-copy"><strong>${r.title}</strong><span>${r.meta}</span></div></div>`).join('');
+    }
+
+    function switchView(name) {
+      state.currentView = name;
+      $$('.view').forEach(v=>v.classList.remove('active'));
+      $(`#view-${name}`)?.classList.add('active');
+      $$('.nav-item[data-view]').forEach(n=>n.classList.toggle('active',n.dataset.view===name));
+      const names={queue:'Cơ hội hôm nay',workspace:'Decision Brief · Công ty ABC',approvals:'Chờ phê duyệt',performance:'Hiệu suất & kiểm soát',receipt:'Execution Receipt'};
+      $('#breadcrumbCurrent').textContent=names[name]||name;
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    function openDrawer(title, subtitle, html) {
+      $('#drawerTitle').textContent=title; $('#drawerSubtitle').textContent=subtitle; $('#drawerBody').innerHTML=html;
+      $('#drawerBackdrop').classList.add('open'); $('#sideDrawer').classList.add('open'); $('#sideDrawer').setAttribute('aria-hidden','false');
+    }
+    function closeDrawer() { $('#drawerBackdrop').classList.remove('open'); $('#sideDrawer').classList.remove('open'); $('#sideDrawer').setAttribute('aria-hidden','true'); }
+
+    function traceHtml() {
+      const steps = [
+        ['Context Engine','Đã xác minh RM, customer, case, quyền và độ mới dữ liệu.','82 ms','6 sources','PASS'],
+        ['Need & Signal Analyst','Chuyển 4 fact thành 4 nhu cầu kinh doanh; phân biệt fact và inference.','218 ms','4 signals','PASS'],
+        ['Opportunity Generator','Tạo 4 opportunity độc lập để có thể đo funnel và action theo từng nhánh.','143 ms','4 outputs','PASS'],
+        ['Product Agent','Truy xuất catalog kiểm soát và xếp hạng sản phẩm với citation.','506 ms','4 citations','PASS'],
+        ['Legal Agent','Chỉ nhánh Working Capital bị pending vì thiếu UBO/BCTC.','419 ms','2 blocking rules','ATTENTION'],
+        ['Operations Agent','Chuẩn bị checklist, owner, SLA, email draft và kiểm tra task trùng.','226 ms','4 tasks','PASS'],
+        ['Evidence Validator','Xác minh claim quan trọng; chặn phát biểu “đủ điều kiện hoàn toàn”.','364 ms','100% covered','PASS'],
+        ['Decision Brief Composer','Nén output thành brief có thể duyệt trong khoảng 60 giây.','297 ms','payload v3','READY']
+      ];
+      return `<div class="trace-list">${steps.map((s,i)=>`<div class="trace-step"><div class="trace-node ${s[4]==='ATTENTION'?'warn':''}">${icon(s[4]==='ATTENTION'?'alert':'check')}</div><div class="trace-content"><div class="trace-top"><strong>${i+1}. ${s[0]}</strong><span class="trace-time">${s[2]}</span></div><p>${s[1]}</p><div class="trace-meta"><span>${s[3]}</span><span>${s[4]}</span><span>schema v2.0</span></div></div></div>`).join('')}</div>`;
+    }
+
+    function openEvidence(id) {
+      const op = state.opportunities.find(o=>o.id===id);
+      openDrawer(`Bằng chứng · ${op.short}`,`${op.source} · ${op.section}`,`<div class="evidence-block"><div class="evidence-head"><div class="action-status">${icon('file')}</div><div><h4>${op.source}</h4><p>${op.section} · phiên bản synthetic 2026</p></div></div><div class="evidence-body"><div class="evidence-quote">“${op.quote}”</div><div class="evidence-meta"><span>Claim được hỗ trợ: điều kiện và prerequisite của opportunity</span><span class="badge green">Valid</span></div></div></div><div class="source-note">${icon('alert')}<span>Nguồn này là dữ liệu synthetic trong repo demo; trước production cần owner, version, effective date và phê duyệt của SHB.</span></div>`);
+    }
+
+    function openScore(id) {
+      const op = state.opportunities.find(o=>o.id===id);
+      const parts=[['Mức phù hợp nhu cầu',Math.min(98,op.score+3),30],['Độ sâu quan hệ',84,20],['Thời điểm',op.id==='credit'?78:88,20],['Sẵn sàng sản phẩm',op.status==='ready'?92:51,15],['Chất lượng bằng chứng',op.status==='ready'?96:68,15]];
+      openDrawer(`Cấu phần điểm · ${op.short}`,'Điểm dùng để ưu tiên, không phải quyết định eligibility',`<div class="source-note" style="margin:0 0 12px">${icon('shield')}<span>Điểm opportunity không thay thế Legal rule, credit scoring hoặc phán đoán của RM.</span></div>${parts.map(p=>`<div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px"><strong>${p[0]}</strong><span>${p[1]}/100 · trọng số ${p[2]}%</span></div><div class="readiness-track"><span style="width:${p[1]}%;background:${p[1]<70?'var(--amber-600)':'var(--blue-600)'}"></span></div></div>`).join('')}<div class="panel" style="margin-top:16px"><div class="panel-body"><strong style="font-size:12px">Tổng điểm: ${op.score}/100</strong><p style="font-size:10px;color:var(--ink-500);margin:5px 0 0">Có thể giải thích theo từng thành phần, có version và không được dùng để tự động phê duyệt.</p></div></div>`);
+    }
+
+    function openApproval() {
+      const selected=state.opportunities.filter(o=>state.selectedOpIds.has(o.id));
+      if(!selected.length){ toast('Chưa chọn opportunity','Chọn ít nhất một opportunity trước khi duyệt.'); return; }
+      const ready=selected.filter(o=>o.status==='ready').length;
+      $('#approvalOpCount').textContent=selected.length; $('#approvalReadyCount').textContent=ready; $('#approvalPendingCount').textContent=selected.length-ready; $('#approvalTaskCount').textContent=state.documentsCompleted?Math.max(3,selected.length):4;
+      $('#payloadDiff').innerHTML=selected.map(o=>`<tr><td><strong>${o.short}</strong><div class="company-meta">OPP-${o.id.toUpperCase()}-001</div></td><td>Create opportunity</td><td><span class="badge ${o.status==='ready'?'green':'amber'}">${o.status==='ready'?'Ready':'Pending information'}</span></td></tr>`).join('')+`<tr><td><strong>Customer email</strong></td><td>Save draft</td><td><span class="badge gray">Not sent</span></td></tr>`;
+      $$('.approval-check').forEach(c=>c.checked=false); $('#confirmApproval').disabled=true;
+      $('#modalBackdrop').classList.add('open'); $('#approvalModal').classList.add('open');
+    }
+    function closeApproval(){ $('#modalBackdrop').classList.remove('open'); $('#approvalModal').classList.remove('open'); }
+
+    function confirmApproval(){
+      closeApproval();
+      const selected=state.opportunities.filter(o=>state.selectedOpIds.has(o.id));
+      $('#receiptId').textContent=`RCPT-${new Date().toISOString().slice(2,10).replaceAll('-','')}-${Math.floor(1000+Math.random()*8999)}`;
+      $('#receiptActions').innerHTML=selected.map(o=>`<div class="receipt-action">${icon('check')}<strong>${o.short}</strong><span>${o.status==='ready'?'CREATED':'PENDING'}</span></div>`).join('')+`<div class="receipt-action">${icon('check')}<strong>Email phản hồi được lưu dưới dạng draft</strong><span>NOT_SENT</span></div><div class="receipt-action">${icon('check')}<strong>Task đã được tạo/tái sử dụng, không trùng lặp</strong><span>IDEMPOTENT</span></div>`;
+      toast('Phê duyệt thành công','Payload đã qua RBAC, evidence và idempotency gate.');
+      setTimeout(()=>switchView('receipt'),350);
+    }
+
+    function addDocuments(){
+      if(state.documentsCompleted){toast('Hồ sơ đã được bổ sung','UBO và BCTC đang ở phiên bản mới nhất trong demo.');return;}
+      state.documentsCompleted=true;
+      const credit=state.opportunities.find(o=>o.id==='credit');
+      credit.status='review'; credit.statusLabel='Sẵn sàng chuyển thẩm định'; credit.score=88; credit.reasons=['Nhu cầu vốn mùa vụ được RM xác nhận','UBO đã được bổ sung và xác minh metadata','BCTC gần nhất đã được tải lên']; credit.next='Chuyển chuyên viên tín dụng thẩm định sơ bộ'; credit.description='Hồ sơ dữ liệu đầu vào đã đầy đủ để chuyển thẩm định; hệ thống vẫn không phê duyệt tín dụng.';
+      $('#creditReadiness').textContent='86%'; $('#creditReadinessBar').style.width='86%'; $('#creditReadinessBar').style.background='var(--green-600)';
+      renderOpportunities();
+      toast('Đã resume theo impact graph','Chỉ Legal → Evidence → Operations chạy lại; Product và Intent được giữ nguyên.');
+    }
+
+    function toast(title,msg){
+      const el=document.createElement('div');el.className='toast';el.innerHTML=`${icon('check')}<div><strong>${title}</strong><span>${msg}</span></div>`;$('#toastWrap').appendChild(el);setTimeout(()=>el.remove(),4200);
+    }
+
+    function detectApi(){
+      if(location.protocol==='file:') return;
+      fetch('/health',{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()).then(()=>{state.apiConnected=true;$('#connectionLabel').textContent='API FastAPI đã kết nối';}).catch(()=>{});
+    }
+
+    // Event wiring
+    $$('.nav-item[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+    $$('[data-view-target]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.viewTarget)));
+    $$('[data-action="trace"], #traceBtn').forEach(b=>b.addEventListener('click',()=>openDrawer('Agent trace','TRACE-ABC-2607 · 8 bước · 2,4 giây',traceHtml())));
+    $('#drawerClose').addEventListener('click',closeDrawer); $('#drawerBackdrop').addEventListener('click',closeDrawer);
+    $('#openApproval').addEventListener('click',openApproval); $('#closeApproval').addEventListener('click',closeApproval); $('#cancelApproval').addEventListener('click',closeApproval); $('#modalBackdrop').addEventListener('click',closeApproval);
+    $$('.approval-check').forEach(c=>c.addEventListener('change',()=>$('#confirmApproval').disabled=!$$('.approval-check').every(x=>x.checked)));
+    $('#confirmApproval').addEventListener('click',confirmApproval); $('#addDocs').addEventListener('click',addDocuments);
+    $('#requestRevision').addEventListener('click',()=>toast('Đã ghi nhận yêu cầu chỉnh sửa','Trong production, feedback này tạo correction event và invalidate đúng downstream node.'));
+    $('#rerunBtn').addEventListener('click',()=>{toast('Đã phân tích lại','Planner giữ context và chạy lại các node bị ảnh hưởng.');});
+    $('#caseSearch').addEventListener('input',renderCaseRows); $('#statusFilter').addEventListener('change',renderCaseRows);
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();closeApproval();}});
+
+    renderCaseRows(); renderOpportunities(); detectApi();
+  </script>
+</body>
+</html>

@@ -1,2 +1,0 @@
-{"at": "2026-07-18T11:02:10.592689+00:00", "event_code": "case_created", "case_id": "CASE-501C1598A9D3", "trace_id": "TRACE-5FBB61D18E9E40B59CC399D1626B98CD", "status": "pending_approval"}
-{"at": "2026-07-18T11:02:10.602305+00:00", "event_code": "context_corrected", "case_id": "CASE-501C1598A9D3", "trace_id": "TRACE-5FBB61D18E9E40B59CC399D1626B98CD", "field": "customer.attributes.employees_count"}

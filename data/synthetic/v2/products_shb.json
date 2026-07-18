@@ -1,0 +1,708 @@
+{
+  "dataset_version": "2026.07.18-shb-manual-v1",
+  "source": "SHB_Corporate_RAG_Product_Manual_Public_Source_2026.odt",
+  "synthetic": false,
+  "products": [
+    {
+      "product_id": "SHB-CORP-ACC-001",
+      "bank": "SHB",
+      "product_name": "Tài khoản thanh toán doanh nghiệp",
+      "name": "Tài khoản thanh toán doanh nghiệp",
+      "category": "account",
+      "risk_level": "medium",
+      "source_label": [
+        "VERIFIED_PUBLIC",
+        "REGULATORY"
+      ],
+      "data_label": "VERIFIED_PUBLIC_REGULATORY",
+      "business_need": "Thiết lập tài khoản giao dịch cơ sở để nhận tiền, thanh toán và kích hoạt các dịch vụ số/doanh nghiệp khác.",
+      "target_profile": "• Doanh nghiệp mới bắt đầu quan hệ với SHB. • Doanh nghiệp cần tách tài khoản theo mục đích, chi nhánh hoặc đơn vị thành viên. • Doanh nghiệp muốn dùng Internet Banking, payroll, cash management, thuế, thẻ hoặc tài trợ thương mại.",
+      "public_features": [
+        "SHB công bố bộ điều kiện, điều khoản mở và sử dụng tài khoản thanh toán dành cho khách hàng tổ chức ngày 20/06/2025.",
+        "Dịch vụ Internet Banking doanh nghiệp yêu cầu khách hàng có tài khoản thanh toán tại SHB.",
+        "Hồ sơ công khai cho đăng ký ngân hàng điện tử gồm giấy phép/đăng ký doanh nghiệp, quyết định bổ nhiệm, giấy tờ người đại diện, giấy ủy quyền nếu có và giấy tờ người được ủy quyền.",
+        "Thông tư 17/2024/TT-NHNN là khung pháp lý về mở và sử dụng tài khoản thanh toán; tình trạng hiệu lực phải được kiểm tra trên CSDL VBPL."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Pháp nhân/tổ chức và người đại diện phải được nhận biết, xác minh theo quy định hiện hành.",
+        "Tài khoản và người dùng chỉ được kích hoạt theo thẩm quyền đã đăng ký."
+      ],
+      "internal_required": [
+        "Biểu phí và số dư/điều kiện hiện hành.",
+        "Danh sách hồ sơ chi tiết theo loại pháp nhân.",
+        "Kết quả KYC/AML, UBO, FATCA và quyền ký."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "Khách hàng chưa có tài khoản SHB.",
+        "Opportunity khác phụ thuộc tài khoản thanh toán.",
+        "Nhu cầu mở nhiều tài khoản hoặc phân quyền nhiều cấp."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Doanh nghiệp cần tài khoản VNĐ, ngoại tệ hay cả hai? 2. Ai là chủ tài khoản, người tạo lệnh và người phê duyệt? 3. Mô hình công ty mẹ–con hay nhiều chi nhánh? 4. Dịch vụ nào cần kích hoạt ngay sau mở tài khoản? Hành vi Multi-Agent Product Agent tạo sản phẩm cơ sở; Legal Agent xác minh pháp nhân/người đại diện; Operations Agent tạo checklist mở tài khoản. Không cho phép “READY” nếu customer identity hoặc authority chưa được xác minh."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-DIGI-002, SHB-CORP-PAY-003, SHB-CORP-CASH-004, SHB-CORP-TAX-006 SRC-SHB-001, SRC-SHB-002, SRC-REG-001"
+      ],
+      "branch_behavior": "READY_TO_PREPARE",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-ACC-001",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-DIGI-002",
+      "bank": "SHB",
+      "product_name": "Internet Banking / SHB Corporate Mobile",
+      "name": "Internet Banking / SHB Corporate Mobile",
+      "category": "digital",
+      "risk_level": "medium",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Cho phép doanh nghiệp vấn tin, lập và phê duyệt giao dịch từ xa, theo lô và theo cấp quyền.",
+      "target_profile": "• Doanh nghiệp có tài khoản thanh toán tại SHB. • Doanh nghiệp có nhiều giao dịch/chứng từ hoặc người phê duyệt ở nhiều địa điểm. • Doanh nghiệp cần chuyển tiền, chi lương, tra cứu bảo lãnh/L/C hoặc quản lý thẻ trên kênh số.",
+      "public_features": [
+        "SHB Internet Banking hỗ trợ vấn tin tài khoản, tiền gửi, tiền vay; chuyển tiền trong/ngoài hệ thống; chuyển tiền theo lô; thanh toán lương; truy vấn bảo lãnh, L/C và nhờ thu; đăng ký chuyển tiền quốc tế và phát hành L/C.",
+        "SHB công bố cơ chế xác thực bằng Smart OTP và/hoặc chữ ký số cho dịch vụ tài chính.",
+        "Thông tin nâng cấp công bố khả năng phân quyền 2–3 cấp và hạn mức liên ngân hàng đến 100 tỷ đồng/ngày tại thời điểm công bố năm 2023; agent phải kiểm tra điều khoản hiện hành trước khi nêu hạn mức."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Có tài khoản thanh toán và đăng ký dịch vụ ngân hàng điện tử.",
+        "Người dùng, vai trò tạo/kiểm soát/phê duyệt và phương thức xác thực phải được đăng ký."
+      ],
+      "internal_required": [
+        "Hạn mức và biểu phí hiện hành.",
+        "Danh mục tính năng theo gói và phiên bản.",
+        "Ma trận quyền, chính sách sinh trắc học/chữ ký số và device binding."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "Nhiều lệnh chi hoặc payroll theo lô.",
+        "Lãnh đạo cần phê duyệt từ xa.",
+        "Doanh nghiệp cần audit maker–checker.",
+        "Nhu cầu tra cứu tập trung tiền vay, bảo lãnh và L/C."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Số cấp phê duyệt và hạn mức mỗi cấp? 2. Doanh nghiệp dùng chữ ký số hay Smart OTP? 3. Có cần upload file lô/ERP không? 4. Nhóm giao dịch nào cần triển khai trước? Hành vi Multi-Agent Product Agent khuyến nghị gói số phù hợp; Legal/Operations kiểm quyền người dùng và hồ sơ. Action Executor chỉ tạo draft đăng ký, không tự cấp quyền hoặc thay hạn mức."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-PAY-003, SHB-CORP-TAX-006, SHB-CORP-CARD-007, SHB-CORP-TFI-010 SRC-SHB-002, SRC-SHB-005, SRC-SHB-006"
+      ],
+      "branch_behavior": "READY_TO_PREPARE",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-DIGI-002",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-PAY-003",
+      "bank": "SHB",
+      "product_name": "Dịch vụ và gói chi trả lương",
+      "name": "Dịch vụ và gói chi trả lương",
+      "category": "payroll",
+      "risk_level": "low",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Tự động hóa chi lương, giảm tiền mặt, giảm rủi ro và tạo trải nghiệm thống nhất cho doanh nghiệp và nhân viên.",
+      "target_profile": "• Doanh nghiệp có tài khoản SHB và nhu cầu trả lương định kỳ. • Doanh nghiệp có số lượng nhân viên đủ lớn để cần file/lệnh theo lô. • Doanh nghiệp muốn kết hợp ngân hàng số và phúc lợi tài chính cho nhân viên.",
+      "public_features": [
+        "SHB mô tả dịch vụ là trích từ tài khoản doanh nghiệp hoặc thu tiền để chi trả lương theo danh sách.",
+        "Đối tượng công khai là khách hàng doanh nghiệp có tài khoản tại SHB và có nhu cầu trả lương qua tài khoản.",
+        "Gói chi trả lương công bố các ưu đãi cho doanh nghiệp và người lao động; ưu đãi là thông tin theo thời kỳ, không được hard-code làm điều kiện sản phẩm."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Khách hàng có tài khoản doanh nghiệp tại SHB.",
+        "Danh sách chi lương và người phê duyệt phải đi theo kênh/quy trình được đăng ký."
+      ],
+      "internal_required": [
+        "Biểu phí/gói ưu đãi còn hiệu lực.",
+        "Định dạng file, cut-off time, hạn mức và SLA.",
+        "Hợp đồng dịch vụ, quy trình xử lý sai/hoàn trả."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "employees_count tăng hoặc lớn.",
+        "Payroll process thủ công hoặc tiền mặt.",
+        "Có pay_day cố định và nhiều tài khoản nhân viên ngoài SHB."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Số lượng nhân viên và tổng quỹ lương? 2. Ngày trả lương/cut-off mong muốn? 3. Nguồn file từ ERP/HRM và định dạng? 4. Mô hình maker–checker? 5. Tỷ lệ nhân viên dự kiến mở tài khoản SHB? Hành vi Multi-Agent Signal Agent chỉ dùng quy mô nhân sự như tín hiệu, không suy luận thu nhập cá nhân. Product Agent tạo payroll opportunity; Operations tạo checklist file, phê duyệt và test run."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-DIGI-002, SHB-CORP-CARD-007, SHB-CORP-CASH-005 SRC-SHB-003, SRC-SHB-004"
+      ],
+      "branch_behavior": "READY_TO_PREPARE",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-PAY-003",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-CASH-004",
+      "bank": "SHB",
+      "product_name": "Dịch vụ quản lý tài khoản tập trung",
+      "name": "Dịch vụ quản lý tài khoản tập trung",
+      "category": "cash",
+      "risk_level": "medium",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Tập trung, điều chuyển và kiểm soát tiền giữa tài khoản chính với tài khoản phụ/đơn vị thành viên.",
+      "target_profile": "• Tập đoàn, tổng công ty, công ty mẹ–con. • Tổng đại lý–đại lý hoặc doanh nghiệp có nhiều đơn vị/chi nhánh. • Doanh nghiệp có thừa/thiếu vốn cục bộ và muốn tự động gom/điều tiền.",
+      "public_features": [
+        "SHB mô tả giải pháp quản lý giữa một tài khoản chính và nhiều tài khoản phụ qua chuyển tiền tự động.",
+        "Có thể thiết kế chuyển tự động từ đơn vị thành viên về công ty mẹ hoặc ngược lại.",
+        "Tần suất công khai gồm hàng ngày hoặc nhiều ngày/lần; cuối ngày hoặc một/nhiều khung giờ.",
+        "Hồ sơ công khai gồm hồ sơ mở tài khoản thanh toán, hợp đồng dịch vụ và xác nhận tham gia của các đơn vị thành viên có tư cách pháp nhân độc lập."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Có cấu trúc tài khoản và các bên tham gia được xác nhận.",
+        "Có thỏa thuận/ủy quyền và quy tắc điều chuyển hợp lệ."
+      ],
+      "internal_required": [
+        "Thuật toán sweep/target balance/zero balance được hỗ trợ.",
+        "Biểu phí, cut-off, ngoại tệ, giao dịch liên pháp nhân và hạch toán.",
+        "Approval matrix và giới hạn tài khoản."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "accounts_count hoặc subsidiaries_count lớn.",
+        "Dòng tiền phân tán; đơn vị có dư và thiếu tiền cùng lúc.",
+        "CFO cần báo cáo tổng hợp và điều chuyển định kỳ."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Bao nhiêu tài khoản và pháp nhân tham gia? 2. Hướng sweep, số dư mục tiêu và tần suất? 3. Có giao dịch ngược từ công ty mẹ xuống đơn vị không? 4. Ai phê duyệt cấu hình và thay đổi rule? Hành vi Multi-Agent Product Agent phải dựng sơ đồ tài khoản; Legal kiểm thỏa thuận và quyền; Operations tạo implementation checklist. Không tự tạo cấu hình sweep."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-ACC-001, SHB-CORP-DIGI-002, SHB-CORP-CASH-005 SRC-SHB-007"
+      ],
+      "branch_behavior": "READY_TO_PREPARE",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-CASH-004",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-CASH-005",
+      "bank": "SHB",
+      "product_name": "Gói sản phẩm quản lý dòng tiền",
+      "name": "Gói sản phẩm quản lý dòng tiền",
+      "category": "cash",
+      "risk_level": "medium",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Kết hợp quản lý phải thu, phải trả, thanh khoản, chuyển tiền, tiền gửi và hạn mức ngắn hạn trong một bundle.",
+      "target_profile": "• Doanh nghiệp có nhu cầu đồng thời về tài khoản, chuyển tiền, tiền gửi, thu NSNN, thấu chi và quản lý tài khoản tập trung. • Doanh nghiệp muốn tối ưu phí và vận hành nhiều dòng sản phẩm.",
+      "public_features": [
+        "SHB công bố gói quản lý dòng tiền phục vụ quản lý phải thu, phải trả và thanh khoản.",
+        "Trang sản phẩm nêu điều kiện sử dụng tối thiểu 4/6 thành phần: tài khoản thanh toán, chuyển tiền trong/quốc tế, tiền gửi có kỳ hạn, thu hộ NSNN, thấu chi có tài sản bảo đảm, quản lý tài khoản tập trung.",
+        "Gói có thể gắn với thấu chi; nhánh tín dụng phải được tách khỏi các dịch vụ giao dịch và không được coi là tự động đủ điều kiện."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Phù hợp khi có ít nhất bốn nhu cầu/thành phần thực tế; không nên ép bundle nếu chỉ có một nhu cầu.",
+        "Mỗi sản phẩm con giữ eligibility và source riêng."
+      ],
+      "internal_required": [
+        "Danh mục 4/6 còn hiệu lực, chính sách bundle và ưu đãi.",
+        "Điều kiện tín dụng/thấu chi.",
+        "Phí và thời hạn ưu đãi hiện hành."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "Nhiều use case: payroll + supplier payment + liquidity + tax.",
+        "Chi phí giao dịch lớn hoặc nhiều hệ thống.",
+        "Nhu cầu vốn ngắn hạn song song với thanh toán."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Bốn nhu cầu ưu tiên nhất là gì? 2. Sản phẩm nào khách hàng đã sử dụng? 3. Lưu lượng giao dịch và số tài khoản? 4. Nhánh nào cần triển khai trước? 5. Có nhu cầu tín dụng hay chỉ quản lý tiền? Hành vi Multi-Agent Planner phân rã bundle thành các branch. Product đề xuất từng component; Legal chặn riêng credit branch; Operations tạo roadmap triển khai theo phase."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-PAY-003, SHB-CORP-CASH-004, SHB-CORP-CREDIT-008, SHB-CORP-TAX-006 SRC-SHB-008"
+      ],
+      "branch_behavior": "READY_TO_PREPARE",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-CASH-005",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-TAX-006",
+      "bank": "SHB",
+      "product_name": "Thanh toán thuế hải quan online 24/7",
+      "name": "Thanh toán thuế hải quan online 24/7",
+      "category": "tax",
+      "risk_level": "medium",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Nộp thuế xuất nhập khẩu trực tuyến, giảm thời gian đến quầy và hỗ trợ thông quan.",
+      "target_profile": "• Doanh nghiệp có hoạt động xuất nhập khẩu. • Doanh nghiệp cần nộp thuế ngoài giờ hoặc quản lý tập trung giao dịch hải quan.",
+      "public_features": [
+        "SHB công bố dịch vụ nộp thuế hải quan hoàn toàn trực tuyến qua Internet Banking doanh nghiệp.",
+        "Đối tượng công khai là khách hàng doanh nghiệp có hoạt động xuất nhập khẩu.",
+        "Dịch vụ được mô tả là hỗ trợ thực hiện 24/7."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Có tài khoản và Internet Banking doanh nghiệp.",
+        "Thông tin nghĩa vụ thuế/hải quan phải chính xác và nằm trong phạm vi được hỗ trợ."
+      ],
+      "internal_required": [
+        "Danh mục cơ quan/kênh kết nối, cut-off và trạng thái đối soát.",
+        "Phân quyền tạo–duyệt và biểu phí.",
+        "Quy trình tra soát/hoàn giao dịch."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "import_export = true.",
+        "Nhiều tờ khai hoặc nộp thuế thường xuyên.",
+        "Pain point về thời gian thông quan."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Loại thuế và tần suất nộp? 2. Nguồn dữ liệu tờ khai từ hệ thống nào? 3. Ai tạo và ai phê duyệt? 4. Cần báo cáo/đối soát ra sao? Hành vi Multi-Agent Operations Agent phải kiểm tra payload thuế và cho RM preview; không suy đoán số tờ khai, mã cơ quan hoặc số tiền."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-DIGI-002, SHB-CORP-TFI-010, SHB-CORP-FX-012 SRC-SHB-009"
+      ],
+      "branch_behavior": "READY_TO_PREPARE",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-TAX-006",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-CARD-007",
+      "bank": "SHB",
+      "product_name": "SHB Mastercard Business Platinum",
+      "name": "SHB Mastercard Business Platinum",
+      "category": "card",
+      "risk_level": "high",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Cấp phương tiện chi tiêu doanh nghiệp có kiểm soát, giảm tiền mặt và hỗ trợ vốn ngắn hạn cho chi phí vận hành.",
+      "target_profile": "• Doanh nghiệp có chi phí công tác, mua sắm hoặc thanh toán định kỳ. • Doanh nghiệp cần nhiều thẻ cho cán bộ với cơ chế quản lý và thanh toán tập trung.",
+      "public_features": [
+        "SHB mô tả thẻ Mastercard Business Platinum theo mô hình “thanh toán trước, chi trả sau”, hỗ trợ quản lý dòng tiền và giảm rủi ro tiền mặt.",
+        "Dư nợ có thể được thanh toán qua trích nợ tự động, quầy, ngân hàng khác, ATM và SHB Corporate Mobile.",
+        "Người tạo lệnh và người kiểm soát/phê duyệt có thể thao tác qua Corporate Mobile/Internet Banking.",
+        "SHB có biểu phí thẻ doanh nghiệp công bố ngày 24/06/2025; fee engine phải lấy bản còn hiệu lực."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Phát hành và hạn mức phải theo quy định tín dụng/thẻ hiện hành.",
+        "Người dùng thẻ, mục đích chi tiêu và trách nhiệm thanh toán phải được xác định."
+      ],
+      "internal_required": [
+        "Eligibility, hạn mức, tài sản bảo đảm/ký quỹ nếu có.",
+        "MCC restrictions, sub-limit, số thẻ và control policy.",
+        "Biểu phí, lãi suất, grace period và điều khoản hiện hành."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "travel_spend hoặc procurement_spend cao.",
+        "Nhiều reimbursement tiền mặt.",
+        "Nhu cầu thẻ phụ và kiểm soát theo nhân viên."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Mục đích chi tiêu và số lượng người dùng? 2. Hạn mức tổng và hạn mức từng thẻ dự kiến? 3. Cơ chế sao kê/thanh toán và kế toán? 4. Có cần hạn chế MCC/giao dịch quốc tế? Hành vi Multi-Agent Product Agent có thể tạo candidate; Legal/Credit phải kiểm eligibility. UI phải ghi rõ “chưa phê duyệt hạn mức”."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-DIGI-002, SHB-CORP-PAY-003, SHB-CORP-CASH-005 SRC-SHB-010, SRC-SHB-011, SRC-SHB-012"
+      ],
+      "branch_behavior": "READY_TO_PREPARE",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-CARD-007",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-CREDIT-008",
+      "bank": "SHB",
+      "product_name": "Thấu chi online và giải pháp vốn lưu động",
+      "name": "Thấu chi online và giải pháp vốn lưu động",
+      "category": "credit",
+      "risk_level": "very_high",
+      "source_label": [
+        "VERIFIED_PUBLIC; HUMAN DECISION REQUIRED"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Bù đắp thiếu hụt vốn lưu động ngắn hạn theo chu kỳ kinh doanh hoặc dòng tiền.",
+      "target_profile": "• Doanh nghiệp có nhu cầu vốn ngắn hạn, dòng tiền về có thể quan sát và hồ sơ tín dụng phù hợp. • Khách hàng hiện hữu có tài khoản, ngân hàng điện tử và quan hệ tín dụng tại SHB.",
+      "public_features": [
+        "Sản phẩm Thấu chi Online công bố hạn mức đến 5 tỷ đồng, thời hạn tối đa 12 tháng và yêu cầu tài khoản doanh nghiệp, Internet Banking và khoản vay còn hiệu lực tại SHB.",
+        "Trang tín dụng doanh nghiệp 2026 công bố sản phẩm Cấp tín dụng nhanh cho doanh nghiệp siêu nhỏ doanh thu tối đa 100 tỷ đồng/năm, hạn mức đến 10 tỷ đồng, thời hạn tối đa 12 tháng và thông điệp phê duyệt trong 24 giờ làm việc.",
+        "Các con số trên là điều khoản marketing theo sản phẩm cụ thể; không được chuyển thành rule chung hoặc cam kết với mọi khách hàng."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Chỉ tạo opportunity và pre-check; quyết định cấp tín dụng thuộc người/hệ thống có thẩm quyền.",
+        "Unknown về UBO, BCTC, mục đích vốn, dòng tiền hoặc tài sản bảo đảm phải là need_info/review, không phải pass."
+      ],
+      "internal_required": [
+        "Credit policy, score/rating, CIC, AML/KYC, UBO, BCTC và authority matrix.",
+        "Hạn mức, lãi suất, tài sản bảo đảm, covenant và pricing.",
+        "Tính đủ điều kiện theo từng product/version."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "seasonal_gap hoặc supplier_payment_peak.",
+        "Dòng tiền vào ổn định nhưng thiếu hụt ngắn hạn.",
+        "Khách hàng đã có active loan và sử dụng Internet Banking."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Mục đích vốn, số tiền, thời hạn và thời điểm cần vốn? 2. Nguồn trả nợ và dòng tiền về đâu? 3. BCTC/UBO/CIC đã sẵn sàng chưa? 4. Tài sản bảo đảm hoặc hợp đồng đầu ra? Hành vi Multi-Agent Product Agent chỉ nêu candidate. Legal/Credit Engine chạy rule deterministic. Evidence Validator chặn mọi claim “được duyệt”, “chắc chắn cấp” hoặc lãi suất/hạn mức không có nguồn current."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-CASH-005, SHB-CORP-PAY-003, SHB-CORP-TFE-011 SRC-SHB-013, SRC-SHB-014, SRC-SHB-015"
+      ],
+      "branch_behavior": "REVIEW_REQUIRED",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-CREDIT-008",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-GUAR-009",
+      "bank": "SHB",
+      "product_name": "Bảo lãnh ngân hàng",
+      "name": "Bảo lãnh ngân hàng",
+      "category": "guarantee",
+      "risk_level": "very_high",
+      "source_label": [
+        "VERIFIED_PUBLIC",
+        "REGULATORY"
+      ],
+      "data_label": "VERIFIED_PUBLIC_REGULATORY",
+      "business_need": "Tăng độ tin cậy và đáp ứng nghĩa vụ bảo đảm trong đấu thầu, hợp đồng, thanh toán, ứng trước, thuế, bảo hành hoặc vay vốn.",
+      "target_profile": "• Nhà thầu, nhà cung cấp, doanh nghiệp xuất nhập khẩu hoặc doanh nghiệp có nghĩa vụ cần ngân hàng bảo lãnh.",
+      "public_features": [
+        "SHB công bố nhiều loại bảo lãnh: dự thầu, thực hiện hợp đồng, thanh toán, hoàn trả tiền ứng trước, bảo đảm chất lượng, nộp thuế và vay vốn.",
+        "Các trang sản phẩm mô tả bảo lãnh được phát hành dưới dạng thư bảo lãnh và hồ sơ thực hiện theo quy định SHB.",
+        "Văn bản hợp nhất 36/VBHN-NHNN ngày 07/11/2024 hợp nhất quy định về bảo lãnh ngân hàng và phải được dùng thay vì chỉ dựa vào Thông tư 11/2022 đã hết hiệu lực toàn bộ từ 01/04/2025."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Xác định đúng loại bảo lãnh, bên nhận, nghĩa vụ, số tiền, thời hạn và điều kiện gọi bảo lãnh.",
+        "Phải có thẩm định và phê duyệt tín dụng/bảo lãnh theo thẩm quyền."
+      ],
+      "internal_required": [
+        "Mẫu thư, clause library, counter-indemnity, ký quỹ/TSBĐ, pricing và approval matrix.",
+        "Danh sách cấm vận/PEP, legal review và quy trình phát hành."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "tender_id hoặc contract requires bank guarantee.",
+        "Khách hàng nhận tạm ứng hoặc phải bảo hành.",
+        "Nghĩa vụ thuế nhập khẩu cần bảo lãnh."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Loại bảo lãnh và nghĩa vụ được bảo đảm? 2. Bên nhận, số tiền, thời hạn, ngôn ngữ và luật áp dụng? 3. Mẫu thư của đối tác hay mẫu ngân hàng? 4. Ký quỹ/TSBĐ và deadline phát hành? Hành vi Multi-Agent Planner tách Legal, Credit và Operations. Legal không được tự chỉnh clause. Action chỉ tạo draft request, không phát hành thư."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-TFI-010, SHB-CORP-CREDIT-008, SHB-CORP-TAX-006 SRC-SHB-016, SRC-SHB-017, SRC-SHB-018, SRC-SHB-019, SRC-REG-002"
+      ],
+      "branch_behavior": "REVIEW_REQUIRED",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-GUAR-009",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-TFI-010",
+      "bank": "SHB",
+      "product_name": "Tài trợ thương mại nhập khẩu",
+      "name": "Tài trợ thương mại nhập khẩu",
+      "category": "trade",
+      "risk_level": "very_high",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Bảo đảm thanh toán và tối ưu vốn cho giao dịch nhập khẩu thông qua L/C, UPAS/negotiation hoặc chuyển tiền quốc tế.",
+      "target_profile": "• Doanh nghiệp nhập khẩu hàng hóa/dịch vụ có hợp đồng ngoại thương. • Doanh nghiệp cần trả chậm cho mình nhưng nhà xuất khẩu nhận tiền sớm.",
+      "public_features": [
+        "SHB công bố các dịch vụ L/C nhập khẩu, UPAS L/C, nhờ thu CAD nhập khẩu, chuyển tiền quốc tế và L/C có điều khoản thương lượng thanh toán.",
+        "L/C có điều khoản thương lượng cho phép khách hàng trả chậm trong khi nhà xuất khẩu có thể được thanh toán sớm; thời gian trả chậm công bố lên tới 365 ngày.",
+        "Hồ sơ công khai gồm hợp đồng nhập khẩu, đơn đề nghị phát hành L/C theo mẫu và hồ sơ khác theo hướng dẫn."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Có giao dịch thương mại hợp pháp và chứng từ chứng minh mục đích.",
+        "Tài trợ hoặc phát hành L/C cần hạn mức/phê duyệt phù hợp."
+      ],
+      "internal_required": [
+        "Country/bank risk, sanctions, commodity restrictions và UCP/ISBP handling.",
+        "Margin, credit line, pricing, tenor và approval.",
+        "Document checklist theo phương thức thanh toán."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "import_contract = true.",
+        "Nhà xuất khẩu yêu cầu L/C hoặc khách hàng cần deferred payment.",
+        "FX payment date và shipment schedule đã biết."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Hợp đồng, mặt hàng, quốc gia và đối tác? 2. Phương thức thanh toán, trị giá, đồng tiền và tenor? 3. Cần tài trợ hay chỉ dịch vụ L/C? 4. Ngày giao hàng và bộ chứng từ dự kiến? Hành vi Multi-Agent Trade Product Agent retrieve product; Legal/Sanctions kiểm giao dịch và các bên; FX Agent đề xuất hedge nếu có exposure; RM duyệt draft."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-FX-012, SHB-CORP-GUAR-009, SHB-CORP-TAX-006 SRC-SHB-020, SRC-SHB-021"
+      ],
+      "branch_behavior": "REVIEW_REQUIRED",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-TFI-010",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-TFE-011",
+      "bank": "SHB",
+      "product_name": "Tài trợ thương mại xuất khẩu",
+      "name": "Tài trợ thương mại xuất khẩu",
+      "category": "trade",
+      "risk_level": "very_high",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Cấp vốn trước giao hàng hoặc ứng trước tiền từ bộ chứng từ sau giao hàng.",
+      "target_profile": "• Doanh nghiệp xuất khẩu có đơn hàng/hợp đồng và nhu cầu vốn lưu động. • Doanh nghiệp đã giao hàng, có bộ chứng từ L/C, nhờ thu hoặc CAD và đang chờ thanh toán.",
+      "public_features": [
+        "Tài trợ xuất khẩu trước giao hàng công bố tỷ lệ đến 90% nhu cầu vốn và thời hạn đến 12 tháng.",
+        "Tài trợ hợp đồng xuất khẩu T/T công bố đến 100% nhu cầu vốn, tối đa 80% giá trị hợp đồng và thời hạn đến 9 tháng.",
+        "Chiết khấu bộ chứng từ công bố tỷ lệ đến 98%, thời gian tối đa 6 tháng, loại tiền VND/USD và thời gian xử lý hồ sơ 2 giờ.",
+        "Cho vay bảo đảm bằng bộ chứng từ xuất khẩu công bố tỷ lệ đến 98% giá trị bộ chứng từ và tối đa 6 tháng."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Phải xác định stage: trước giao hàng hay sau giao hàng.",
+        "Có hợp đồng/đơn hàng hoặc bộ chứng từ phù hợp và đáp ứng quy định tín dụng."
+      ],
+      "internal_required": [
+        "Buyer/bank/country risk, recourse, discrepancy policy, credit line và collateral.",
+        "Pricing, currency, document verification và approval."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "export_order hoặc export_documents.",
+        "working_capital_need trước sản xuất/giao hàng.",
+        "waiting_for_receivable sau giao hàng."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Đã giao hàng hay chưa? 2. Phương thức thanh toán L/C, D/P, D/A, CAD hay T/T? 3. Giá trị hợp đồng/bộ chứng từ và ngày đáo hạn? 4. Có discrepancy hoặc buyer/country risk? Hành vi Multi-Agent Need Agent phân loại stage; Product Agent chọn pre-shipment/post-shipment; Legal/Credit xử lý high-risk. Không dùng tỷ lệ công bố làm approval rule."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-FX-012, SHB-CORP-CREDIT-008, SHB-CORP-GUAR-009 SRC-SHB-022, SRC-SHB-023, SRC-SHB-024, SRC-SHB-025"
+      ],
+      "branch_behavior": "REVIEW_REQUIRED",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-TFE-011",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    },
+    {
+      "product_id": "SHB-CORP-FX-012",
+      "bank": "SHB",
+      "product_name": "Ngoại hối Spot / Forward / Swap",
+      "name": "Ngoại hối Spot / Forward / Swap",
+      "category": "fx",
+      "risk_level": "very_high",
+      "source_label": [
+        "VERIFIED_PUBLIC"
+      ],
+      "data_label": "PUBLIC_SOURCE_DEMO",
+      "business_need": "Thanh toán ngoại tệ, khóa tỷ giá tương lai hoặc hoán đổi nguồn tiền giữa hai đồng tiền.",
+      "target_profile": "• Doanh nghiệp xuất nhập khẩu hoặc có nghĩa vụ/nguồn thu ngoại tệ. • Doanh nghiệp cần quản trị rủi ro tỷ giá và dòng tiền ngoại tệ.",
+      "public_features": [
+        "SPOT là giao dịch mua/bán ngoại tệ theo tỷ giá giao ngay và hoàn tất trong vòng hai ngày làm việc tiếp theo.",
+        "FORWARD là cam kết mua/bán ngoại tệ theo tỷ giá xác định hôm nay và thanh toán trong tương lai; SHB công bố kỳ hạn 3–365 ngày.",
+        "SWAP là mua và bán cùng một lượng ngoại tệ với hai ngày thanh toán khác nhau; SHB công bố kỳ hạn 3–365 ngày.",
+        "Hồ sơ công khai gồm hợp đồng giao dịch và chứng từ chứng minh mục đích mua/bán ngoại tệ."
+      ],
+      "public_conditions": [
+        "/ điều kiện tối thiểu",
+        "Có nhu cầu ngoại tệ hợp pháp và chứng từ chứng minh mục đích.",
+        "Pricing/tỷ giá phải lấy realtime từ treasury system, không lưu cứng trong RAG."
+      ],
+      "internal_required": [
+        "Counterparty limit, product suitability, market risk, settlement instructions và dealing authority.",
+        "Tỷ giá, swap points, cut-off, collateral/margin nếu có."
+      ],
+      "sales_signals": [
+        "bán hàng",
+        "foreign_currency_payable hoặc receivable.",
+        "payment_date/receipt_date trong tương lai.",
+        "Mismatch giữa đồng tiền nắm giữ và đồng tiền cần sử dụng."
+      ],
+      "discovery_questions": [
+        "cho RM 1. Đồng tiền, số tiền, chiều mua/bán và ngày giá trị? 2. Mục đích và chứng từ? 3. Khách hàng muốn thanh toán ngay hay khóa tỷ giá? 4. Có nguồn ngoại tệ đối ứng cho swap không? Hành vi Multi-Agent FX Agent chỉ phân loại nhu cầu và tạo RFQ draft. Mọi quote phải realtime và có expiry; không để LLM sinh tỷ giá."
+      ],
+      "cross_sell": [
+        "/ bundle candidates Nguồn xác nhận SHB-CORP-TFI-010, SHB-CORP-TFE-011, SHB-CORP-CASH-005 SRC-SHB-026, SRC-SHB-027, SRC-SHB-028"
+      ],
+      "branch_behavior": "REVIEW_REQUIRED",
+      "document_id": "SHB-RAG-KB-CORP-2026-01",
+      "document_version": "1.0",
+      "section": "product-profile/SHB-CORP-FX-012",
+      "effective_from": "2026-07-18",
+      "effective_to": null,
+      "source_date": "2026-07-18",
+      "active": true,
+      "segments": [
+        "SME",
+        "CORPORATE"
+      ],
+      "access_scope": {
+        "branches": [
+          "*"
+        ]
+      }
+    }
+  ]
+}

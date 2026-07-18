@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -34,13 +34,12 @@ class EligibilityRule(BaseModel):
     operator: str
     expected: Any
     failure_code: str
-    policy_id: str = ""
-    section_id: str = ""
+    policy_id: str
+    section_id: str
     source_document_id: str
     source_version: str
     source_location: str
     source_quote: str
-    access_scope: Optional[dict] = None
     # Policy flag, not a technical property of the rule: may a human
     # specialist override a FAILED verdict on this specific rule after
     # independent verification (see app/workflow/risk_gate.py's
@@ -66,22 +65,13 @@ class RuleEvaluation(BaseModel):
     actual: Any = None
     expected: Any = None
     failure_code: Optional[str] = None
+    policy_id: str
+    section_id: str
     source_document_id: str
     source_version: str
     source_location: str
     source_quote: str
     human_review_allowed: bool = False
-
-
-class ProductEligibility(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    product_id: str
-    status: RuleStatus
-    rules: List[RuleEvaluation]
-    missing_information: List[str]
-    evaluated_at: datetime
-    registry_version: str
 
 
 class RelatedPolicy(BaseModel):
@@ -96,7 +86,7 @@ class RelatedPolicy(BaseModel):
     effective_from: date
     effective_to: Optional[date] = None
     applicability_reason: str
-    decision_effect: str
+    decision_effect: Literal["blocking", "warning", "required_information", "informational", "manual_review"]
     rule_ids: List[str]
     summary: str
     source_quote: str
@@ -111,3 +101,16 @@ class LegalSummary(BaseModel):
     blocking_reasons: List[str]
     warnings: List[str]
     required_actions: List[str]
+
+
+class ProductEligibility(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    product_id: str
+    status: RuleStatus
+    rules: List[RuleEvaluation]
+    missing_information: List[str]
+    evaluated_at: datetime
+    registry_version: str
+    related_policies: List[RelatedPolicy]
+    legal_summary: LegalSummary
