@@ -33,7 +33,14 @@ class ActionExecutorV2:
             return {**replay, "idempotent_replay": True}
         if state.status != CaseStatus.PENDING_APPROVAL:
             raise ExecutionDenied("case is not pending approval")
-        if (state.eligibility_result or {}).get("overall_status") != "passed":
+        eligibility_passed = (state.eligibility_result or {}).get("overall_status") == "passed"
+        # A specialist has independently cleared a human_review_allowed block
+        # (see app/workflow/engine.clear_specialist_block + the specialist-reviews
+        # endpoint) -- a deliberate, audited human override of the deterministic
+        # eligibility verdict, so execution may proceed once the case is in
+        # PENDING_APPROVAL with a valid approval token.
+        human_override = bool((state.risk_gate_result or {}).get("human_review_allowed"))
+        if not (eligibility_passed or human_override):
             raise ExecutionDenied("blocking or pending eligibility result")
         if not state.evidences or not all(item.is_valid for item in state.evidences):
             raise ExecutionDenied("evidence validation failed")

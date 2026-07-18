@@ -94,6 +94,7 @@
         "location": {"type": "string"},
         "quote": {"type": "string"},
         "is_valid": {"type": "boolean"},
+        "human_review_allowed": {"type": "boolean", "default": false},
         "validation_score": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
       }
     }

@@ -208,7 +208,7 @@ def test_ubo_block_flows_through_real_pipeline_to_legal_clearance_approval_and_e
         },
     )
     assert stale.status_code == 409, stale.text
-    assert stale.json()["error"]["code"] == "CASE_VERSION_CONFLICT"
+    assert stale.json()["detail"]["error"]["code"] == "CASE_VERSION_CONFLICT"
 
     cleared = client.post(
         f"/api/v2/cases/{case_id}/specialist-reviews",
