@@ -167,6 +167,9 @@ def init_employee_db() -> None:
     if cursor.fetchone()[0] == 0:
         # Seed Employees
         employees_data = [
+            ("USER-MP-001", "customer_user", "Minh Phat Customer Portal",
+             json.dumps(["case:create", "case:read", "case:write"]),
+             json.dumps(["COMP-MP"])),
             ("RM-999", "relationship_manager", "Corporate Banking HN", 
              json.dumps(["case:read", "case:write", "approval:request"]), 
              json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"])),
@@ -201,6 +204,10 @@ def init_employee_db() -> None:
         )
 
         # Seed default Consent
+        cursor.execute(
+            "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+            ("USER-MP-001", 0, 0, json.dumps([]), "v1", datetime.utcnow().isoformat())
+        )
         cursor.execute(
             "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
             ("RM-999", 1, 1, json.dumps(["ui_preferences", "recommendation_feedback"]), "v1", datetime.utcnow().isoformat())
@@ -308,6 +315,29 @@ def init_employee_db() -> None:
     cursor.execute("DELETE FROM employee_consent WHERE employee_id = ?", ("SPEC-OPS-001",))
     cursor.execute("DELETE FROM employee_habits WHERE employee_id = ?", ("SPEC-OPS-001",))
     cursor.execute("DELETE FROM employees WHERE employee_id = ?", ("SPEC-OPS-001",))
+    cursor.execute(
+        """
+        INSERT INTO employees (employee_id, role, organization_unit, permissions, customer_scope)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(employee_id) DO UPDATE SET
+            role = excluded.role,
+            organization_unit = excluded.organization_unit,
+            permissions = excluded.permissions,
+            customer_scope = excluded.customer_scope
+        """,
+        (
+            "USER-MP-001", "customer_user", "Minh Phat Customer Portal",
+            json.dumps(["case:create", "case:read", "case:write"]),
+            json.dumps(["COMP-MP"]),
+        ),
+    )
+    cursor.execute(
+        "INSERT OR IGNORE INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+        (
+            "USER-MP-001", 0, 0, json.dumps([]),
+            "v1", datetime.utcnow().isoformat(),
+        ),
+    )
     cursor.execute(
         """
         INSERT INTO employees (employee_id, role, organization_unit, permissions, customer_scope)

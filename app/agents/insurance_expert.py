@@ -156,7 +156,7 @@ class InsuranceExpertAgent(BaseExpertRuntime):
                 consistency_status="consistent",
                 rule_certainty="deterministic",
                 input_completeness=round(coverage_present / coverage_total, 4) if result.get("coverage_checks") else 1.0,
-                display_confidence=1.0 if status == "ready_for_insurance_review" else 0.6,
+                display_confidence=1.0 if status in {"ready_for_insurance_review", "not_applicable"} else 0.6,
                 calibration_policy_version="insurance-confidence-v1",
             ),
             domain_result=result,

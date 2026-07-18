@@ -175,7 +175,10 @@ class CreditExpertAgent(BaseExpertRuntime):
                 consistency_status="consistent",
                 rule_certainty="deterministic",
                 input_completeness=confidence_score,
-                display_confidence=round(min(1.0, 0.6 * confidence_score + (0.4 if evidence_refs else 0.0)), 4),
+                display_confidence=(
+                    1.0 if status == "not_applicable"
+                    else round(min(1.0, 0.6 * confidence_score + (0.4 if evidence_refs else 0.0)), 4)
+                ),
                 calibration_policy_version="credit-confidence-v1",
             ),
             domain_result=result,

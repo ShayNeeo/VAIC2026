@@ -210,6 +210,57 @@
     @media (max-width: 1100px) {
       .expert-grid, .coordinator-summary { grid-template-columns: 1fr; }
     }
+
+    /* RM Workspace V4: decision-first, progressive disclosure. */
+    #rmWorkspace { max-width: 1540px; margin: 0 auto; }
+    .rm-command-hero {
+      margin: 16px 16px 12px;
+      padding: 22px 24px;
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(120deg, #09284a 0%, #0d537a 68%, #11745d 100%);
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 20px;
+      box-shadow: 0 14px 34px rgba(9,40,74,.2);
+    }
+    .rm-command-hero h1 { margin: 2px 0 8px; font-size: 26px; }
+    .rm-command-hero p { margin: 0; color: #d5e7f2; max-width: 760px; }
+    .rm-command-checks { display: grid; gap: 8px; align-content: center; }
+    .rm-command-checks span { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); border-radius: 9px; padding: 8px 10px; font-size: 11px; }
+    #rmWorkspace .case-summary { margin: 0 16px 12px; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+    #rmWorkspace .stepper { margin: 0 16px 14px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    #rmWorkspace .workspace { grid-template-columns: 270px minmax(0, 1fr); max-width: none; margin: 0; }
+    #rmWorkspace .left-column { grid-column: 1; grid-row: 1 / span 2; }
+    #rmWorkspace .main-column { grid-column: 2; grid-row: 1; }
+    #rmWorkspace .right-column { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: minmax(300px,.8fr) minmax(440px,1.2fr); align-items: start; }
+    #rmWorkspace .sticky { position: static; }
+    #rmWorkspace .nbw-list { max-height: 360px; overflow: auto; }
+    .decision-overview {
+      display: grid;
+      grid-template-columns: 1.4fr repeat(3, minmax(130px,.7fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .decision-overview > div { background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 14px; box-shadow: var(--shadow); }
+    .decision-overview .decision-main { background: #09284a; color: #fff; }
+    .decision-overview .decision-main p { color: #cbdce8; margin: 6px 0 0; font-size: 12px; }
+    .decision-overview span { display: block; color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .decision-overview strong { display: block; margin-top: 7px; color: var(--navy); font-size: 14px; line-height: 1.35; }
+    .decision-overview .decision-main span, .decision-overview .decision-main strong { color: #fff; }
+    .expert-card.not-applicable { background: #f7f9fa; border-top-color: #9aa8b1; }
+    .plain-status { display:inline-flex; padding:4px 7px; border-radius:5px; font-size:10px; font-weight:900; background:#eef2f4; color:#4b616e; }
+    .customer-shell { max-width: 1180px; margin: 20px auto; padding: 0 16px; }
+    .customer-hero { background: linear-gradient(120deg,#09284a,#0d6b63); color:#fff; border-radius:16px; padding:24px; margin-bottom:16px; }
+    .customer-hero p { color:#d5e7f2; margin-bottom:0; }
+    .customer-grid { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr); gap:16px; align-items:start; }
+    .customer-status { display:grid; gap:8px; }
+    .customer-case-item { border:1px solid var(--line); border-radius:8px; padding:10px; font-size:12px; }
+    @media (max-width: 1100px) {
+      #rmWorkspace .workspace, #rmWorkspace .right-column, .customer-grid { grid-template-columns: 1fr; }
+      #rmWorkspace .left-column, #rmWorkspace .main-column, #rmWorkspace .right-column { grid-column: 1; grid-row: auto; }
+      .decision-overview, .rm-command-hero { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -220,6 +271,7 @@
       <p class="muted" style="margin:0 0 22px;">Phiên demo dùng SSO/IAM giả lập để nhận diện role và quyền truy cập.</p>
       <label>Employee ID
         <select id="loginEmployee" style="width:100%;margin-top:6px;">
+          <option value="USER-MP-001">USER-MP-001 · Khách hàng Minh Phát</option>
           <option value="RM-999">RM-999 · Relationship Manager</option>
           <option value="SPEC-PROD-001">SPEC-PROD-001 · Product Specialist</option>
           <option value="SPEC-CREDIT-001">SPEC-CREDIT-001 · Credit Specialist</option>
@@ -242,6 +294,7 @@
     <div class="top-context">
       <label>Identity đã xác thực
         <select id="employee" disabled>
+          <option value="USER-MP-001">USER-MP-001 (Customer User)</option>
           <option value="RM-999">RM-999 (Relationship Manager)</option>
           <option value="SPEC-PROD-001">SPEC-PROD-001 (Product Specialist)</option>
           <option value="SPEC-CREDIT-001">SPEC-CREDIT-001 (Credit Specialist)</option>
@@ -311,6 +364,18 @@
   <!-- RM WORKSPACE -->
 
   <div id="rmWorkspace">
+    <section class="rm-command-hero">
+      <div>
+        <span class="eyebrow" style="color:#9fd8ff;">RM DECISION COCKPIT</span>
+        <h1>Một màn hình để hiểu khách hàng và chốt bước tiếp theo</h1>
+        <p>Ưu tiên kết luận có thể hành động. Chi tiết kỹ thuật, nguồn và AI log được giữ ở lớp kiểm tra phía dưới.</p>
+      </div>
+      <div class="rm-command-checks">
+        <span>① Khách hàng đã cung cấp gì?</span>
+        <span>② Ba chuyên gia kết luận gì?</span>
+        <span>③ RM cần làm gì ngay bây giờ?</span>
+      </div>
+    </section>
     <section class="case-summary" aria-label="Tóm tắt case">
       <div><span>Mã case</span><strong id="summaryCase">Chưa tạo</strong></div>
       <div><span>Trạng thái</span><strong id="summaryStatus">Chưa bắt đầu</strong></div>
@@ -365,60 +430,102 @@
       </aside>
 
       <section class="main-column">
-        <section id="intakePanel" class="panel">
-          <div class="panel-title">
-            <div><span class="eyebrow">ĐẦU VÀO ĐƯỢC KIỂM SOÁT</span><h1>Đầu vào</h1><p id="stageHint">Nhập mục tiêu kinh doanh và tạo hồ sơ nháp.</p></div>
-            <span id="intakeBadge" class="status-pill neutral">DRAFT</span>
+        <!-- CHATBOT PANEL -->
+        <section class="chat-container">
+          <div class="chat-header">
+            <h3>💬 SHB Copilot Specialist Orchestrator</h3>
+            <div class="chat-status"><span class="status-dot"></span><span>Copilot Online</span></div>
           </div>
-
-          <div id="stageInput" class="stage">
-            <div class="form-grid">
-              <label class="field span-2">Doanh nghiệp<input id="companyName" value="Công ty Cổ phần Thiết bị Minh Phát"></label>
-              <label class="field">Mã số thuế<input id="taxCode" value="0109988665"></label>
-              <label class="field">Ngành<input id="industry" value="Phân phối thiết bị công nghiệp"></label>
-              <label class="field span-2">Nhu cầu khách hàng<textarea id="needText" rows="5"></textarea><small>Viết theo kết quả mong muốn; không cần chỉ định agent hay tool.</small></label>
-              <label class="field span-2">Ghi chú của RM<textarea id="rmNote" rows="2" placeholder="Thông tin bổ sung từ cuộc trao đổi"></textarea></label>
+          <div id="chatHistory" class="chat-history">
+            <div class="chat-bubble-wrapper">
+              <div class="chat-avatar">AI</div>
+              <div class="chat-bubble">
+                <p>Xin chào! Tôi là <b>SHB Copilot Coordinator</b>. Tôi sẽ hỗ trợ bạn thực thi toàn bộ luồng quy trình cấp sản phẩm doanh nghiệp.</p>
+                <p>Để bắt đầu nhanh, hãy click vào một gợi ý kịch bản hoặc bấm nút <b>Tạo Case Nháp</b> bên dưới:</p>
+                <div class="actions">
+                  <button class="button primary" onclick="startChatScenario('payroll')">Payroll Đủ Điều Kiện (Case 1)</button>
+                  <button class="button secondary" onclick="startChatScenario('mixed')">Vốn Lưu Động Thiếu Hồ Sơ (Case 2)</button>
+                </div>
+              </div>
             </div>
-            <div class="button-row"><button id="createCase" class="button primary">Tạo sales case →</button></div>
           </div>
-
-          <div id="stageDocuments" class="stage hidden">
-            <div class="dropzone" id="dropzone">
-              <input id="fileInput" type="file" multiple accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.json">
-              <div class="drop-icon">⇧</div><h3>Kéo thả hồ sơ vào đây</h3>
-              <p>PDF, DOCX, XLSX, TXT, CSV, JSON · tối đa 10 MB/file</p>
-              <div class="button-row center"><button id="chooseFiles" class="button secondary" type="button">Chọn file tài liệu</button><button id="loadMockFiles" class="button ghost" type="button">Nạp bộ hồ sơ mẫu</button></div>
-            </div>
-            <div id="pendingFiles" class="file-list"></div>
-            <div id="uploadedFiles" class="file-list"></div>
-            <div class="button-row split"><button id="backToInput" class="button ghost">← Sửa nhu cầu</button><button id="uploadDocuments" class="button primary">Tải lên & kiểm tra file →</button></div>
+          <div id="chatSuggestions" class="chat-suggestions">
+            <span class="suggestion-chip" onclick="chatAction('create')">1. Tạo Case Nháp</span>
+            <span class="suggestion-chip" onclick="chatAction('mock_files')">2. Nạp Hồ Sơ Mẫu</span>
+            <span class="suggestion-chip" onclick="chatAction('ocr')">3. Chạy Trích Xuất AI</span>
+            <span class="suggestion-chip" onclick="chatAction('attest')">4. RM Ký Xác Nhận</span>
+            <span class="suggestion-chip" onclick="chatAction('analyze')">5. Chạy Phân Tích E2E</span>
+            <span class="suggestion-chip" onclick="chatAction('sync')">6. Đồng Bộ Core CRM</span>
           </div>
-
-          <div id="stageProcessing" class="stage hidden">
-            <div class="processing-hero"><div class="spinner"></div><div><h3>Hồ sơ đã tải lên, sẵn sàng trích xuất</h3><p>Hệ thống phân loại tài liệu, trích xuất field kèm nguồn và phát hiện xung đột.</p></div></div>
-            <div id="processingJobs" class="job-list"></div>
-            <div class="button-row"><button id="processDocuments" class="button primary">Chạy Document Intelligence →</button></div>
-          </div>
-
-          <div id="stageProfile" class="stage hidden">
-            <div class="notice warning"><b>RM phải kiểm tra trước khi AI phân tích.</b> Giá trị ảnh hưởng quyết định phải có nguồn; xung đột chưa xử lý sẽ chặn xác nhận.</div>
-            <div id="conflictList"></div>
-            <div id="profileView" class="profile-grid"></div>
-            <details class="manual-correction"><summary>Chỉnh một trường thủ công</summary>
-              <div class="inline-form"><select id="correctionField"><option value="business_profile.employees_count">Số nhân viên</option><option value="business_profile.annual_revenue">Doanh thu năm</option><option value="business_profile.account_or_unit_count">Số tài khoản/đơn vị</option><option value="legal_profile.ubo_status">Trạng thái UBO</option><option value="explicit_needs">Nhu cầu xác nhận</option></select><input id="correctionValue" placeholder="Giá trị đúng"><button id="saveCorrection" class="button secondary">Lưu chỉnh sửa</button></div>
-            </details>
-            <label class="attestation"><input id="attestation" type="checkbox"> Tôi đã đối chiếu hồ sơ và xác nhận Customer Business Snapshot dùng cho phân tích.</label>
-            <div class="button-row split"><button id="addMoreDocuments" class="button ghost">+ Bổ sung hồ sơ</button><button id="confirmProfile" class="button primary">Xác nhận context →</button></div>
-          </div>
-
-          <div id="stageConfirmed" class="stage hidden">
-            <div class="confirmation-card"><span>✓</span><div><h3>Context đã được RM xác nhận</h3><p>Snapshot đã khóa revision và hash. AI chỉ phân tích trên context này cùng nguồn đã kiểm tra.</p><code id="snapshotHash">—</code></div></div>
-            <div class="button-row"><button id="runAnalysis" class="button primary">Chạy phân tích end-to-end →</button></div>
+          <div class="chat-input-area">
+            <textarea id="chatMsgInput" placeholder="Nhập yêu cầu cho Copilot (ví dụ: 'tạo case', 'chạy phân tích')..." rows="1"></textarea>
+            <button id="sendChatBtn" onclick="handleSendChat()">➔</button>
           </div>
         </section>
 
+        <details class="collapsible-form" id="collapsibleFormDetails">
+          <summary>🛠 Cấu hình hồ sơ chi tiết (Form nhập tay truyền thống)</summary>
+          <section id="intakePanel" class="panel" style="margin-top:10px;">
+            <div class="panel-title">
+              <div><span class="eyebrow">ĐẦU VÀO ĐƯỢC KIỂM SOÁT</span><h1>Đầu vào</h1><p id="stageHint">Nhập mục tiêu kinh doanh và tạo hồ sơ nháp.</p></div>
+              <span id="intakeBadge" class="status-pill neutral">DRAFT</span>
+            </div>
+
+            <div id="stageInput" class="stage">
+              <div class="form-grid">
+                <label class="field span-2">Doanh nghiệp<input id="companyName" value="Công ty Cổ phần Thiết bị Minh Phát"></label>
+                <label class="field">Mã số thuế<input id="taxCode" value="0109988665"></label>
+                <label class="field">Ngành<input id="industry" value="Phân phối thiết bị công nghiệp"></label>
+                <label class="field span-2">Nhu cầu khách hàng<textarea id="needText" rows="5"></textarea><small>Viết theo kết quả mong muốn; không cần chỉ định agent hay tool.</small></label>
+                <label class="field span-2">Ghi chú của RM<textarea id="rmNote" rows="2" placeholder="Thông tin bổ sung từ cuộc trao đổi"></textarea></label>
+              </div>
+              <div class="button-row"><button id="createCase" class="button primary">Tạo sales case →</button></div>
+            </div>
+
+            <div id="stageDocuments" class="stage hidden">
+              <div class="dropzone" id="dropzone">
+                <input id="fileInput" type="file" multiple accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.json">
+                <div class="drop-icon">⇧</div><h3>Kéo thả hồ sơ vào đây</h3>
+                <p>PDF, DOCX, XLSX, TXT, CSV, JSON · tối đa 10 MB/file</p>
+                <div class="button-row center"><button id="chooseFiles" class="button secondary" type="button">Chọn file tài liệu</button><button id="loadMockFiles" class="button ghost" type="button">Nạp bộ hồ sơ mẫu</button></div>
+              </div>
+              <div id="pendingFiles" class="file-list"></div>
+              <div id="uploadedFiles" class="file-list"></div>
+              <div class="button-row split"><button id="backToInput" class="button ghost">← Sửa nhu cầu</button><button id="uploadDocuments" class="button primary">Tải lên & kiểm tra file →</button></div>
+            </div>
+
+            <div id="stageProcessing" class="stage hidden">
+              <div class="processing-hero"><div class="spinner"></div><div><h3>Hồ sơ đã tải lên, sẵn sàng trích xuất</h3><p>Hệ thống phân loại tài liệu, trích xuất field kèm nguồn và phát hiện xung đột.</p></div></div>
+              <div id="processingJobs" class="job-list"></div>
+              <div class="button-row"><button id="processDocuments" class="button primary">Chạy Document Intelligence →</button></div>
+            </div>
+
+            <div id="stageProfile" class="stage hidden">
+              <div class="notice warning"><b>RM phải kiểm tra trước khi AI phân tích.</b> Giá trị ảnh hưởng quyết định phải có nguồn; xung đột chưa xử lý sẽ chặn xác nhận.</div>
+              <div id="conflictList"></div>
+              <div id="profileView" class="profile-grid"></div>
+              <details class="manual-correction"><summary>Chỉnh một trường thủ công</summary>
+                <div class="inline-form"><select id="correctionField"><option value="business_profile.employees_count">Số nhân viên</option><option value="business_profile.annual_revenue">Doanh thu năm</option><option value="business_profile.account_or_unit_count">Số tài khoản/đơn vị</option><option value="legal_profile.ubo_status">Trạng thái UBO</option><option value="explicit_needs">Nhu cầu xác nhận</option></select><input id="correctionValue" placeholder="Giá trị đúng"><button id="saveCorrection" class="button secondary">Lưu chỉnh sửa</button></div>
+              </details>
+              <label class="attestation"><input id="attestation" type="checkbox"> Tôi đã đối chiếu hồ sơ và xác nhận Customer Business Snapshot dùng cho phân tích.</label>
+              <div class="button-row split"><button id="addMoreDocuments" class="button ghost">+ Bổ sung hồ sơ</button><button id="confirmProfile" class="button primary">Xác nhận context →</button></div>
+            </div>
+
+            <div id="stageConfirmed" class="stage hidden">
+              <div class="confirmation-card"><span>✓</span><div><h3>Context đã được RM xác nhận</h3><p>Snapshot đã khóa revision và hash. AI chỉ phân tích trên context này cùng nguồn đã kiểm tra.</p><code id="snapshotHash">—</code></div></div>
+              <div class="button-row"><button id="runAnalysis" class="button primary">Chạy phân tích end-to-end →</button></div>
+            </div>
+          </section>
+        </details>
+
         <section id="resultsPanel" class="hidden">
           <div class="section-heading"><span class="eyebrow">QUYẾT ĐỊNH CÓ GIẢI THÍCH</span><h1>Kết luận xử lý</h1><p>Đọc từ trái sang phải. Sản phẩm phù hợp không đồng nghĩa với đã đủ điều kiện.</p></div>
+          <section class="decision-overview" aria-label="Kết luận điều hành">
+            <div class="decision-main"><span>Kết luận đề xuất</span><strong id="decisionHeadline">Chưa có kết luận</strong><p id="decisionReason">Chạy phân tích sau khi RM xác nhận context.</p></div>
+            <div><span>Điều kiện</span><strong id="decisionEligibility">Chưa kiểm tra</strong></div>
+            <div><span>Thông tin còn thiếu</span><strong id="decisionMissing">—</strong></div>
+            <div><span>Bước tiếp theo</span><strong id="decisionNext">Chạy phân tích</strong></div>
+          </section>
           <div class="decision-grid">
             <article class="decision-card"><span class="card-number">1</span><h2>AI hiểu khách hàng cần gì?</h2><div id="intentResult"></div></article>
             <article class="decision-card"><span class="card-number">2</span><h2>Sản phẩm nào phù hợp?</h2><div id="productResult"></div></article>
@@ -433,6 +540,18 @@
               <article class="expert-card product"><span class="eyebrow">PRODUCT EXPERT</span><h3>Sản phẩm phù hợp</h3><div id="productExpertOutput"><p class="muted">Chưa có kết quả.</p></div></article>
               <article class="expert-card credit"><span class="eyebrow">CREDIT EXPERT</span><h3>Khả năng trả nợ & cấu trúc tín dụng</h3><div id="creditExpertOutput"><p class="muted">Chưa có kết quả.</p></div></article>
               <article class="expert-card insurance"><span class="eyebrow">INSURANCE EXPERT</span><h3>Mức sẵn sàng bảo hiểm</h3><div id="insuranceExpertOutput"><p class="muted">Chưa có kết quả.</p></div></article>
+            </div>
+          </section>
+          <section class="panel" id="specialistReviewsPanel">
+            <div class="panel-title">
+              <div>
+                <span class="eyebrow">SPECIALIST APPROVALS</span>
+                <h2>Ý kiến phê duyệt của Chuyên viên</h2>
+                <p class="muted">Các quyết định giải tỏa/chặn hồ sơ từ phòng ban Legal/Credit/Product.</p>
+              </div>
+            </div>
+            <div id="specialistReviewsList" class="guide-box" style="background:#fff; border-left-color:var(--navy); padding:10px 15px;">
+              <p class="muted" style="margin:0;">Chưa có ý kiến chuyên viên.</p>
             </div>
           </section>
           <section class="panel">
@@ -465,6 +584,56 @@
         </section>
       </aside>
     </main>
+  </div>
+
+  <!-- CUSTOMER USER WORKSPACE: input only, no analysis or approval authority. -->
+  <div id="customerWorkspace" class="hidden">
+    <div class="customer-shell">
+      <section class="customer-hero">
+        <span class="eyebrow" style="color:#9fd8ff;">CỔNG THÔNG TIN KHÁCH HÀNG</span>
+        <h1>Cung cấp thông tin một lần, RM tiếp nhận trực tiếp</h1>
+        <p>Dữ liệu bạn nhập được gắn nguồn CUSTOMER_INPUT. RM vẫn phải đối chiếu hồ sơ trước khi AI phân tích hoặc tạo bất kỳ tác vụ nào.</p>
+      </section>
+      <div class="customer-grid">
+        <main class="panel">
+          <div class="panel-title"><div><span class="eyebrow">THÔNG TIN DOANH NGHIỆP</span><h2>Phiếu nhu cầu Minh Phát</h2><p>Điền đủ thông tin giúp RM không phải hỏi lại nhiều lần.</p></div></div>
+          <div class="form-grid">
+            <label class="field span-2">Tên doanh nghiệp<input id="customerCompanyName" value="Công ty Cổ phần Thiết bị Minh Phát"></label>
+            <label class="field">Mã số thuế<input id="customerTaxCode" value="0109988665"></label>
+            <label class="field">Ngành<input id="customerIndustry" value="Phân phối thiết bị công nghiệp"></label>
+            <label class="field">Người liên hệ<input id="customerContact" value="Nguyễn Minh Anh · 0901 234 567"></label>
+            <label class="field">Số nhân viên<input id="customerEmployees" type="number" min="1" value="500"></label>
+            <label class="field">Doanh thu năm (VND)<input id="customerRevenue" type="number" min="0" value="120000000000"></label>
+            <label class="field">Số năm hoạt động<input id="customerOperatingYears" type="number" min="0" value="8"></label>
+            <label class="field">Khoản vốn dự kiến, nếu có (VND)<input id="customerRequestedAmount" type="number" min="0" placeholder="Không bắt buộc"></label>
+            <label class="field">Thời gian mong muốn<input id="customerTimeline" value="Triển khai trong tháng này"></label>
+            <label class="field span-2">Nhu cầu và kết quả mong muốn<textarea id="customerNeedText" rows="4">Doanh nghiệp muốn triển khai chi lương cho 500 nhân viên và quản lý dòng tiền tập trung.</textarea></label>
+          </div>
+          <div class="button-row"><button id="customerSubmit" class="button primary">Gửi thông tin cho RM →</button></div>
+          <section id="customerDocuments" class="hidden" style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px;">
+            <h3>Hồ sơ đính kèm</h3>
+            <p class="muted">Có thể dùng bộ hồ sơ mẫu để chạy thử hoặc chọn file của bạn.</p>
+            <input id="customerFileInput" type="file" multiple accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.json">
+            <div class="button-row"><button id="customerChooseFiles" class="button secondary" type="button">Chọn file</button><button id="customerLoadMock" class="button ghost" type="button">Nạp hồ sơ mẫu</button></div>
+            <div id="customerPendingFiles" class="file-list"></div>
+            <div class="button-row"><button id="customerUpload" class="button primary" type="button">Tải hồ sơ và gửi RM kiểm tra →</button></div>
+          </section>
+        </main>
+        <aside class="customer-status">
+          <section class="panel">
+            <span class="eyebrow">TRẠNG THÁI GỬI RM</span>
+            <h2 id="customerStatusTitle">Chưa gửi thông tin</h2>
+            <p id="customerStatusHelp" class="muted">Sau khi gửi, bạn sẽ nhận mã hồ sơ để theo dõi.</p>
+            <div id="customerCurrentCase" class="guide-box hidden"></div>
+          </section>
+          <section class="panel">
+            <span class="eyebrow">HỒ SƠ ĐÃ GỬI</span>
+            <div id="customerCaseList"><p class="muted">Chưa có hồ sơ.</p></div>
+          </section>
+          <section class="notice warning"><b>Phân quyền an toàn:</b> Customer User không xem AI log, kết luận nội bộ, payload phê duyệt và không thể tạo CRM task.</section>
+        </aside>
+      </div>
+    </div>
   </div>
 
   <!-- SPECIALIST WORKSPACE -->
