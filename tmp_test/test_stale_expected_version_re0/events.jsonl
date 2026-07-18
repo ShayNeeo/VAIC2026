@@ -1,2 +1,0 @@
-{"at": "2026-07-18T02:38:18.035145+00:00", "event_code": "case_created", "case_id": "CASE-CD3236CDCB2B", "trace_id": "TRACE-84A2089DC22E4700894A3B6576A44282", "status": "pending_approval"}
-{"at": "2026-07-18T02:38:18.068214+00:00", "event_code": "payload_approved", "case_id": "CASE-CD3236CDCB2B", "trace_id": "TRACE-84A2089DC22E4700894A3B6576A44282", "payload_hash": "sha256:0a0f42cd6b9fa35cec9a1d9168dff4f916bb9dfeaa1d060a48ed477f4591e5db"}
