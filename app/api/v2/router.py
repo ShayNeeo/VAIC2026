@@ -24,6 +24,23 @@ from app.integrations.enterprise import (
     SQLiteSSOAdapter,
     map_enterprise_role_to_role_type,
 )
+from app.integrations.pg import (
+    PostgresCRMAdapter,
+    PostgresIAMAdapter,
+    PostgresSSOAdapter,
+)
+
+
+def _crm_adapter():
+    return PostgresCRMAdapter() if settings.DATABASE_URL else SQLiteCRMAdapter()
+
+
+def _iam_adapter():
+    return PostgresIAMAdapter() if settings.DATABASE_URL else SQLiteIAMAdapter()
+
+
+def _sso_adapter():
+    return PostgresSSOAdapter() if settings.DATABASE_URL else SQLiteSSOAdapter()
 from app.integrations.errors import ContextAccessDeniedError, ContextError, UpstreamTimeoutError, UpstreamUnavailableError
 from app.integrations.resilient import ResilientCRMAdapter
 from app.intake import IntakeService, IntakeValidationError
@@ -170,9 +187,9 @@ def _default_assembler() -> ContextAssembler:
         active_case_id=None, active_task_id=None, selected_product_ids=[],
     )
     return ContextAssembler(
-        EmployeeContextService(SQLiteSSOAdapter(), SQLiteIAMAdapter()),
+        EmployeeContextService(_sso_adapter(), _iam_adapter()),
         WorkspaceContextService(sessions),
-        CustomerContextService(ResilientCRMAdapter(SQLiteCRMAdapter())),
+        CustomerContextService(ResilientCRMAdapter(_crm_adapter())),
         ConversationStateService(ConversationStateStore()),
     )
 
@@ -259,7 +276,7 @@ def create_router(
     def actor_role(employee_id: str) -> str:
         correlation_id = f"TRACE-{uuid.uuid4().hex.upper()}"
         try:
-            identity = SQLiteSSOAdapter().get_employee_identity(employee_id, correlation_id=correlation_id)
+            identity = _sso_adapter().get_employee_identity(employee_id, correlation_id=correlation_id)
         except ContextError as exc:
             raise HTTPException(status_code=503, detail={"code": "IAM_UNAVAILABLE"}) from exc
         return map_enterprise_role_to_role_type(identity["role"], identity["organization_unit"])
@@ -342,7 +359,7 @@ def create_router(
     def iam_grant(employee_id: str) -> Dict[str, Any]:
         correlation_id = f"TRACE-{uuid.uuid4().hex.upper()}"
         try:
-            return SQLiteIAMAdapter().get_permissions(employee_id, correlation_id=correlation_id)
+            return _iam_adapter().get_permissions(employee_id, correlation_id=correlation_id)
         except ContextError as exc:
             raise HTTPException(status_code=503, detail={"code": "IAM_UNAVAILABLE"}) from exc
 
