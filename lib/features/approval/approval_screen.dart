@@ -23,7 +23,7 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CaseDetailController>().loadCase(widget.caseId, useMock: true);
+      context.read<CaseDetailController>().loadCase(widget.caseId, useMock: false);
     });
   }
 

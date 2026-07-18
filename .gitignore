@@ -173,3 +173,15 @@ data/rag_mcp/
 # --- Generated proposal render output (tools/render_pdf_pages.py, tools/create_rewrite_proposal.py) ---
 # Hundreds of page-render PNGs/PDFs and Office lock files (~$*.docx); regenerate from tools/, don't commit.
 outputs/
+
+# Inter TTF fonts are large (regenerated via tools/fetch_fonts.sh)
+assets/fonts/*.ttf
+
+# Local tooling / state
+.dart_tool/
+.opencode-state/
+.wrangler/
+
+# Binary deliverables not tracked
+*.odt
+*.docx

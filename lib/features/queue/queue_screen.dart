@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/rm_workspace_core.dart';
 import '../../design/design.dart';
+import '../../design/widgets/nav_sidebar.dart';
 
 /// S1: Opportunity Queue — mirrors SHB Opportunity OS mobile/index.html
 class QueueScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class _QueueScreenState extends State<QueueScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CaseController>().loadCases(useMock: true);
+      context.read<CaseController>().loadCases(useMock: false);
     });
     _search.addListener(() => setState(() {}));
   }
@@ -33,35 +34,127 @@ class _QueueScreenState extends State<QueueScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<CaseController>(
-      builder: (context, controller, _) => Scaffold(
-        backgroundColor: AppColors.background,
-        body: CustomScrollView(
-          slivers: [
-            _TopBar(subtitle: 'Ưu tiên theo giá trị, độ sẵn sàng và SLA', onRefresh: () => controller.loadCases(useMock: true)),
-            if (controller.isLoading)
-              const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
-            else if (controller.error != null)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text('Lỗi: ${controller.error}'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(onPressed: () => controller.loadCases(useMock: true), child: const Text('Thử lại')),
-                    ],
-                  ),
-                ),
-              )
-            else
-              SliverToBoxAdapter(child: _Body(controller: controller, search: _search)),
-          ],
+      builder: (context, controller, _) => LayoutScaffold(
+        sidebar: const NavSidebar(current: 'queue'),
+        body: Builder(
+          builder: (context) {
+            final desktop = isDesktop(context);
+            if (desktop) {
+              return Container(
+                color: AppColors.background,
+                child: _Content(controller: controller, search: _search, grid: true),
+              );
+            }
+            return Scaffold(
+              backgroundColor: AppColors.background,
+              body: CustomScrollView(
+                slivers: [
+                  _TopBar(subtitle: 'Ưu tiên theo giá trị, độ sẵn sàng và SLA', onRefresh: () => controller.loadCases(useMock: false)),
+                  if (controller.isLoading)
+                    const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+                  else if (controller.error != null)
+                    SliverToBoxAdapter(child: _ErrorState(controller: controller))
+                  else
+                    SliverToBoxAdapter(child: _Body(controller: controller, search: _search)),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
+}
+
+class _Content extends StatelessWidget {
+  final CaseController controller;
+  final TextEditingController search;
+  final bool grid;
+  const _Content({required this.controller, required this.search, this.grid = false});
+
+  @override
+  Widget build(BuildContext context) {
+    if (controller.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (controller.error != null) {
+      return SingleChildScrollView(child: _ErrorState(controller: controller));
+    }
+    return SingleChildScrollView(
+      padding: responsivePadding(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Notice(),
+          const SizedBox(height: 16),
+          _DesktopHeader(controller: controller, search: search),
+          const SizedBox(height: 16),
+          _Body(controller: controller, search: search, grid: grid),
+        ],
+      ),
+    );
+  }
+}
+
+class _DesktopHeader extends StatelessWidget {
+  final CaseController controller;
+  final TextEditingController search;
+  const _DesktopHeader({required this.controller, required this.search});
+
+  @override
+  Widget build(BuildContext context) {
+    final open = controller.filteredCases.length;
+    final ready = controller.filteredCases.where((e) => (e.branchStatusCounts['ready'] ?? 0) > 0).length;
+    final need = controller.filteredCases.where((e) => (e.branchStatusCounts['need_info'] ?? 0) > 0).length;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Cơ hội hôm nay', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.navy900, letterSpacing: -0.8)),
+              const SizedBox(height: 4),
+              const Text('Ưu tiên theo giá trị, độ sẵn sàng và SLA', style: TextStyle(fontSize: 13, color: AppColors.muted)),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _HeaderStat(label: 'Đang mở', value: '$open', color: AppColors.blue),
+                  const SizedBox(width: 18),
+                  _HeaderStat(label: 'Sẵn sàng', value: '$ready', color: AppColors.statusReady),
+                  const SizedBox(width: 18),
+                  _HeaderStat(label: 'Thiếu hồ sơ', value: '$need', color: AppColors.statusNeedInfo),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          width: 280,
+          child: TextField(
+            controller: search,
+            decoration: const InputDecoration(hintText: 'Tìm doanh nghiệp, case, MST…', prefixIcon: Icon(Icons.search, color: AppColors.subtle)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HeaderStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _HeaderStat({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+          const SizedBox(width: 5),
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.muted)),
+        ],
+      );
 }
 
 class _TopBar extends StatelessWidget {
@@ -98,10 +191,32 @@ class _TopBar extends StatelessWidget {
   }
 }
 
+class _ErrorState extends StatelessWidget {
+  final CaseController controller;
+  const _ErrorState({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline, size: 48, color: Colors.red),
+          const SizedBox(height: 16),
+          Text('Lỗi: ${controller.error}'),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: () => controller.loadCases(useMock: false), child: const Text('Thử lại')),
+        ],
+      ),
+    );
+  }
+}
+
 class _Body extends StatelessWidget {
   final CaseController controller;
   final TextEditingController search;
-  const _Body({required this.controller, required this.search});
+  final bool grid;
+  const _Body({required this.controller, required this.search, this.grid = false});
 
   @override
   Widget build(BuildContext context) {
@@ -112,13 +227,13 @@ class _Body extends StatelessWidget {
     final ready = _readyCount(cases);
     final need = _needCount(cases);
 
-    return Column(
+    final head = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Notice(),
-        _Metrics(open: open, ready: ready, need: need),
-        _SearchField(controller: search),
-        _FilterChips(controller: controller),
+        if (!grid) _Notice(),
+        if (!grid) _Metrics(open: open, ready: ready, need: need),
+        if (!grid) _SearchField(controller: search),
+        if (!grid) _FilterChips(controller: controller),
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
           child: Row(
@@ -129,13 +244,50 @@ class _Body extends StatelessWidget {
             ],
           ),
         ),
-        if (visible.isEmpty)
-          const Padding(padding: EdgeInsets.all(24), child: Text('Không có case phù hợp bộ lọc.'))
-        else
-          ...visible.map((c) => _CaseCard(c: c)),
+      ],
+    );
+
+    if (visible.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          head,
+          const Padding(padding: EdgeInsets.all(24), child: Text('Không có case phù hợp bộ lọc.')),
+        ],
+      );
+    }
+
+    if (grid) {
+      final cols = gridColumns(context).clamp(2, 4);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          head,
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            children: visible.map((c) => SizedBox(width: _cardWidth(context, cols), child: _CaseCard(c: c))).toList(),
+          ),
+          const SizedBox(height: 24),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        head,
+        ...visible.map((c) => _CaseCard(c: c)),
         const SizedBox(height: 24),
       ],
     );
+  }
+
+  double _cardWidth(BuildContext context, int cols) {
+    final pad = responsivePadding(context).left + responsivePadding(context).right;
+    final w = MediaQuery.of(context).size.width - 280 - pad;
+    return (w - 14 * (cols - 1)) / cols;
   }
 
   int _readyCount(List<CaseQueueItem> c) => c.where((e) => (e.branchStatusCounts['ready'] ?? 0) > 0).length;
