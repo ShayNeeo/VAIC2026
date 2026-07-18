@@ -1,0 +1,1028 @@
+{
+  "dataset_version": "2026.07-assembled-v1",
+  "compiled_at": "2026-07-18T05:44:20.446355+00:00",
+  "products": [
+    {
+      "product_id": "PRD-CA-001",
+      "product_name": "Tài khoản thanh toán doanh nghiệp",
+      "product_type": "current_account",
+      "description": "Tài khoản giao dịch chính cho thu/chi, số dư và sao kê.",
+      "target_segment": "corporate",
+      "key_features": [
+        "inbound",
+        "outbound",
+        "statement"
+      ],
+      "prerequisites": [
+        "business_registration",
+        "representative_id"
+      ],
+      "supported_currencies": [
+        "VND",
+        "USD"
+      ],
+      "minimum_revenue_vnd": 1000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "*"
+      ],
+      "source_id": "SRC-BIAN-001",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-001-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "monthly_service_fee",
+          "fee_amount": 120000.0,
+          "fee_rate_pct": 0.0,
+          "limit_amount": 2000000000.0,
+          "sla_business_hours": 8,
+          "implementation_days": 3,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-001-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 5.0,
+          "fee_rate_pct": 0.05,
+          "limit_amount": 100000.0,
+          "sla_business_hours": 6,
+          "implementation_days": 2,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-CA-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Tài khoản thanh toán doanh nghiệp: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CA-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Tài khoản thanh toán doanh nghiệp: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CA-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Tài khoản thanh toán doanh nghiệp: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CA-04",
+          "rule_type": "document",
+          "condition_field": "chief_accountant_appointment",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "chief_accountant",
+          "rule_text": "Tài khoản thanh toán doanh nghiệp: Yêu cầu Quyết định bổ nhiệm Kế toán trưởng.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CA-05",
+          "rule_type": "eligibility",
+          "condition_field": "ubo_declaration",
+          "operator": "equals",
+          "threshold_value": "verified",
+          "severity": "high",
+          "required_evidence": "ubo_profile",
+          "rule_text": "Tài khoản thanh toán doanh nghiệp: Hoàn tất định danh Chủ sở hữu hưởng lợi (UBO).",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        }
+      ]
+    },
+    {
+      "product_id": "PRD-PY-001",
+      "product_name": "Dịch vụ chi lương doanh nghiệp",
+      "product_type": "corporate_payroll",
+      "description": "Tải file lương, kiểm tra người duyệt và thực hiện batch payroll.",
+      "target_segment": "corporate",
+      "key_features": [
+        "payroll_file",
+        "multi_level_approval",
+        "payment_status"
+      ],
+      "prerequisites": [
+        "current_account",
+        "board_resolution",
+        "authorized_signer"
+      ],
+      "supported_currencies": [
+        "VND"
+      ],
+      "minimum_revenue_vnd": 3000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "*"
+      ],
+      "source_id": "SRC-BIAN-001",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-002-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "transaction_fee",
+          "fee_amount": 145000.0,
+          "fee_rate_pct": 0.09,
+          "limit_amount": 2500000000.0,
+          "sla_business_hours": 10,
+          "implementation_days": 4,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-002-VND-OLD",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "transaction_fee",
+          "fee_amount": 130000.0,
+          "fee_rate_pct": 0.08,
+          "limit_amount": 2000000000.0,
+          "sla_business_hours": 10,
+          "implementation_days": 4,
+          "effective_from": "2025-01-01",
+          "effective_to": "2025-12-31"
+        },
+        {
+          "pricing_id": "PRICE-002-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 6.0,
+          "fee_rate_pct": 0.060000000000000005,
+          "limit_amount": 125000.0,
+          "sla_business_hours": 7,
+          "implementation_days": 3,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-PY-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Dịch vụ chi lương doanh nghiệp: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-PY-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Dịch vụ chi lương doanh nghiệp: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-PY-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Dịch vụ chi lương doanh nghiệp: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-PY-04",
+          "rule_type": "eligibility",
+          "condition_field": "minimum_employees",
+          "operator": "greater_than_or_equals",
+          "threshold_value": "10",
+          "severity": "medium",
+          "required_evidence": "employee_payroll_list",
+          "rule_text": "Dịch vụ chi lương doanh nghiệp: Doanh nghiệp cần tối thiểu 10 nhân sự.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-PY-05",
+          "rule_type": "document",
+          "condition_field": "payroll_agreement",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "payroll_agreement",
+          "rule_text": "Dịch vụ chi lương doanh nghiệp: Yêu cầu ký kết Hợp đồng dịch vụ chi lương.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        }
+      ]
+    },
+    {
+      "product_id": "PRD-CM-001",
+      "product_name": "Quản lý dòng tiền tập trung",
+      "product_type": "cash_management",
+      "description": "Theo dõi tài khoản, điều phối số dư và đối soát dòng tiền.",
+      "target_segment": "corporate",
+      "key_features": [
+        "sweeping",
+        "account_view",
+        "reconciliation"
+      ],
+      "prerequisites": [
+        "current_account",
+        "cash_management_setup"
+      ],
+      "supported_currencies": [
+        "VND",
+        "USD"
+      ],
+      "minimum_revenue_vnd": 5000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "*"
+      ],
+      "source_id": "SRC-BIAN-001",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-003-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "monthly_service_fee",
+          "fee_amount": 170000.0,
+          "fee_rate_pct": 0.0,
+          "limit_amount": 3000000000.0,
+          "sla_business_hours": 12,
+          "implementation_days": 5,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-003-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 7.0,
+          "fee_rate_pct": 0.07,
+          "limit_amount": 150000.0,
+          "sla_business_hours": 8,
+          "implementation_days": 4,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-CM-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Quản lý dòng tiền tập trung: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CM-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Quản lý dòng tiền tập trung: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CM-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Quản lý dòng tiền tập trung: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CM-04",
+          "rule_type": "eligibility",
+          "condition_field": "annual_revenue_vnd",
+          "operator": "greater_than_or_equals",
+          "threshold_value": "50000000000",
+          "severity": "high",
+          "required_evidence": "financial_statements",
+          "rule_text": "Quản lý dòng tiền tập trung: Doanh thu tối thiểu 50 tỷ VNĐ.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CM-05",
+          "rule_type": "document",
+          "condition_field": "cash_sweeping_agreement",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "cash_sweeping_agreement",
+          "rule_text": "Quản lý dòng tiền tập trung: Yêu cầu Thỏa thuận điều chuyển số dư tự động giữa mẹ và con.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        }
+      ]
+    },
+    {
+      "product_id": "PRD-CO-001",
+      "product_name": "Thu hộ và quản lý khoản phải thu",
+      "product_type": "collection",
+      "description": "Nhận diện khoản thu theo mã, đối soát và báo cáo công nợ.",
+      "target_segment": "corporate",
+      "key_features": [
+        "virtual_account",
+        "collection_code",
+        "reconciliation"
+      ],
+      "prerequisites": [
+        "current_account",
+        "collection_schedule"
+      ],
+      "supported_currencies": [
+        "VND"
+      ],
+      "minimum_revenue_vnd": 2000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "*"
+      ],
+      "source_id": "SRC-BIAN-001",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-004-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "transaction_fee",
+          "fee_amount": 195000.0,
+          "fee_rate_pct": 0.11,
+          "limit_amount": 3500000000.0,
+          "sla_business_hours": 14,
+          "implementation_days": 6,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-004-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 8.0,
+          "fee_rate_pct": 0.08,
+          "limit_amount": 175000.0,
+          "sla_business_hours": 9,
+          "implementation_days": 2,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-CO-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Thu hộ và quản lý khoản phải thu: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CO-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Thu hộ và quản lý khoản phải thu: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-CO-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Thu hộ và quản lý khoản phải thu: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        }
+      ]
+    },
+    {
+      "product_id": "PRD-PO-001",
+      "product_name": "Thanh toán nhà cung cấp",
+      "product_type": "supplier_payment",
+      "description": "Tạo lệnh thanh toán đơn lẻ hoặc theo lô cho nhà cung cấp.",
+      "target_segment": "corporate",
+      "key_features": [
+        "payment_order",
+        "bulk_payment",
+        "approval"
+      ],
+      "prerequisites": [
+        "current_account",
+        "authorized_signer"
+      ],
+      "supported_currencies": [
+        "VND",
+        "USD"
+      ],
+      "minimum_revenue_vnd": 5000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "*"
+      ],
+      "source_id": "SRC-BIAN-002",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-005-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "monthly_service_fee",
+          "fee_amount": 220000.0,
+          "fee_rate_pct": 0.0,
+          "limit_amount": 4000000000.0,
+          "sla_business_hours": 16,
+          "implementation_days": 3,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-005-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 9.0,
+          "fee_rate_pct": 0.09,
+          "limit_amount": 200000.0,
+          "sla_business_hours": 10,
+          "implementation_days": 3,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-PO-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Thanh toán nhà cung cấp: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-PO-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Thanh toán nhà cung cấp: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-PO-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Thanh toán nhà cung cấp: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        }
+      ]
+    },
+    {
+      "product_id": "PRD-WC-001",
+      "product_name": "Hạn mức vốn lưu động",
+      "product_type": "working_capital",
+      "description": "Khoản cấp tín dụng ngắn hạn phục vụ vốn lưu động.",
+      "target_segment": "corporate",
+      "key_features": [
+        "credit_line",
+        "drawdown",
+        "repayment"
+      ],
+      "prerequisites": [
+        "financial_statement",
+        "ubo_declaration",
+        "collateral"
+      ],
+      "supported_currencies": [
+        "VND"
+      ],
+      "minimum_revenue_vnd": 10000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "HN01"
+      ],
+      "source_id": "SRC-FATF-001",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-006-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "transaction_fee",
+          "fee_amount": 245000.0,
+          "fee_rate_pct": 0.13,
+          "limit_amount": 4500000000.0,
+          "sla_business_hours": 18,
+          "implementation_days": 4,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-006-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 10.0,
+          "fee_rate_pct": 0.1,
+          "limit_amount": 225000.0,
+          "sla_business_hours": 11,
+          "implementation_days": 4,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-WC-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Hạn mức vốn lưu động: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Credit"
+        },
+        {
+          "policy_id": "POL-WC-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Hạn mức vốn lưu động: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Credit"
+        },
+        {
+          "policy_id": "POL-WC-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Hạn mức vốn lưu động: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Credit"
+        },
+        {
+          "policy_id": "POL-WC-04",
+          "rule_type": "eligibility",
+          "condition_field": "years_of_operation",
+          "operator": "greater_than_or_equals",
+          "threshold_value": "2",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Hạn mức vốn lưu động: Doanh nghiệp hoạt động từ 2 năm trở lên.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Credit"
+        },
+        {
+          "policy_id": "POL-WC-05",
+          "rule_type": "eligibility",
+          "condition_field": "credit_score_cic",
+          "operator": "not_in",
+          "threshold_value": "bad_debt_group_3_5",
+          "severity": "high",
+          "required_evidence": "cic_report",
+          "rule_text": "Hạn mức vốn lưu động: Không có nợ xấu nhóm 3-5 trên hệ thống CIC.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Credit"
+        },
+        {
+          "policy_id": "POL-WC-06",
+          "rule_type": "document",
+          "condition_field": "financial_statements",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "financial_statements",
+          "rule_text": "Hạn mức vốn lưu động: Yêu cầu báo cáo tài chính tối thiểu 2 năm gần nhất.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Credit"
+        }
+      ]
+    },
+    {
+      "product_id": "PRD-GU-001",
+      "product_name": "Bảo lãnh doanh nghiệp",
+      "product_type": "guarantee",
+      "description": "Phát hành bảo lãnh theo hợp đồng và tài sản/biện pháp bảo đảm.",
+      "target_segment": "corporate",
+      "key_features": [
+        "guarantee_request",
+        "contract",
+        "approval"
+      ],
+      "prerequisites": [
+        "business_registration",
+        "contract",
+        "collateral"
+      ],
+      "supported_currencies": [
+        "VND"
+      ],
+      "minimum_revenue_vnd": 5000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "*"
+      ],
+      "source_id": "SRC-PROP-001",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-007-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "monthly_service_fee",
+          "fee_amount": 270000.0,
+          "fee_rate_pct": 0.0,
+          "limit_amount": 5000000000.0,
+          "sla_business_hours": 20,
+          "implementation_days": 5,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-007-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 11.0,
+          "fee_rate_pct": 0.11,
+          "limit_amount": 250000.0,
+          "sla_business_hours": 12,
+          "implementation_days": 2,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-GU-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Bảo lãnh doanh nghiệp: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-GU-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Bảo lãnh doanh nghiệp: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-GU-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Bảo lãnh doanh nghiệp: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-GU-04",
+          "rule_type": "document",
+          "condition_field": "underlying_contract",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "underlying_contract",
+          "rule_text": "Bảo lãnh doanh nghiệp: Yêu cầu hồ sơ chứng minh nghĩa vụ được bảo lãnh (Hợp đồng kinh tế gốc).",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        }
+      ]
+    },
+    {
+      "product_id": "PRD-FX-001",
+      "product_name": "Thanh toán và thu tiền quốc tế",
+      "product_type": "international_payment",
+      "description": "Thanh toán/thu tiền quốc tế theo hồ sơ giao dịch và mục đích.",
+      "target_segment": "corporate",
+      "key_features": [
+        "fx_payment",
+        "beneficiary",
+        "purpose_code"
+      ],
+      "prerequisites": [
+        "current_account",
+        "contract",
+        "invoice"
+      ],
+      "supported_currencies": [
+        "USD",
+        "EUR",
+        "VND"
+      ],
+      "minimum_revenue_vnd": 3000000000.0,
+      "status": "active",
+      "active": true,
+      "branches": [
+        "*"
+      ],
+      "source_id": "SRC-ISO-002",
+      "pricing_limits": [
+        {
+          "pricing_id": "PRICE-008-VND",
+          "segment": "standard_corporate",
+          "currency": "VND",
+          "fee_type": "transaction_fee",
+          "fee_amount": 295000.0,
+          "fee_rate_pct": 0.15000000000000002,
+          "limit_amount": 5500000000.0,
+          "sla_business_hours": 22,
+          "implementation_days": 6,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        },
+        {
+          "pricing_id": "PRICE-008-USD",
+          "segment": "premium_corporate",
+          "currency": "USD",
+          "fee_type": "transaction_fee",
+          "fee_amount": 12.0,
+          "fee_rate_pct": 0.12000000000000001,
+          "limit_amount": 275000.0,
+          "sla_business_hours": 13,
+          "implementation_days": 3,
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31"
+        }
+      ],
+      "policies": [
+        {
+          "policy_id": "POL-FX-01",
+          "rule_type": "eligibility",
+          "condition_field": "customer_status",
+          "operator": "equals",
+          "threshold_value": "active",
+          "severity": "medium",
+          "required_evidence": "customer_profile",
+          "rule_text": "Thanh toán và thu tiền quốc tế: Khách hàng phải ở trạng thái active.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-FX-02",
+          "rule_type": "document",
+          "condition_field": "business_registration",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "business_registration",
+          "rule_text": "Thanh toán và thu tiền quốc tế: Phải có đăng ký doanh nghiệp còn hiệu lực.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-FX-03",
+          "rule_type": "risk",
+          "condition_field": "risk_segment",
+          "operator": "not_equals",
+          "threshold_value": "high",
+          "severity": "medium",
+          "required_evidence": "risk_profile",
+          "rule_text": "Thanh toán và thu tiền quốc tế: Khách hàng phân khúc rủi ro cao cần human review.",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        },
+        {
+          "policy_id": "POL-FX-04",
+          "rule_type": "document",
+          "condition_field": "legitimate_purpose_doc",
+          "operator": "present",
+          "threshold_value": "true",
+          "severity": "high",
+          "required_evidence": "trade_documents",
+          "rule_text": "Thanh toán và thu tiền quốc tế: Yêu cầu hồ sơ chứng minh mục đích chuyển tiền (Sales Contract; Invoice; tờ khai hải quan).",
+          "effective_from": "2026-01-01",
+          "effective_to": "2026-12-31",
+          "version": "v1.0",
+          "owner_team": "Product"
+        }
+      ]
+    }
+  ],
+  "solution_bundles": [
+    {
+      "bundle_id": "BND-001",
+      "bundle_name": "Corporate Cash Flow Starter",
+      "target_segment": "mid_market",
+      "included_products": [],
+      "bundle_benefits": [],
+      "discount_description": null,
+      "effective_from": null,
+      "active": false
+    },
+    {
+      "bundle_id": "BND-002",
+      "bundle_name": "Supplier Payment Control",
+      "target_segment": "mid_market",
+      "included_products": [],
+      "bundle_benefits": [],
+      "discount_description": null,
+      "effective_from": null,
+      "active": false
+    },
+    {
+      "bundle_id": "BND-003",
+      "bundle_name": "Working Capital Readiness",
+      "target_segment": "large_corporate",
+      "included_products": [],
+      "bundle_benefits": [],
+      "discount_description": null,
+      "effective_from": null,
+      "active": false
+    },
+    {
+      "bundle_id": "BND-004",
+      "bundle_name": "Project Finance Operations",
+      "target_segment": "project",
+      "included_products": [],
+      "bundle_benefits": [],
+      "discount_description": null,
+      "effective_from": null,
+      "active": false
+    },
+    {
+      "bundle_id": "BND-005",
+      "bundle_name": "Cross-border Trade Flow",
+      "target_segment": "export",
+      "included_products": [],
+      "bundle_benefits": [],
+      "discount_description": null,
+      "effective_from": null,
+      "active": false
+    },
+    {
+      "bundle_id": "BND-006",
+      "bundle_name": "Retail Payroll and Settlement",
+      "target_segment": "retail",
+      "included_products": [],
+      "bundle_benefits": [],
+      "discount_description": null,
+      "effective_from": null,
+      "active": false
+    }
+  ]
+}

@@ -10,9 +10,11 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.v2.router import router as v2_router
-from app.api.v2.employee_router import case_action_router
-from app.api.v2.employee_router import recommendation_router
-from app.api.v2.employee_router import router as employee_router
+from app.api.v2.employee_router import (
+    case_action_router,
+    recommendation_router,
+    router as employee_router,
+)
 
 app = FastAPI(
     title="SHB Corporate Expert Workspace",

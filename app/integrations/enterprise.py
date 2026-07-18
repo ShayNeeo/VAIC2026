@@ -92,15 +92,27 @@ class SQLiteIAMAdapter(EnterpriseSQLiteBase):
             }
 
 
+class SQLiteSSOAdapter(EnterpriseSQLiteBase):
+    def get_employee_identity(self, employee_id: str, *, correlation_id: str) -> EmployeeIdentity:
+        if employee_id in self._fail_for:
+            raise UpstreamTimeoutError(correlation_id, upstream="sso")
+            
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT role, organization_unit FROM employees WHERE employee_id = ?", (employee_id,))
+            row = cursor.fetchone()
+            
+            if not row:
+                raise UpstreamUnavailableError(correlation_id, upstream="sso", reason=f"unknown employee_id {employee_id}")
+                
+            return {
+                "employee_id": employee_id,
+                "role": row["role"],
+                "organization_unit": row["organization_unit"],
+            }
+
+
 _EMPLOYEE_COPILOT_DEMO_PERSONAS: list[tuple[str, str, str, list[str], dict]] = [
-    # (employee_id, coarse_role, organization_unit, permissions, access_scope)
-    # RM-999 already exists in enterprise_core.sqlite3 from the original
-    # seed; these four were only ever seeded into the newer, separate
-    # employee_db.py (data/state/v2.sqlite3) SQLite file, which meant
-    # SQLiteSSOAdapter/SQLiteIAMAdapter could never resolve them. Adding
-    # them here (idempotently) makes IAMPort/SSOPort the single place that
-    # knows about every demo employee, instead of two disconnected seed
-    # sources for the same five-person demo cast.
     ("SPEC-LEGAL-001", "Specialist", "Legal & Compliance",
      ["case:read", "case:verify_evidence", "legal:check_issue", "legal:block_non_eligible"],
      {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
@@ -117,17 +129,6 @@ _EMPLOYEE_COPILOT_DEMO_PERSONAS: list[tuple[str, str, str, list[str], dict]] = [
 
 
 def ensure_employee_copilot_demo_personas(db_path: Path | str | None = None) -> None:
-    """Idempotently add the Employee Copilot demo personas to the real
-    enterprise IAM/SSO database, if they are not already present -- and keep
-    their `permissions` JSON in sync with _EMPLOYEE_COPILOT_DEMO_PERSONAS
-    above (an upsert, not INSERT OR IGNORE, specifically for that one
-    column) so adding a new specialist-review capability to this list
-    actually takes effect on the next process start instead of silently
-    freezing at whatever was seeded the first time this ran. `employees`
-    rows (identity/org unit) are still insert-or-ignore-only -- unlike
-    scripts/init_enterprise_db.py (a one-time, now-broken migration that
-    would wipe this table -- do not reuse that script), this never deletes
-    a row and never touches any OTHER employee's permissions."""
     path = Path(db_path) if db_path is not None else (
         Path(__file__).resolve().parents[2] / "data" / "mock_database" / "enterprise_core.sqlite3"
     )
@@ -152,10 +153,6 @@ def ensure_employee_copilot_demo_personas(db_path: Path | str | None = None) -> 
 
 
 def map_enterprise_role_to_role_type(role: str, organization_unit: str) -> str:
-    """Bridge the coarse IAM role ("RM"/"Specialist"/"Manager"/"DataSteward")
-    to the fine-grained RoleType the Next Best Work / role-routing layer
-    needs. Returns a RoleType.value string (caller wraps in RoleType()) to
-    avoid a schemas -> integrations import cycle."""
     role_lower = role.lower()
     unit_lower = organization_unit.lower()
     if role_lower == "rm":
@@ -173,23 +170,3 @@ def map_enterprise_role_to_role_type(role: str, organization_unit: str) -> str:
     if role_lower == "datasteward":
         return "auditor"
     return "auditor"
-
-
-class SQLiteSSOAdapter(EnterpriseSQLiteBase):
-    def get_employee_identity(self, employee_id: str, *, correlation_id: str) -> EmployeeIdentity:
-        if employee_id in self._fail_for:
-            raise UpstreamTimeoutError(correlation_id, upstream="sso")
-            
-        with self._get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT role, organization_unit FROM employees WHERE employee_id = ?", (employee_id,))
-            row = cursor.fetchone()
-            
-            if not row:
-                raise UpstreamUnavailableError(correlation_id, upstream="sso", reason=f"unknown employee_id {employee_id}")
-                
-            return {
-                "employee_id": employee_id,
-                "role": row["role"],
-                "organization_unit": row["organization_unit"],
-            }

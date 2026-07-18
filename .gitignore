@@ -187,5 +187,5 @@ assets/fonts/*.ttf
 *.odt
 *.docx
 
-# Test scratch artifacts
-tmp_test/
+# Flutter local machine config (generated)
+android/local.properties

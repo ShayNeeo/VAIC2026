@@ -30,11 +30,11 @@ def test_ingestion_is_typed_and_reports_lineage():
 
 def test_index_is_persistent_and_upsert_is_idempotent(tmp_path):
     first = service(tmp_path)
-    assert first.index.count() == 17
+    assert first.index.count() == 5
     first.ingest()
-    assert first.index.count() == 17
+    assert first.index.count() == 5
     restarted = ProductKnowledgeService(tmp_path / "products.sqlite3")
-    assert restarted.index.count() == 17
+    assert restarted.index.count() == 5
 
 
 def test_payroll_retrieval_has_exact_versioned_evidence(tmp_path):
@@ -82,13 +82,6 @@ def test_product_recommendation_is_grounded_and_does_not_claim_eligibility(tmp_p
     )
     recommendation = result["recommendations"][0]
     assert result["status"] == "grounded"
-    # PROD-PAYROLL (synthetic) must surface in a payroll query; the SHB public
-    # manual payroll product may rank first under the offline local encoder,
-    # which is acceptable. Eligibility is never asserted by the product layer.
-    payroll_ids = {rec["product_id"] for rec in result["recommendations"]}
-    # A payroll query must return a payroll product. Under the key-free local
-    # encoder the SHB public-source payroll product (SHB-CORP-PAY-003) can
-    # outrank the synthetic one; either is a correct, grounded result.
-    assert payroll_ids & {"PROD-PAYROLL", "SHB-CORP-PAY-003"}
+    assert recommendation["product_id"] == "PROD-PAYROLL"
     assert recommendation["eligibility"] == "unknown"
     assert recommendation["evidences"][0]["source_document_id"]

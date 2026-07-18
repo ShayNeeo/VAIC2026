@@ -21,14 +21,18 @@ jobs:
       RAG_MCP_EMBEDDING_PROVIDER: "local"
       APPROVAL_SECRET: "ci-only-not-a-real-secret"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          # Optional stack has pinned langchain/chromadb versions that may conflict
+          # with the resolved requirements.txt set; never let it break CI.
+          pip install -r requirements-optional.txt || echo "requirements-optional.txt skipped (conflict)"
 
       - name: Ensure state dir exists for sqlite-backed tests
         run: mkdir -p data/state

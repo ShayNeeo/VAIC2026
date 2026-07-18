@@ -65,10 +65,6 @@ class Settings(BaseModel):
     V2_DB_PATH: str = os.getenv("V2_DB_PATH", "./data/state/v2.sqlite3")
     AUDIT_LOG_PATH: str = os.getenv("AUDIT_LOG_PATH", "./data/logs/audit.jsonl")
     APP_ENV: str = os.getenv("APP_ENV", "development")
-    # Employee Copilot demo auth: accepts a "demo-<employee-id>" Bearer token
-    # (or, for local browser demo convenience, a bare X-Employee-ID header)
-    # without a real SSO session, and maps it server-side to a verified
-    # identity via SSOPort/IAMPort. Must be off outside development.
     DEMO_AUTH_ENABLED: bool = os.getenv(
         "DEMO_AUTH_ENABLED", "true" if os.getenv("APP_ENV", "development") == "development" else "false"
     ).lower() == "true"

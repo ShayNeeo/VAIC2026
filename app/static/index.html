@@ -11,40 +11,44 @@
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark">S</div>
-      <div><strong>SHB Corporate Sales Copilot</strong><span id="workspaceTitle">RM Workspace · Personalization Enabled</span></div>
+      <div><strong>SHB Corporate Sales Copilot</strong><span>RM Workspace · Synthetic E2E</span></div>
     </div>
     <div class="top-context">
-      <label>SSO Switcher 
-        <select id="employee">
-          <option value="RM-999">RM-999 (Relationship Manager)</option>
-          <option value="SPEC-LEGAL-001">SPEC-LEGAL-001 (Legal Specialist)</option>
-          <option value="SPEC-PROD-001">SPEC-PROD-001 (Product Specialist)</option>
-          <option value="SPEC-OPS-001">SPEC-OPS-001 (Operations Specialist)</option>
-          <option value="MGR-HN-01">MGR-HN-01 (Sales Manager)</option>
-          <option value="EXPIRED_TOKEN">Simulate Expired Token (401)</option>
-          <option value="IAM_ERROR">Simulate IAM Service Outage (503)</option>
-        </select>
-      </label>
-      <label>Khách hàng 
-        <select id="session">
-          <option value="SESS-MP">Minh Phát · COMP-MP</option>
-          <option value="SESS-ABC">ABC Việt Nam · COMP-ABC</option>
-        </select>
-      </label>
+      <label>RM <select id="employee"><option value="RM-999">RM-999 · Hà Nội</option></select></label>
+      <label>Khách hàng <select id="session"><option value="SESS-MP">Minh Phát · COMP-MP</option><option value="SESS-ABC">ABC Việt Nam · COMP-ABC</option></select></label>
       <span class="demo-badge">DỮ LIỆU GIẢ LẬP</span>
     </div>
   </header>
 
   <div id="toast" class="toast hidden" role="status"></div>
 
-  <!-- PERSONALIZATION CONTROL BAR -->
-  <div class="mgr-dashboard" style="margin-bottom:0px; margin-top:15px;" id="personalizationPanel">
-    <div class="personalization-settings">
-      <div class="settings-group">
-        <label>Cá nhân hóa thói quen:</label>
-        <label class="switch">
-          <input type="checkbox" id="togglePersonalization" checked>
-          <span class="slider"></span>
+  <section class="case-summary" aria-label="Tóm tắt case">
+    <div><span>Mã case</span><strong id="summaryCase">Chưa tạo</strong></div>
+    <div><span>Trạng thái</span><strong id="summaryStatus">Chưa bắt đầu</strong></div>
+    <div><span>Việc RM cần làm</span><strong id="summaryNext">Nhập nhu cầu</strong></div>
+    <div><span>Sản phẩm phù hợp</span><strong id="summaryProducts">—</strong></div>
+    <div><span>AI log</span><strong id="summaryAiLog">0 bản ghi</strong></div>
+  </section>
+
+  <nav id="stepper" class="stepper" aria-label="Tiến trình xử lý">
+    <button data-step="1" class="active"><i>1</i><span>Nhập nhu cầu<small>Tạo sales case</small></span></button>
+    <button data-step="2"><i>2</i><span>Nạp hồ sơ<small>File hồ sơ doanh nghiệp</small></span></button>
+    <button data-step="3"><i>3</i><span>AI đọc hồ sơ<small>Phân loại & trích xuất</small></span></button>
+    <button data-step="4"><i>4</i><span>RM xác nhận<small>Chốt context dùng chung</small></span></button>
+    <button data-step="5"><i>5</i><span>Phân tích & xử lý<small>Đề xuất → phê duyệt</small></span></button>
+  </nav>
+
+  <main class="workspace">
+    <aside class="left-column">
+      <section class="panel">
+        <div class="panel-title"><div><span class="eyebrow">BẮT ĐẦU NHANH</span><h2>Case mẫu có hướng dẫn</h2></div></div>
+        <label class="field">Chọn tình huống
+          <select id="scenario">
+            <option value="payroll">Case 1 · Payroll đủ điều kiện sơ bộ</option>
+            <option value="mixed">Case 2 · Payroll + vốn lưu động thiếu hồ sơ</option>
+            <option value="clarify">Case 3 · Nhu cầu cần làm rõ</option>
+            <option value="unsafe">Case 4 · Yêu cầu không an toàn</option>
+          </select>
         </label>
       </div>
       <div class="settings-group">
@@ -259,78 +263,111 @@
         </section>
       </section>
 
-      <aside class="right-column">
-        <section class="panel sticky action-panel">
-          <span class="eyebrow">NEXT BEST ACTION</span><h2>Hành động ưu tiên</h2>
-          <div id="nextAction"><p class="muted">Tạo case để hệ thống chỉ ra đúng bước tiếp theo.</p></div>
-          <div id="actionButtons" class="action-buttons"></div>
-        </section>
+      <section class="panel compact">
+        <div class="panel-title"><div><span class="eyebrow">PERSISTENT STATE</span><h2>Hồ sơ đang xử lý</h2></div><button id="refreshCases" class="icon-button" title="Tải lại">↻</button></div>
+        <div id="caseList" class="case-list"><p class="muted">Chưa có case.</p></div>
+      </section>
 
-        <section class="panel control-panel">
-          <div class="tab-buttons" role="tablist">
-            <button class="tab active" data-tab="evidence" id="tabButtonEvidence">Nguồn</button>
-            <button class="tab" data-tab="ai" id="tabButtonAi">Nhật ký AI</button>
-            <button class="tab" data-tab="audit" id="tabButtonAudit">Audit</button>
-            <button class="tab" data-tab="json" id="tabButtonJson">JSON</button>
+      <details class="panel help-panel">
+        <summary>Cách đọc giao diện</summary>
+        <ol>
+          <li><b>Tóm tắt case</b>: nhìn trạng thái và việc cần làm trước.</li>
+          <li><b>Đầu vào</b>: nhập nhu cầu, nạp file, kiểm tra hồ sơ hợp nhất.</li>
+          <li><b>Kết luận xử lý</b>: đọc lần lượt nhu cầu → sản phẩm → điều kiện.</li>
+          <li><b>Hành động ưu tiên</b>: chỉ làm đúng một bước được đề xuất.</li>
+          <li><b>Nguồn chứng minh kết luận</b> và <b>Nhật ký AI</b>: dùng để kiểm tra.</li>
+          <li>Case thiếu hồ sơ: <b>Bổ sung hồ sơ UBO và BCTC</b>.</li>
+          <li>Case đủ rule: <b>RM phê duyệt tạo case/task</b> trên payload đã xem.</li>
+        </ol>
+      </details>
+    </aside>
+
+    <section class="main-column">
+      <section id="intakePanel" class="panel">
+        <div class="panel-title">
+          <div><span class="eyebrow">ĐẦU VÀO ĐƯỢC KIỂM SOÁT</span><h1>Đầu vào</h1><p id="stageHint">Nhập mục tiêu kinh doanh và tạo hồ sơ nháp.</p></div>
+          <span id="intakeBadge" class="status-pill neutral">DRAFT</span>
+        </div>
+
+        <div id="stageInput" class="stage">
+          <div class="form-grid">
+            <label class="field span-2">Doanh nghiệp<input id="companyName" value="Công ty Cổ phần Thiết bị Minh Phát"></label>
+            <label class="field">Mã số thuế<input id="taxCode" value="0109988665"></label>
+            <label class="field">Ngành<input id="industry" value="Phân phối thiết bị công nghiệp"></label>
+            <label class="field span-2">Nhu cầu khách hàng<textarea id="needText" rows="5"></textarea><small>Viết theo kết quả mong muốn; không cần chỉ định agent hay tool.</small></label>
+            <label class="field span-2">Ghi chú của RM<textarea id="rmNote" rows="2" placeholder="Thông tin bổ sung từ cuộc trao đổi"></textarea></label>
           </div>
-          <div id="tabEvidence" class="tab-content"><h3>Nguồn chứng minh kết luận</h3><div id="evidenceList" class="evidence-list"><p class="muted">Chưa có nguồn.</p></div></div>
-          <div id="tabAi" class="tab-content hidden"><h3>AI Decision Log</h3><p class="muted">Không lưu raw PII, secret hoặc approval token.</p><div id="aiLog" class="log-list"></div></div>
-          <div id="tabAudit" class="tab-content hidden"><h3>Audit hash-chain</h3><div id="auditLog" class="log-list"></div></div>
-          <div id="tabJson" class="tab-content hidden"><h3>Dữ liệu kỹ thuật JSON</h3><pre id="rawJson">{}</pre></div>
-        </section>
-      </aside>
-    </main>
-  </div>
+          <div class="button-row"><button id="createCase" class="button primary">Tạo sales case →</button></div>
+        </div>
 
-  <!-- SPECIALIST WORKSPACE -->
-  <div id="specialistWorkspace" class="hidden">
-    <div class="spec-grid">
-      <aside class="panel">
-        <span class="eyebrow">SPECIALIST WORK QUEUE</span>
-        <h2 id="specQueueTitle">Hàng đợi công việc</h2>
-        <div id="specQueueList" class="nbw-list">
-          <p class="muted">Đang tải nhiệm vụ...</p>
+        <div id="stageDocuments" class="stage hidden">
+          <div class="dropzone" id="dropzone">
+            <input id="fileInput" type="file" multiple accept=".pdf,.docx,.xlsx,.txt,.md,.csv,.json">
+            <div class="drop-icon">⇧</div><h3>Kéo thả hồ sơ vào đây</h3>
+            <p>PDF, DOCX, XLSX, TXT, CSV, JSON · tối đa 10 MB/file</p>
+            <div class="button-row center"><button id="chooseFiles" class="button secondary" type="button">Chọn file tài liệu</button><button id="loadMockFiles" class="button ghost" type="button">Nạp bộ hồ sơ mẫu</button></div>
+          </div>
+          <div id="pendingFiles" class="file-list"></div>
+          <div id="uploadedFiles" class="file-list"></div>
+          <div class="button-row split"><button id="backToInput" class="button ghost">← Sửa nhu cầu</button><button id="uploadDocuments" class="button primary">Tải lên & kiểm tra file →</button></div>
         </div>
-      </aside>
-      <main class="spec-detail-card" id="specDetailPanel">
-        <h2>Chi tiết nhiệm vụ chuyên viên</h2>
-        <p class="muted">Chọn một nhiệm vụ từ danh sách hàng đợi để thẩm định.</p>
-      </main>
-    </div>
-  </div>
 
-  <!-- MANAGER WORKSPACE -->
-  <div id="managerWorkspace" class="hidden">
-    <div class="mgr-dashboard">
-      <div class="panel-title">
-        <div>
-          <span class="eyebrow">BRANCH MANAGER CONSOLE</span>
-          <h1>Quản lý Vận hành Chi nhánh</h1>
-          <p>Số liệu tổng hợp của chi nhánh BRANCH-HN-01. Không hiển thị preferences/thói quen cá nhân.</p>
+        <div id="stageProcessing" class="stage hidden">
+          <div class="processing-hero"><div class="spinner"></div><div><h3>Hồ sơ đã tải lên, sẵn sàng trích xuất</h3><p>Hệ thống phân loại tài liệu, trích xuất field kèm nguồn và phát hiện xung đột. Raw file không được lưu lâu dài trong MVP.</p></div></div>
+          <div id="processingJobs" class="job-list"></div>
+          <div class="button-row"><button id="processDocuments" class="button primary">Chạy Document Intelligence →</button></div>
         </div>
-      </div>
-      <div class="mgr-stats-grid">
-        <div class="mgr-stat-card">
-          <h3>Case đang bị Block</h3>
-          <div class="value" id="mgrBlockedCases">0</div>
+
+        <div id="stageProfile" class="stage hidden">
+          <div class="notice warning"><b>RM phải kiểm tra trước khi AI phân tích.</b> Giá trị ảnh hưởng quyết định phải có nguồn; xung đột chưa xử lý sẽ chặn xác nhận.</div>
+          <div id="conflictList"></div>
+          <div id="profileView" class="profile-grid"></div>
+          <details class="manual-correction"><summary>Chỉnh một trường thủ công</summary>
+            <div class="inline-form"><select id="correctionField"><option value="business_profile.employees_count">Số nhân viên</option><option value="business_profile.annual_revenue">Doanh thu năm</option><option value="business_profile.account_or_unit_count">Số tài khoản/đơn vị</option><option value="legal_profile.ubo_status">Trạng thái UBO</option><option value="explicit_needs">Nhu cầu xác nhận</option></select><input id="correctionValue" placeholder="Giá trị đúng"><button id="saveCorrection" class="button secondary">Lưu chỉnh sửa</button></div>
+          </details>
+          <label class="attestation"><input id="attestation" type="checkbox"> Tôi đã đối chiếu hồ sơ và xác nhận Customer Business Snapshot dùng cho phân tích.</label>
+          <div class="button-row split"><button id="addMoreDocuments" class="button ghost">+ Bổ sung hồ sơ</button><button id="confirmProfile" class="button primary">Xác nhận context →</button></div>
         </div>
-        <div class="mgr-stat-card">
-          <h3>Nhiệm vụ rủi ro cao / Trễ SLA</h3>
-          <div class="value" id="mgrSlaRisks">0</div>
+
+        <div id="stageConfirmed" class="stage hidden">
+          <div class="confirmation-card"><span>✓</span><div><h3>Context đã được RM xác nhận</h3><p>Snapshot đã khóa revision và hash. AI chỉ phân tích trên context này cùng nguồn đã kiểm tra.</p><code id="snapshotHash">—</code></div></div>
+          <div class="button-row"><button id="runAnalysis" class="button primary">Chạy phân tích end-to-end →</button></div>
         </div>
-        <div class="mgr-stat-card">
-          <h3>Quy mô Cohort RM</h3>
-          <div class="value" id="mgrCohortSize">0</div>
+      </section>
+
+      <section id="resultsPanel" class="hidden">
+        <div class="section-heading"><span class="eyebrow">QUYẾT ĐỊNH CÓ GIẢI THÍCH</span><h1>Kết luận xử lý</h1><p>Đọc từ trái sang phải. Sản phẩm phù hợp không đồng nghĩa với đã đủ điều kiện.</p></div>
+        <div class="decision-grid">
+          <article class="decision-card"><span class="card-number">1</span><h2>AI hiểu khách hàng cần gì?</h2><div id="intentResult"></div></article>
+          <article class="decision-card"><span class="card-number">2</span><h2>Sản phẩm nào phù hợp?</h2><div id="productResult"></div></article>
+          <article class="decision-card"><span class="card-number">3</span><h2>Đạt, không đạt hay còn thiếu?</h2><div id="eligibilityResult"></div></article>
         </div>
-      </div>
-      <div class="panel">
-        <h2>AI Recommendation Utilization (Cohort View)</h2>
-        <p class="muted">Tỷ lệ tương tác và chấp nhận đề xuất từ AI của RM trong chi nhánh.</p>
-        <div id="mgrUtilizationSummary" style="font-size:14px; margin-top:15px;"></div>
-        <div class="cohort-warning"><b>⚠ Bảo vệ quyền riêng tư:</b> Biểu đồ chỉ hiển thị khi cohort đạt tối thiểu 5 thành viên để tránh đánh giá hiệu suất của riêng từng cá nhân.</div>
-      </div>
-    </div>
-  </div>
+        <section class="panel"><div class="panel-title"><div><span class="eyebrow">PLANNER</span><h2>Kế hoạch xử lý liên kết</h2></div><span id="planVersion" class="status-pill neutral">v—</span></div><div id="executionPlan" class="plan-list"></div></section>
+        <section class="panel"><div class="panel-title"><div><span class="eyebrow">OPERATIONS DRAFT</span><h2>Hồ sơ, checklist và đề xuất nháp</h2></div></div><div id="operationsResult"></div></section>
+      </section>
+    </section>
+
+    <aside class="right-column">
+      <section class="panel sticky action-panel">
+        <span class="eyebrow">NEXT BEST ACTION</span><h2>Hành động ưu tiên</h2>
+        <div id="nextAction"><p class="muted">Tạo case để hệ thống chỉ ra đúng bước tiếp theo.</p></div>
+        <div id="actionButtons" class="action-buttons"></div>
+      </section>
+
+      <section class="panel control-panel">
+        <div class="tab-buttons" role="tablist">
+          <button class="tab active" data-tab="evidence">Nguồn</button>
+          <button class="tab" data-tab="ai">Nhật ký AI</button>
+          <button class="tab" data-tab="audit">Audit</button>
+          <button class="tab" data-tab="json">JSON</button>
+        </div>
+        <div id="tabEvidence" class="tab-content"><h3>Nguồn chứng minh kết luận</h3><div id="evidenceList" class="evidence-list"><p class="muted">Chưa có nguồn.</p></div></div>
+        <div id="tabAi" class="tab-content hidden"><h3>AI Decision Log</h3><p class="muted">Không lưu raw PII, secret hoặc approval token.</p><div id="aiLog" class="log-list"></div></div>
+        <div id="tabAudit" class="tab-content hidden"><h3>Audit hash-chain</h3><div id="auditLog" class="log-list"></div></div>
+        <div id="tabJson" class="tab-content hidden"><h3>Dữ liệu kỹ thuật JSON</h3><pre id="rawJson">{}</pre></div>
+      </section>
+    </aside>
+  </main>
 
   <footer><b>Synthetic demo.</b> AI chỉ phân tích và soạn nháp. Tạo CRM/task/email luôn cần RM phê duyệt payload cụ thể.</footer>
   <script src="/static/app.js" defer></script>

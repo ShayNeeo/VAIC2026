@@ -13,12 +13,12 @@ class ProductDocument(BaseModel):
 
     product_id: str
     name: str
-    family: str = "uncategorized"
-    segments: List[str] = Field(default_factory=list)
-    description: str = ""
-    benefits: List[str] = Field(default_factory=list)
-    required_documents: List[str] = Field(default_factory=list)
-    eligibility_summary: str = ""
+    family: str
+    segments: List[str]
+    description: str
+    benefits: List[str]
+    required_documents: List[str]
+    eligibility_summary: str
     effective_from: date
     effective_to: Optional[date] = None
     active: bool
@@ -26,24 +26,6 @@ class ProductDocument(BaseModel):
     document_version: str
     section: str
     access_scope: Dict[str, Any]
-    # Optional governance fields (SHB product manual). All optional so the
-    # existing synthetic catalog keeps validating unchanged.
-    bank: Optional[str] = None
-    product_name: Optional[str] = None
-    category: Optional[str] = None
-    risk_level: str = "unknown"
-    source_label: List[str] = Field(default_factory=list)
-    data_label: Optional[str] = None
-    business_need: Optional[str] = None
-    target_profile: Optional[str] = None
-    public_features: List[str] = Field(default_factory=list)
-    public_conditions: List[str] = Field(default_factory=list)
-    internal_required: List[str] = Field(default_factory=list)
-    sales_signals: List[str] = Field(default_factory=list)
-    discovery_questions: List[str] = Field(default_factory=list)
-    cross_sell: List[str] = Field(default_factory=list)
-    branch_behavior: str = "READY_TO_PREPARE"
-    source_date: Optional[date] = None
 
 
 class KnowledgeChunk(BaseModel):
@@ -62,18 +44,6 @@ class KnowledgeChunk(BaseModel):
     segments: List[str]
     access_scope: Dict[str, Any]
     content_hash: str
-    # Governance fields preserved verbatim from the SHB product manual so the
-    # matcher/enricher can enforce safe-answer rules without re-parsing text.
-    risk_level: str = "unknown"
-    source_label: List[str] = Field(default_factory=list)
-    data_label: Optional[str] = None
-    internal_required: List[str] = Field(default_factory=list)
-    branch_behavior: str = "READY_TO_PREPARE"
-    # Date the source document was captured/frozen. Two chunks for the same
-    # product_id are reconciled by latest source_date (see index.upsert), so
-    # the RAG only surfaces the most recent published version -- never a stale
-    # promotion, fee or limit from an older corpus.
-    source_date: Optional[date] = None
 
 
 class RetrievalHit(BaseModel):
