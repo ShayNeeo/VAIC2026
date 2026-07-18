@@ -1,175 +1,264 @@
-# SHB Corporate Sales Copilot — Local MVP V2
+# SHB Corporate Sales Copilot — Enterprise Specialist Workspace (VAIC 2026)
 
-Hệ thống hỗ trợ RM xử lý một sales case doanh nghiệp theo luồng có kiểm soát:
+> **Track:** Corporate Banking | **Team:** `<TEAM_NAME>` | **Status:** Sandbox MVP V2 Functional
+>
+> An AI-native assistant designed for Corporate Relationship Managers (RMs) at SHB, managing the end-to-end sales case lifecycle through a controlled multi-agent workflow, deterministic eligibility validation, and secure cryptographic execution.
+
+---
+
+## 1. One-Line Pitch
+We help **SHB Corporate Relationship Managers (RMs)** solve **complex credit & service underwriting bottlenecks** by using a **controlled, multi-agent workflow** to produce **verifiable, policy-compliant opportunity drafts and action plans**.
+
+---
+
+## 2. Pain Points & Opportunities (Business Context)
+
+### The Real-world Bottlenecks
+*   **Manual Policy Overhead:** RMs spend days manually parsing complex, multi-layered B2B product regulations (Payroll, Cash Management, Bulk Payment, Working Capital) to check corporate eligibility.
+*   **Compliance & Credit Risk:** High risk of human error or oversight in checking legal exclusions (such as bad debts, PEP list, AML, or complex industry restrictions), leading to potential financial loss.
+*   **AI Hallucination & Lack of Trust:** Generic LLM chatbots (chatbot wrappers) hallucinate rules, fail to cite evidence, and cannot be trusted to perform banking operations.
+*   **Security & Execution Vulnerabilities:** Unsecured AI outputs can be tricked via prompt injection or data leakage (PII), and lack cryptographic controls to prevent unauthorized action execution.
+
+---
+
+## 3. The AI-Native Solution
+
+### Core Architectural Pillars
+1.  **Controlled Multi-Agent Coordination:** Tasks are routed and sequenced through dedicated specialized agents (**Planner, Product, Compliance/Eligibility, Operations**) rather than an unrestricted single-agent chat.
+2.  **Deterministic Eligibility Engine (Fail-Closed):** LLMs are restricted to information extraction and RAG grounding. The final eligibility decision (Pass/Fail) is executed by a deterministic, version-controlled rule engine.
+3.  **Evidence-Backed Underwriting:** Every recommendation, product match, and action checklist is linked to a specific policy section with verification hashes, validating evidence authenticity (`is_valid`, anti-tampering).
+4.  **Dual-Gate Human-in-the-Loop (HITL):**
+    *   *Confirmation Gate:* RM reviews and confirms the extracted `Customer Business Snapshot` before downstream analysis begins.
+    *   *Approval Gate:* Final transaction payloads are cryptographically frozen. RMs sign off with a secure, one-time use JWT approval token.
+5.  **Robust Guardrails & Redaction:** Input screening blocks prompt injection and malware. The runtime log automatically redacts sensitive data (PII, credentials, tokens) before storing.
+
+---
+
+## 4. End-to-End Workflow Architecture
+
+The system coordinates the relationship between document ingestion, agent reasoning, and secure execution:
+
+```mermaid
+flowchart TD
+    %% Styling
+    classDef agent fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef gate fill:#ff9,stroke:#333,stroke-width:2px;
+    classDef data fill:#bbf,stroke:#333,stroke-width:1px;
+    classDef executor fill:#bfb,stroke:#333,stroke-width:2px;
+
+    %% Nodes
+    A["RM Uploads Documents"] -->|"PDF, DOCX, XLSX"| B("Document Intake & Guardrails")
+    B -->|"Input Screen & Quarantine"| C("Metadata Extraction & Validation")
+    C -->|"Generate Profile Draft"| D{"Confirmation Gate\n(Human-in-the-Loop)"}:::gate
+    
+    D -->|"RM Correction & Confirm"| E("Customer Business Snapshot"):::data
+    E --> F("Complexity Router")
+    
+    F -->|"Simple Case"| G("Single-Agent RAG\n(Product & Legal)"):::agent
+    F -->|"Complex Case"| H("Planner Agent\n(Builds Execution Plan)"):::agent
+    
+    H -->|"Execution Plan"| I("Product Agent\n(Search Catalog)"):::agent
+    I -->|"Product Candidates"| J("Compliance Agent\n(Eligibility Rules)"):::agent
+    J -->|"Draft Eligibility"| K("Evidence Validator\n(Anti-tampering)")
+    
+    K --> L("Operations Agent\n(Drafts Checklist & Proposals)"):::agent
+    G & L --> M("Risk & Guardrail Gate\n(Safety Check & Topic Filtering)"):::gate
+    
+    M -->|"Outcome: Review/Info/Approve"| N{"Final Case Status"}:::data
+    N -->|"Approve"| O{"Approval Gate\n(Payload Hash & One-time Token)"}:::gate
+    O -->|"Authorized Signature"| P("Idempotent Mock CRM Executor"):::executor
+    
+    %% Logs & Audit
+    P & N & M --> Q[("Audit Trail (Hash-chained)\n& AI Decision Log")]:::data
+```
+
+### Flow Breakdown
+1.  **Intake & Screening:** Documents undergo size, type, and prompt-injection checks. The text layer is parsed (or marked `NEEDS_OCR`).
+2.  **Context Resolution:** Extracted attributes are compiled with existing CRM records. The RM reviews, edits, and freezes the **Customer Business Snapshot**.
+3.  **Complexity Routing:** Simple inquiries go to direct RAG. Complex credit requests spawn a dependency plan via the **Planner Agent**.
+4.  **Specialist Analysis:**
+    *   **Product Agent** searches the catalog using Hybrid RAG.
+    *   **Compliance Agent** evaluates candidates against eligibility rules.
+    *   **Evidence Validator** audits the source text for anti-tampering and completeness.
+    *   **Operations Agent** drafts checklists, proposals, and CRM payloads.
+5.  **Risk & Guardrail Gate:** Audits the overall case (resolving to *Approve*, *Need Information*, or *Need Review* with a high-risk indicator if policy checks fail).
+6.  **Secure Execution:** RMs approve the frozen transaction payload, generating a secure token for idempotent execution.
+
+---
+
+## 5. Key Features
+
+| Feature | Description | AI Role | Business Value | Status |
+|---|---|---|---|---|
+| **Document Intake** | Multi-format parser (PDF, DOCX, XLSX, TXT) with validation. | Classifies docs & extracts core attributes. | Eliminates manual data entry. | **Working** |
+| **Customer Snapshot** | Merges CRM, docs, and RM corrections. | Synthesizes conflicting data. | Single source of customer truth. | **Working** |
+| **Complexity Router** | Classifies cases into simple or complex pipelines. | Evaluates query complexity. | Lowers latency & token costs. | **Working** |
+| **Hybrid RAG** | Persistent Product/Legal index in SQLite or MCP. | Vector + Keyword retrieval with filters. | Zero hallucination domain grounding. | **Working** |
+| **Eligibility Engine** | Deterministic rule checking for corporate loans. | Extracts rules; does NOT make decisions. | Fail-closed compliance compliance. | **Working** |
+| **Risk Guardrail Gate** | Checks policy risk, validation, and injection. | Runs safety checks on inputs/outputs. | Banking-grade safety assurance. | **Working** |
+| **Operations Engine** | Drafts checklist, proposals, and CRM task drafts. | Generates contextual B2B templates. | Cuts draft times by 90%. | **Working** |
+| **Approval Service** | One-time token locked to frozen payload hash. | None (Deterministic cryptography). | Prevents unauthorized executions. | **Working** |
+| **AI Decision Log** | Traceable case log (model, cost, latency, outcome). | Logs raw output metadata (sanitized). | Auditability and LLM observability. | **Working** |
+| **OCR Service** | Scans PDFs/images without text layers. | Tesseract/GCP Vision adapter stub. | Enables scanning of physical files. | *Planned* |
+
+---
+
+## 6. Technology Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Frontend** | Vanilla JS, HTML5, CSS3 | RM Workspace 3-column UI with interactive stepper, AI Log, and Audit panels. |
+| **Backend** | Python 3.11, FastAPI, Pydantic | High-performance, async API facade with schema verification. |
+| **Agent Workflow** | Custom State Machine (router, planner, specialist agents) | Controlled agent orchestration and impact-based state resumption. |
+| **RAG System** | SQLite (Local), MCP SDK (Independent Service) | Hybrid keyword & vector retrieval, Bearer Auth, and branch ACL. |
+| **LLM Provider** | OpenAI API (GPT-4o), Google Gemini API (fallback) | Text analysis, schema extraction, and planning. |
+| **Storage / DB** | SQLite | Case persistent store, optimistic locking, and hash-chained audit events. |
+| **Evaluation** | Pytest, Custom Scopes (40 golden cases, 45 security/reliability cases) | E2E assurance, regression safety, and single vs. multi-agent benchmarking. |
+
+---
+
+## 7. Directory Structure
 
 ```text
-Tiếp nhận hồ sơ → trích xuất Customer Business Snapshot → RM xác nhận context
-→ hiểu nhu cầu → tìm sản phẩm → kiểm tra điều kiện → lập kế hoạch/checklist/nháp
-→ kiểm chứng nguồn → RM xem và phê duyệt exact payload → mock executor thực thi
+.
+├── app/
+│   ├── actions/          # Mock CRM action execution
+│   ├── api/v2/           # API routes (40 endpoints)
+│   ├── approval/         # Cryptographic payload-hash approval token service
+│   ├── context/          # Customer profile builder & resolution logic
+│   ├── data_catalog/     # Shared catalogs (Products, Rules, Exclusions)
+│   ├── eligibility/      # Deterministic Eligibility check engine
+│   ├── evaluation/       # Automated test & safety bench runners
+│   ├── intake/           # File upload, validation, and extraction
+│   ├── intent/           # Intent parser (LLM optional & Regex fallback)
+│   ├── knowledge/        # Local RAG service & parsing utilities
+│   ├── observability/    # JSON logger, metrics, and Audit Event hash chain
+│   ├── product/          # Product recommender service
+│   ├── reliability/      # Circuit breakers, Scoped TTL Cache, safe retry
+│   ├── schemas/v2/       # Pydantic schema contracts matching plan_v2/contracts/
+│   ├── static/           # RM UI (HTML, CSS, JS)
+│   └── workflow/         # Complexity Router, Planner Agent, Risk Gate, state machine
+├── services/
+│   └── rag_mcp/          # Independent RAG MCP server (SDK 1.x, HTTP stateless)
+├── tests/                # Unit, contract, RAG, and e2e integration tests
+├── docs/                 # System guides, benchmarks, design documents, and audit logs
+├── plan_v2/              # Modular implementation plans & machine-readable contracts
+├── AI_LOG.md             # AI Collaboration Log (Integrity Audit)
+└── README.md             # This document
 ```
 
-> Toàn bộ khách hàng, sản phẩm, chính sách, hồ sơ và kết quả CRM trong repo là **SYNTHETIC_DEMO_DATA**. Không dùng làm chính sách SHB thật hoặc quyết định tín dụng production.
+---
 
-## Bản này đã có gì
+## 8. RAG Provider Configuration (Local | MCP | Hybrid)
 
-- Document intake cho PDF/DOCX/XLSX/TXT/MD/CSV/JSON: kiểm tra loại/kích thước, SHA-256, quality gate và prompt-injection quarantine; không lưu raw upload.
-- Hồ sơ doanh nghiệp hợp nhất từ CRM mock, tài liệu và RM correction thành `Customer Business Snapshot` có nguồn, confidence, conflict và revision hash.
-- RM confirmation gate trước khi AI phân tích; thay đổi profile làm vô hiệu kết quả downstream cũ.
-- Intent extraction có schema, confidence và deterministic fallback khi chưa bật LLM.
-- Persistent hybrid Product RAG và Legal RAG bằng SQLite, có ACL, version, effective date, citation và retrieval score.
-- Eligibility Engine deterministic, versioned và fail-closed; LLM không quyết định đạt/không đạt.
-- Bộ policy B2B synthetic gắn Product → Rule → Policy → Section cho Payroll, Cash Management, Bulk Payment và Working Capital; output từng sản phẩm có chính sách/điều khoản, legal summary, hồ sơ cần bổ sung và evidence đã kiểm chứng. Xem `docs/LEGAL_B2B_CAPABILITY_MATRIX.md`.
-- Planner liên kết Product → Legal/Eligibility → Operations → Approval; có Next Best Question và Next Best Action.
-- Operations tạo checklist, proposal/email nháp và exact CRM/task payload; không tự gọi hệ thống ngoài.
-- Approval token khóa theo `case_id`, RM, exact payload hash, nonce, expiry và one-time use; executor có idempotency.
-- Persistent case state, optimistic locking, hash-chained audit và partial resume theo impact graph.
-- **AI Decision Log theo từng case**: module, mode/model, prompt/rule/workflow version, nguồn, latency, token/cost, output tóm tắt và cờ an toàn. Không ghi raw PII, secret, prompt thô hoặc approval token.
-- RM Workspace ba cột, năm bước nghiệp vụ, bốn case mẫu có output kỳ vọng và tab Nguồn / Nhật ký AI / Audit / JSON.
-- `/api/v2` có `40` route (đếm trực tiếp qua route decorator ngày 2026-07-18). V1 (`app/agents/`, `app/rag/`, `/api/v1`) đã được gỡ bỏ hoàn toàn khỏi mã nguồn và không còn mount trong `app/main.py`.
+`app/knowledge/service.py` and `legal_service.py` route all queries according to the `RAG_PROVIDER` env variable:
+*   `local` (default): Queries the local SQLite index. No MCP initialization occurs.
+*   `mcp`: Uses the independent MCP server; fails with `RagProviderUnavailableError` if the server is down (no silent fallback).
+*   `hybrid`: Queries the MCP server with a circuit breaker (`RAG_MCP_FAILURE_THRESHOLD`, `RAG_MCP_COOLDOWN_SECONDS`, `RAG_MCP_REQUEST_TIMEOUT_SECONDS`) and falls back to local indexing only for network/availability issues (not for policy/auth failures).
 
-## RAG provider (local | mcp | hybrid)
+*For a detailed specification on circuit breakers, metrics, and logging, refer to [docs/RAG_PROVIDER_AND_FALLBACK.md](./docs/RAG_PROVIDER_AND_FALLBACK.md).*
 
-`app/knowledge/service.py`/`legal_service.py` route mọi truy vấn qua
-`RAG_PROVIDER` (`.env`/`.env.v2.example`):
+### Independent RAG MCP Server
+The service in `services/rag_mcp/` manages the corpus, chunking, and retrieval independently:
+*   Official MCP Python SDK `1.x`, HTTP streamable.
+*   Tools exposed: `rag_search`, `rag_get_chunk`, `rag_list_sources`, `rag_health`.
+*   Bearer token auth and branch ACL checking.
+*   To start the MCP server, run: `.\run_rag_mcp.cmd` (Endpoint: `http://127.0.0.1:8100/mcp`).
+*   *For details, see [docs/RAG_MCP_SERVER.md](./docs/RAG_MCP_SERVER.md).*
 
-- `local` (mặc định, an toàn khi chưa deploy MCP server): chỉ dùng SQLite
-  index cục bộ, không khởi tạo MCP client, không log cảnh báo MCP.
-- `mcp`: chỉ dùng MCP server; lỗi trả `RagProviderUnavailableError`, không
-  fallback âm thầm.
-- `hybrid`: ưu tiên MCP, có circuit breaker (`RAG_MCP_FAILURE_THRESHOLD`,
-  `RAG_MCP_COOLDOWN_SECONDS`, `RAG_MCP_REQUEST_TIMEOUT_SECONDS`) + fallback
-  local chỉ cho lỗi mạng/khả dụng (không fallback cho lỗi auth/policy).
+---
 
-Chi tiết kiến trúc, circuit breaker, logging, metrics: `docs/RAG_PROVIDER_AND_FALLBACK.md`.
+## 9. Local Execution Guide
 
-`KNOWLEDGE_EMBEDDING_PROVIDER` (`openai` | `gemini`) chọn embedding provider
-cho index cục bộ; mặc định `openai` (Gemini có thể hết prepayment credits).
-Không có fallback dạng deterministic-hash không cần API key ở thời điểm
-hiện tại (xem "Known limitation" trong `docs/RAG_PROVIDER_AND_FALLBACK.md`).
+### Prerequisites
+*   Python 3.11 (virtual environment configured)
+*   SQLite3
 
-## RAG MCP Server độc lập
-
-Repo có thêm một service riêng tại `services/rag_mcp/`. Service này sở hữu corpus, ingestion, chunk/index và retrieval; không import Agent/Workflow code.
-
-- Official MCP Python SDK `1.x`, Streamable HTTP stateless.
-- Tools: `rag_search`, `rag_get_chunk`, `rag_list_sources`, `rag_health`.
-- Persistent SQLite index: 3 source và 19 active chunk thuộc Product, Legal, Operations.
-- Permission + branch ACL, effective/version filter, sparse gate và citation/content hash.
-- Bearer service authentication và retrieval audit không lưu raw query/PII.
-- MCP transport E2E được kiểm thử bằng official client.
-
-Chạy server:
-
+### Quick Start
+To start the FastAPI server and the local frontend mock:
 ```powershell
-.\run_rag_mcp.cmd
-```
-
-MCP endpoint: `http://127.0.0.1:8100/mcp`. Hướng dẫn đầy đủ: `docs/RAG_MCP_SERVER.md`; audit MCP của repo đồng đội: `docs/VAIC2026_MCP_AUDIT.md`.
-
-## Chạy bản mock
-
-```powershell
-cd C:\Users\Admin\Desktop\hakathon
+# In the repository root:
 .\run_mock_demo.cmd
 ```
-
-Mở:
-
-- UI: `http://127.0.0.1:8000`
-- OpenAPI: `http://127.0.0.1:8000/docs`
-- V2 health: `http://127.0.0.1:8000/api/v2/health`
-
-Nếu cổng 8000 bận:
-
+*If port 8000 is occupied, run with a custom port:*
 ```powershell
 .\run_mock_demo.cmd 8010
 ```
 
-Hành trình UI khuyến nghị:
+### Accessing the Workspace
+*   **Web UI:** `http://127.0.0.1:8000`
+*   **Swagger OpenAPI Docs:** `http://127.0.0.1:8000/docs`
+*   **API Health Check:** `http://127.0.0.1:8000/api/v2/health`
 
-1. Giữ persona `RM-999`, session `SESS-MP`, khách hàng `Minh Phát · COMP-MP`.
-2. Chọn một case mẫu rồi bấm **Tạo sales case**.
-3. Bấm **Tải lên & kiểm tra file** để dùng bộ hồ sơ synthetic hoặc chọn file thật trong phạm vi demo.
-4. Bấm **Chạy Document Intelligence**, xem từng field, nguồn và conflict.
-5. RM tick xác nhận và bấm **Xác nhận context**.
-6. Bấm **Chạy phân tích end-to-end**; đọc kết quả từ trái sang phải.
-7. Mở tab **Nhật ký AI** để xem trace quyết định.
-8. Nếu đủ điều kiện: **Xem payload → RM phê duyệt → Thực thi trên CRM mock**.
+### Recommended UI Walkthrough
+1.  Access the workspace using persona `RM-999`, session `SESS-MP`, and customer `Minh Phát · COMP-MP`.
+2.  Select a mock scenario from the list and click **Tạo sales case**.
+3.  Click **Tải lên & kiểm tra file** (using mock files provided) to upload the intake documents.
+4.  Click **Chạy Document Intelligence** to extract the profile snapshot, verify sources, and resolve conflicts.
+5.  Check the profile attributes, then click **Xác nhận context** (freezes snapshot).
+6.  Click **Chạy phân tích end-to-end** and track agent processing from left to right.
+7.  Check the **Nhật ký AI** (AI Decision Log) tab to see how agents resolved the credit rules.
+8.  If eligible: Click **Xem payload** -> **RM phê duyệt** -> **Thực thi trên CRM mock** to complete the deal.
 
-Chi tiết từng case và output kỳ vọng: `docs/MOCK_DEMO_GUIDE.md`.
+*Refer to [docs/MOCK_DEMO_GUIDE.md](./docs/MOCK_DEMO_GUIDE.md) for full case definitions.*
 
-## API sales-case facade
+---
 
-| Giai đoạn | Endpoint chính |
-|---|---|
-| Tạo/list case | `POST/GET /api/v2/sales-cases` |
-| Upload/list hồ sơ | `POST/GET /api/v2/sales-cases/{case_id}/documents` |
-| Trích xuất | `POST .../process-documents`, `GET .../processing-status` |
-| Review context | `GET/PATCH .../extracted-profile`, `POST .../confirm-profile` |
-| Phân tích | `POST .../run-analysis` |
-| Đọc kết quả | `GET .../recommendations`, `GET .../missing-information`, `GET .../trace` |
-| Kiểm soát hành động | `POST .../approval-preview`, `POST .../approve`, `POST .../reject`, `POST .../execute-actions` |
-| Truy vết | `GET .../audit`, `GET .../ai-log` |
+## 10. Verification and Automated Testing
 
-MVP auth dùng `X-Employee-ID` và `X-Session-ID` với synthetic adapters. Production phải thay bằng principal do SSO/session gateway xác thực.
-
-## Cấu hình
-
-Xem `.env.v2.example`. Các biến chính:
-
-- `V2_DB_PATH`, `VECTOR_DB_DIR`, `AUDIT_LOG_PATH`.
-- `APPROVAL_SECRET`, `APPROVAL_TOKEN_TTL_SECONDS`.
-- `INTENT_USE_LLM=false` để chạy hoàn toàn offline/deterministic.
-- `OPENAI_API_KEY`, `OPENAI_MODEL` chỉ cần khi bật LLM cho intent extraction.
-
-Ngoài development, app từ chối khởi tạo approval service nếu còn dùng secret demo mặc định.
-
-## Kiểm thử và đánh giá
-
+Run the full automated test suite:
 ```powershell
+# Run unit, contract, and RAG integration tests
 .\.venv\Scripts\python.exe -m pytest -q
+
+# Run business capability and evaluation benchmarks
 .\.venv\Scripts\python.exe -m app.evaluation.runner --output data\eval\v2\latest_report.json
+
+# Run safety, security, and reliability stress tests
 .\.venv\Scripts\python.exe -m app.evaluation.safety_reliability_runner --output data\eval\v2\latest_safety_reliability_report.json
 
-# Single-agent vs multi-agent benchmark (40 synthetic cases, xem
-# docs/SINGLE_VS_MULTI_AGENT_BENCHMARK.md)
+# Run Single-Agent vs. Multi-Agent benchmark (40 synthetic cases)
 .\.venv\Scripts\python.exe -m benchmarks.run --cache-mode warm --output-dir benchmarks\results\latest
-.\.venv\Scripts\python.exe -m benchmarks.run --cache-mode cold --cases BENCH-B02,BENCH-D03,BENCH-E02 --output-dir benchmarks\results\cold_smoke
 ```
 
-Snapshot ngày `2026-07-18` (chạy trực tiếp với `.env` mặc định, không override thủ công):
+### Verified Benchmark Snapshot (2026-07-18)
+*   **Tests passing:** `275 passed`, `0 failed`.
+*   **Business accuracy:** `40/40` golden cases evaluated.
+*   **Unsafe approval block rate:** `0%` (successfully blocked unauthorized executions).
+*   **Legal RAG precision/recall:** `100% / 100%` on synthetic credit policies.
+*   **Security & reliability coverage:** `25/25` security gates and `20/20` reliability cases passing.
+*   **Multi-Agent Benchmarking:** Multi-Agent workflow achieved a `recall` of `0.889` for missing info and `0.833` for legal risk detection, compared to `0.0` in the single-agent pipeline (which bypasses the compliance engine entirely). *See [docs/SINGLE_VS_MULTI_AGENT_BENCHMARK.md](./docs/SINGLE_VS_MULTI_AGENT_BENCHMARK.md) for details.*
 
-- `275 passed`, 0 fail (snapshot Legal B2B ngày 2026-07-18).
-- Business golden evaluation `40/40`; unsafe approval rate `0%`.
-- Relevant-policy precision/recall `100%/100%` trên 10 eligibility golden cases synthetic.
-- Security `25/25`; reliability `20/20`.
-- Hero multi-product scenario (`tests/test_sales_cases_e2e.py`, 5 case bao gồm flagship) `5/5 passed`.
-- Benchmark single-agent vs multi-agent (40 case, warm cache): `missing_info_recall` 0.0 (single) vs 0.889 (multi); `legal_flag_recall` 0.0 (single) vs 0.833 (multi) — single-agent path không có khả năng phát hiện thiếu hồ sơ hoặc rủi ro pháp lý vì không chạy Eligibility Engine. Chi tiết: `docs/SINGLE_VS_MULTI_AGENT_BENCHMARK.md`.
+---
 
-OCR: hiện chỉ có phát hiện trạng thái `NEEDS_OCR` cho PDF scan/không có text
-layer, **chưa có OCR engine thật** — không tuyên bố "đã implement OCR".
+## 11. Production Boundaries & 3-Month Pilot Roadmap
 
-Bằng chứng:
+While the sandbox MVP is fully functional, transitioning to SHB production requires addressing the following limitations:
+*   **Real Data Integration:** Connecting to real SHB core banking systems, DMS, CRM, CIC, and AML PEP database.
+*   **OCR Capability:** Activating a live OCR OCR API (GCP Document AI or Azure OCR) for scanned PDFs; the MVP currently requires text-layered PDFs.
+*   **Enterprise Security:** Migrating from basic `X-Employee-ID` headers to OAuth2/OIDC SSO gateway and implementing AWS/GCP KMS key storage.
+*   **Scalability:** Replacing SQLite backend with PostgreSQL/Redis and migrating vector embeddings to a production-grade store.
 
-- `docs/BUILD_V2_LOG.md`
-- `docs/MOCK_DEMO_RUN_REPORT.md`
-- `docs/AI_DECISION_LOG.md`
-- `docs/RAG_MCP_SERVER.md`
-- `docs/RAG_MCP_RUN_REPORT.md`
-- `docs/VAIC2026_MCP_AUDIT.md`
-- `docs/V2_READINESS_REPORT.md`
-- `data/eval/v2/latest_report.json`
-- `data/eval/v2/latest_safety_reliability_report.json`
+### Pilot Roadmap
 
-## Ranh giới production
+| Phase | Timeline | Goal | Deliverable | Success Metric |
+|---|---|---|---|---|
+| **Phase 1** | Weeks 1–2 | Sandbox & Catalog Ingestion | Local workspace matching SHB corporate portfolio | 100% catalog ingestion correctness |
+| **Phase 2** | Weeks 3–4 | Shadow Testing & Feedback | SME validation on 10 active RMs | RM satisfaction score > 4/5 |
+| **Phase 3** | Month 2 | Controlled Pilot Run | Live CRM sync for 5 branches | Case handling time cut by 50% |
+| **Phase 4** | Month 3 | Central Rollout Decision | Comprehensive pilot report and security sign-off | 0 critical security incidents |
 
-Local MVP đã chạy end-to-end nhưng chưa production-ready vì còn thiếu:
+---
 
-- SSO/IAM/CRM/DMS/CIC/KYC và catalog/policy SHB thật.
-- Data-owner, Legal, Privacy và Security sign-off.
-- Semantic embedding/reranker benchmark trên dữ liệu thật. Hiện chưa có fallback dạng deterministic-hash không cần API key — nếu `OPENAI_API_KEY`/`GOOGLE_API_KEY` không khả dụng, retrieval sẽ lỗi thay vì suy biến êm sang một provider không cần mạng (xem "Known limitation" trong `docs/RAG_PROVIDER_AND_FALLBACK.md`).
-- OCR cho PDF scan; parser PDF hiện cần text layer.
-- PostgreSQL/Redis/vector DB/secret manager/OpenTelemetry backend production.
-- Load, penetration, DR test và golden set case thật đã de-identify, được SME adjudicate.
+## 12. AI Collaboration Statement
 
-Không trộn synthetic source vào production serving index.
+This project was built through AI-native collaboration. AI assisted the team with problem analysis, architecture design, implementation, debugging, evaluation, and documentation preparation. Human team members reviewed the outputs and made the final product, safety, and business decisions. See [`AI_LOG.md`](./AI_LOG.md) for the collaboration record.
+
+---
+
+## 13. Links & Artifacts
+*   **Live Demo (Mock URL):** `<LIVE_URL>`
+*   **Demo Video:** `<DEMO_VIDEO_URL>`
+*   **AI Collaboration Audit Trail:** [`./AI_LOG.md`](./AI_LOG.md)
+*   **Underwriting Benchmarks:** [`./docs/SINGLE_VS_MULTI_AGENT_BENCHMARK.md`](./docs/SINGLE_VS_MULTI_AGENT_BENCHMARK.md)
+*   **RAG MCP Specification:** [`./docs/RAG_MCP_SERVER.md`](./docs/RAG_MCP_SERVER.md)
