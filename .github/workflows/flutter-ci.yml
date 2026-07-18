@@ -1,0 +1,33 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main]
+    paths: ['lib/**', 'test/**', 'pubspec.yaml', 'assets/**']
+  pull_request:
+    paths: ['lib/**', 'test/**', 'pubspec.yaml', 'assets/**']
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Static analysis
+        run: flutter analyze
+
+      - name: Unit/widget tests
+        run: flutter test
+
+      - name: Pre-compile web build (catches compile errors before deploy)
+        run: flutter build web --base-href "/"
+
+      - name: Pre-compile Android APK (catches compile errors before release)
+        run: flutter build apk --release
