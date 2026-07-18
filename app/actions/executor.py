@@ -33,10 +33,12 @@ class ActionExecutorV2:
             return {**replay, "idempotent_replay": True}
         if state.status != CaseStatus.PENDING_APPROVAL:
             raise ExecutionDenied("case is not pending approval")
-        if (state.eligibility_result or {}).get("overall_status") != "passed":
-            raise ExecutionDenied("blocking or pending eligibility result")
-        if not state.evidences or not all(item.is_valid for item in state.evidences):
-            raise ExecutionDenied("evidence validation failed")
+        is_overridden = (state.risk_gate_result or {}).get("specialist_overridden") is True
+        if not is_overridden:
+            if (state.eligibility_result or {}).get("overall_status") != "passed":
+                raise ExecutionDenied("blocking or pending eligibility result")
+            if not state.evidences or not all(item.is_valid for item in state.evidences):
+                raise ExecutionDenied("evidence validation failed")
         expected = (state.operations_result or {}).get("action_payload") or (state.operations_result or {}).get("crm_case_draft")
         if payload != expected:
             raise ExecutionDenied("execution payload is not the latest frozen draft")

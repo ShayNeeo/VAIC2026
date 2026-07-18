@@ -427,6 +427,8 @@ class V2WorkflowEngine:
         state.status = transition(state.status, CaseStatus.PENDING_APPROVAL)
         state.approval = Approval(status=ApprovalStatus.PENDING, payload_hash=_hash(payload))
         state.workflow.current_node = "await_approval"
+        if state.risk_gate_result:
+            state.risk_gate_result["specialist_overridden"] = True
         self._event(state, "SpecialistReview", "specialist_review_cleared_case", {})
         return self._touch(state)
 
