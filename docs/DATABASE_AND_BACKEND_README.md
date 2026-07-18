@@ -129,3 +129,137 @@ SELECT
 FROM corporate_credit_requests r
 LEFT JOIN casa_actual_3m c3m ON r.tax_id = c3m.tax_id;
 ```
+
+---
+
+## IV. CÁC TRUY VẤN NÂNG CAO (ADVANCED USE CASES)
+
+Các truy vấn dưới đây dùng để phân tích sâu hơn dòng tiền, quản lý rủi ro nhóm lợi ích và phòng chống rửa tiền (AML):
+
+### 1. Rủi ro tích lũy toàn nhóm liên kết (Group-wide Exposure)
+Tính tổng dư nợ hiện tại và tổng hạn mức mới đề xuất của cả nhóm công ty con/liên kết (Cùng nhóm lợi ích) để kiểm soát giới hạn an toàn tín dụng nhóm (dưới 150 tỷ VNĐ):
+
+```sql
+WITH RECURSIVE group_network AS (
+    SELECT 
+        parent_tax_id AS root_tax_id,
+        child_tax_id AS member_tax_id,
+        relationship_type,
+        1 AS level
+    FROM corporate_relationships
+    UNION ALL
+    SELECT 
+        gn.root_tax_id,
+        cr.child_tax_id AS member_tax_id,
+        cr.relationship_type,
+        gn.level + 1
+    FROM group_network gn
+    INNER JOIN corporate_relationships cr ON gn.member_tax_id = cr.parent_tax_id
+    WHERE gn.level < 5
+)
+SELECT 
+    c_root.company_name AS tap_doan_me,
+    COUNT(DISTINCT gn.member_tax_id) AS so_luong_thanh_vien_nhom,
+    ROUND(SUM(cic.outstanding_short_term + cic.outstanding_medium_term + cic.outstanding_long_term) / 1000000000.0, 2) AS tong_du_no_hien_tai_nhom_ty,
+    ROUND(SUM(r.requested_amount_vnd) / 1000000000.0, 2) AS tong_han_muc_de_xuat_nhom_ty,
+    CASE 
+        WHEN ROUND(SUM(r.requested_amount_vnd) / 1000000000.0, 2) > 150.0 THEN 'RẤT NGUY HIỂM: Vượt giới hạn nhóm (>150 tỷ)'
+        WHEN ROUND(SUM(r.requested_amount_vnd) / 1000000000.0, 2) BETWEEN 100.0 AND 150.0 THEN 'CẢNH BÁO: Cận biên giới hạn nhóm'
+        ELSE 'Hạn mức nhóm an toàn'
+    END AS danh_gia_han_muc_nhom
+FROM companies c_root
+INNER JOIN group_network gn ON c_root.tax_id = gn.root_tax_id
+INNER JOIN cic_risk_profiles cic ON gn.member_tax_id = cic.tax_id
+LEFT JOIN corporate_credit_requests r ON gn.member_tax_id = r.tax_id
+GROUP BY c_root.company_name
+ORDER BY tong_du_no_hien_tai_nhom_ty DESC;
+```
+
+### 2. Chu kỳ tiền mặt của doanh nghiệp (Working Capital Cycle)
+Tính toán Số ngày phải thu (DSO), Số ngày phải trả (DPO) và Chu kỳ chuyển đổi tiền mặt (CCC) từ báo cáo tài chính để thẩm định thời hạn cho vay vốn lưu động ngắn hạn:
+
+```sql
+SELECT 
+    c.company_name,
+    f.fiscal_year,
+    f.net_revenue / 1000000000.0 AS doanh_thu_thuan_ty,
+    f.inventory / 1000000000.0 AS hang_ton_kho_ty,
+    f.receivables / 1000000000.0 AS phai_thu_khach_hang_ty,
+    f.payables / 1000000000.0 AS phai_tra_nha_cung_cap_ty,
+    ROUND((f.receivables / NULLIF(f.net_revenue, 0)) * 365, 0) AS so_ngay_phai_thu_dso,
+    ROUND((f.payables / NULLIF(f.net_revenue, 0)) * 365, 0) AS so_ngay_phai_tra_dpo,
+    ROUND(((f.receivables + f.inventory - f.payables) / NULLIF(f.net_revenue, 0)) * 365, 0) AS chu_ky_tien_mat_ccc_days,
+    CASE 
+        WHEN ROUND(((f.receivables + f.inventory - f.payables) / NULLIF(f.net_revenue, 0)) * 365, 0) > 90 THEN 'Chu kỳ dài: Cần tài trợ vốn'
+        ELSE 'Chu kỳ ngắn: Dòng tiền tự chủ tốt'
+    END AS nhan_dinh_dong_von
+FROM companies c
+INNER JOIN financial_health f ON c.tax_id = f.tax_id
+ORDER BY c.company_name, f.fiscal_year DESC;
+```
+
+### 3. Xác thực chi trả Lương và Thuế qua lịch sử giao dịch
+Đánh giá mức độ minh bạch vận hành doanh nghiệp trong 6 tháng qua thông qua dữ liệu giao dịch nộp thuế nhà nước và thanh toán lương đều đặn:
+
+```sql
+SELECT 
+    r.request_id,
+    r.company_name,
+    r.tax_id,
+    bo.employee_count AS so_nhan_vien_khai_bao,
+    ROUND(SUM(CASE WHEN h.category = 'Lương' OR h.description ILIKE '%luong%' OR h.description ILIKE '%payroll%' THEN h.debit_amount ELSE 0 END) / 1000000.0, 2) AS tong_chi_luong_6m_trieu_vnd,
+    COUNT(CASE WHEN h.category = 'Lương' OR h.description ILIKE '%luong%' OR h.description ILIKE '%payroll%' THEN 1 END) AS so_lan_chi_luong,
+    ROUND(SUM(CASE WHEN h.category = 'Thuế' OR h.description ILIKE '%thue%' OR h.description ILIKE '%nop thue%' THEN h.debit_amount ELSE 0 END) / 1000000.0, 2) AS tong_nop_thue_6m_trieu_vnd,
+    CASE 
+        WHEN COUNT(CASE WHEN h.category = 'Lương' OR h.description ILIKE '%luong%' THEN 1 END) >= 6 THEN 'VẬN HÀNH TỐT (Trả lương đều đặn mỗi tháng)'
+        WHEN SUM(CASE WHEN h.category = 'Thuế' OR h.description ILIKE '%thue%' THEN h.debit_amount ELSE 0 END) = 0 THEN 'CẢNH BÁO: Chưa phát hiện giao dịch nộp thuế'
+        ELSE 'Cần kiểm tra bổ sung bảng lương giấy'
+    END AS danh_gia_van_hanh
+FROM corporate_credit_requests r
+INNER JOIN company_transaction_history h ON r.tax_id = h.tax_id
+LEFT JOIN business_operations bo ON r.tax_id = bo.tax_id
+WHERE h.transaction_date >= (SELECT MAX(transaction_date) FROM company_transaction_history) - INTERVAL '180 days'
+GROUP BY r.request_id, r.company_name, r.tax_id, bo.employee_count;
+```
+
+### 4. Truy tìm người hưởng lợi cuối cùng (AML - Ultimate Beneficial Owner)
+Truy vết đệ quy từ cơ cấu sở hữu cổ đông là các tổ chức để tìm ra các cá nhân nắm quyền sở hữu gián tiếp tích lũy đạt tỷ lệ `>= 25%`:
+
+```sql
+WITH RECURSIVE ubo_tracing AS (
+    SELECT 
+        o.tax_id AS target_tax_id,
+        o.shareholder_name AS holder_name,
+        o.national_id_or_tax_id AS holder_id,
+        o.ownership_percentage AS direct_pct,
+        o.ownership_percentage AS cumulative_pct,
+        1 AS depth
+    FROM ownership_structure o
+    UNION ALL
+    SELECT 
+        ut.target_tax_id,
+        o_next.shareholder_name AS holder_name,
+        o_next.national_id_or_tax_id AS holder_id,
+        o_next.ownership_percentage AS direct_pct,
+        (ut.cumulative_pct * o_next.ownership_percentage / 100.0) AS cumulative_pct,
+        ut.depth + 1
+    FROM ubo_tracing ut
+    INNER JOIN ownership_structure o_next ON ut.holder_id = o_next.tax_id
+    WHERE ut.depth < 4
+)
+SELECT 
+    c.company_name AS doanh_nghiep_nop_don,
+    ut.holder_name AS co_dong_ca_nhan_to_chuc,
+    ut.holder_id AS ma_dinh_danh,
+    ROUND(SUM(ut.cumulative_pct), 2) AS tong_ty_le_so_huu_tich_luy_pct,
+    CASE 
+        WHEN SUM(ut.cumulative_pct) >= 25.0 THEN 'UBO (Cổ đông hưởng lợi cuối cùng - Bắt buộc KYC)'
+        ELSE 'Cổ đông thành viên'
+    END AS phan_loai_kyc
+FROM ubo_tracing ut
+INNER JOIN companies c ON ut.target_tax_id = c.tax_id
+GROUP BY c.company_name, ut.holder_name, ut.holder_id
+ORDER BY tong_ty_le_so_huu_tich_luy_pct DESC;
+```
+
+```
