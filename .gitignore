@@ -185,3 +185,6 @@ assets/fonts/*.ttf
 # Binary deliverables not tracked
 *.odt
 *.docx
+
+# Test scratch artifacts
+tmp_test/

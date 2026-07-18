@@ -50,6 +50,13 @@ class ProductService:
         for product_id, hit in list(grouped.items())[:effective_top_k]:
             context_bonus = self._context_bonus(product_id, attrs)
             match_score = round(min(1.0, 0.8 * hit.score + context_bonus), 6)
+            chunk = hit.chunk
+            # Safe-answer policy from the SHB manual (section 2.2 / safe-answer
+            # rule): a recommendation is only whether the product is suitable to
+            # advise on, NEVER whether the customer is approved. High-risk
+            # products carry branch_behavior=REVIEW_REQUIRED and must not emit
+            # any external action without human/Law/Credit sign-off.
+            can_prepare = chunk.branch_behavior in {"READY_TO_PREPARE", "NEED_INFORMATION"}
             recommendations.append(
                 {
                     "product_id": product_id,
@@ -62,6 +69,11 @@ class ProductService:
                     "matching_reason": self._reason(product_id, attrs),
                     "prerequisites": self._documents_from_chunk(hit),
                     "eligibility": "unknown",
+                    "risk_level": chunk.risk_level,
+                    "branch_behavior": chunk.branch_behavior,
+                    "proceed": can_prepare,
+                    "internal_required": chunk.internal_required,
+                    "data_label": chunk.data_label,
                     "evidences": [self.knowledge.evidence(hit)],
                 }
             )
