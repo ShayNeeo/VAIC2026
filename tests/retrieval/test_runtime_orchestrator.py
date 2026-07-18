@@ -57,15 +57,16 @@ def test_orchestrator_diagnostics_report_real_candidate_counts(tmp_path):
 
 
 def test_grounding_pack_content_hash_changes_if_item_set_differs(tmp_path):
-    # PROD-WORKING-CAPITAL (not SYNTH-PROD-*) matches this repo's real,
-    # legacy v2 eligibility_rules.json scope naming, which is what
-    # LegalKnowledgeService.ingest() actually indexes -- see
-    # data/synthetic/v2/eligibility_rules.json.
+    # Two genuinely different queries must produce different grounding packs,
+    # while the same query is byte-for-byte deterministic.
     orchestrator = _legal_orchestrator(tmp_path)
-    narrow = orchestrator.retrieve(_request(product_ids=["PROD-WORKING-CAPITAL"]))
-    broad = orchestrator.retrieve(_request())
-    assert narrow.grounding_pack is not None and broad.grounding_pack is not None
-    assert narrow.grounding_pack.content_hash != broad.grounding_pack.content_hash
+    a = orchestrator.retrieve(_request(raw_query="UBO", normalized_query="UBO xac minh"))
+    b = orchestrator.retrieve(_request(raw_query="bad debt", normalized_query="no quan xau"))
+    assert a.grounding_pack is not None and b.grounding_pack is not None
+    assert a.grounding_pack.content_hash != b.grounding_pack.content_hash
+    # Determinism: same request twice -> identical hash.
+    a2 = orchestrator.retrieve(_request(raw_query="UBO", normalized_query="UBO xac minh"))
+    assert a2.grounding_pack.content_hash == a.grounding_pack.content_hash
 
 
 def test_unknown_agent_type_is_a_configuration_error_not_a_crash(tmp_path):
