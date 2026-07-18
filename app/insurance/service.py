@@ -110,7 +110,13 @@ class InsuranceReadinessService:
                     }
                 )
 
-        if hard_blocks:
+        if not secured_products and not is_logistics and not risk_flags:
+            status = "not_applicable"
+            conclusion = (
+                "Phương án hiện tại không phát sinh yêu cầu bảo hiểm bắt buộc; "
+                "Insurance Expert ghi nhận không áp dụng thay vì đưa ra kết luận sẵn sàng bảo hiểm."
+            )
+        elif hard_blocks:
             status = "hard_block_detected"
             conclusion = "Phát hiện thiếu bảo hiểm bắt buộc theo chính sách; Insurance Expert không được xác nhận sản phẩm có bảo đảm là sẵn sàng giải ngân."
         elif missing:

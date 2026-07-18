@@ -18,7 +18,12 @@ from app.context.conversation_state import ConversationStateService, Conversatio
 from app.context.customer_service import CustomerContextService
 from app.context.employee_service import EmployeeContextService
 from app.context.workspace_service import WorkspaceContextService, WorkspaceSessionStore
-from app.integrations.enterprise import SQLiteCRMAdapter, SQLiteIAMAdapter, SQLiteSSOAdapter
+from app.integrations.enterprise import (
+    SQLiteCRMAdapter,
+    SQLiteIAMAdapter,
+    SQLiteSSOAdapter,
+    map_enterprise_role_to_role_type,
+)
 from app.integrations.errors import ContextAccessDeniedError, ContextError, UpstreamTimeoutError, UpstreamUnavailableError
 from app.integrations.resilient import ResilientCRMAdapter
 from app.intake import IntakeService, IntakeValidationError
@@ -112,6 +117,11 @@ class CreateSalesCaseBody(BaseModel):
     tax_code: Optional[str] = None
     industry: Optional[str] = None
     contact: Optional[str] = None
+    employees_count: Optional[int] = Field(default=None, ge=1)
+    annual_revenue: Optional[float] = Field(default=None, ge=0)
+    operating_years: Optional[int] = Field(default=None, ge=0)
+    requested_amount_vnd: Optional[float] = Field(default=None, ge=0)
+    preferred_timeline: Optional[str] = None
     need_text: str = Field(min_length=3)
     rm_note: Optional[str] = None
     priority: Literal["low", "normal", "high", "urgent"] = "normal"
@@ -224,7 +234,11 @@ def create_router(
         stored = repo().get_case(case_id)
         if stored is None:
             raise HTTPException(status_code=404, detail={"code": "CASE_NOT_FOUND"})
-        if stored.state.context.employee.employee_id != employee_id:
+        if not can_access_customer_case(
+            owner_id=stored.state.context.employee.employee_id,
+            customer_id=stored.state.context.customer.customer_id,
+            employee_id=employee_id,
+        ):
             metrics.increment("security.case_scope_denied")
             raise HTTPException(status_code=403, detail={"code": "CASE_ACCESS_DENIED"})
         return stored
@@ -233,10 +247,34 @@ def create_router(
         stored = repo().get_intake(case_id)
         if stored is None:
             raise HTTPException(status_code=404, detail={"code": "SALES_CASE_NOT_FOUND"})
-        if stored.session.employee_id != employee_id:
+        if not can_access_customer_case(
+            owner_id=stored.session.employee_id,
+            customer_id=stored.session.customer_id,
+            employee_id=employee_id,
+        ):
             metrics.increment("security.intake_scope_denied")
             raise HTTPException(status_code=403, detail={"code": "CASE_ACCESS_DENIED"})
         return stored
+
+    def actor_role(employee_id: str) -> str:
+        correlation_id = f"TRACE-{uuid.uuid4().hex.upper()}"
+        try:
+            identity = SQLiteSSOAdapter().get_employee_identity(employee_id, correlation_id=correlation_id)
+        except ContextError as exc:
+            raise HTTPException(status_code=503, detail={"code": "IAM_UNAVAILABLE"}) from exc
+        return map_enterprise_role_to_role_type(identity["role"], identity["organization_unit"])
+
+    def can_access_customer_case(*, owner_id: str, customer_id: Optional[str], employee_id: str) -> bool:
+        if owner_id == employee_id:
+            return True
+        # Cross-owner access is deliberately one-way: an assigned RM may
+        # receive customer-submitted data, but a Customer User can never
+        # inspect an RM-owned analysis, internal notes or approval payload.
+        if actor_role(employee_id) != "relationship_manager" or not customer_id:
+            return False
+        grant = iam_grant(employee_id)
+        scope = set(grant.get("access_scope", {}).get("managed_customer_ids", []))
+        return customer_id in scope and "case:read" in set(grant.get("permissions", []))
 
     def require_permission(employee_id: str, permission: str) -> Dict[str, Any]:
         grant = iam_grant(employee_id)
@@ -249,7 +287,12 @@ def create_router(
             "case:execute": "approval:request",
             "case:audit": "case:read",
         }
-        accepted = {permission, compatible.get(permission, permission)}
+        if actor_role(employee_id) == "customer_user" and permission in {
+            "case:confirm", "case:run", "case:approve", "case:execute", "case:audit"
+        }:
+            accepted = {permission}
+        else:
+            accepted = {permission, compatible.get(permission, permission)}
         if not permissions.intersection(accepted):
             raise HTTPException(status_code=403, detail={"code": "PERMISSION_DENIED", "permission": permission})
         return grant
@@ -372,6 +415,7 @@ def create_router(
             raise HTTPException(status_code=400, detail={"code": "UNSAFE_INPUT", "flags": safety.flags})
         context = assemble(x_employee_id, x_session_id)
         manual = body.model_dump(mode="json")
+        manual["submission_source"] = "customer" if actor_role(x_employee_id) == "customer_user" else "rm"
         manual["need_text"] = safety.sanitized_text.split("\n", 1)[0]
         stored = intake_service().create(
             employee_id=x_employee_id,
@@ -396,9 +440,16 @@ def create_router(
     @router.get("/sales-cases")
     def list_sales_cases(x_employee_id: str = Header(...)) -> List[Dict[str, Any]]:
         require_permission(x_employee_id, "case:read")
-        runtime = {item.state.case_id: item for item in repo().list_cases(x_employee_id)}
+        intakes = repo().list_intakes(x_employee_id)
+        runtime_items = repo().list_cases(x_employee_id)
+        if actor_role(x_employee_id) == "relationship_manager":
+            scope = iam_grant(x_employee_id).get("access_scope", {}).get("managed_customer_ids", [])
+            intakes = [*intakes, *repo().list_intakes_for_customers(scope)]
+            runtime_items = [*runtime_items, *repo().list_cases_for_customers(scope)]
+        intakes = list({item.session.case_id: item for item in intakes}.values())
+        runtime = {item.state.case_id: item for item in runtime_items}
         result: List[Dict[str, Any]] = []
-        for item in repo().list_intakes(x_employee_id):
+        for item in intakes:
             state_item = runtime.get(item.session.case_id)
             result.append(
                 {

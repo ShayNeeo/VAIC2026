@@ -23,17 +23,22 @@ def _assess_findings_quality(
     """Aggregate confidence/evidence-support signals across the independent
     Product/Credit/Insurance findings so the Coordinator actually evaluates
     output quality instead of just merging results untouched."""
-    all_refs = [ref for finding in findings for ref in finding.evidence_refs]
+    applicable_findings = [
+        finding for finding in findings
+        if str(finding.domain_result.get("status")) != "not_applicable"
+    ]
+    all_refs = [ref for finding in applicable_findings for ref in finding.evidence_refs]
     supported = [ref for ref in all_refs if ref.support_status == SupportStatus.SUPPORTED]
     confidences = [
         finding.confidence.display_confidence
-        for finding in findings
+        for finding in applicable_findings
         if finding.confidence.display_confidence is not None
     ]
     low_confidence_agents = [
         finding.agent_type.value
-        for finding in findings
-        if (finding.confidence.display_confidence or 1.0) < LOW_CONFIDENCE_THRESHOLD
+        for finding in applicable_findings
+        if finding.confidence.display_confidence is not None
+        and finding.confidence.display_confidence < LOW_CONFIDENCE_THRESHOLD
     ]
     quality_summary = {
         "expert_evidence_ref_count": len(all_refs),
@@ -106,11 +111,20 @@ def synthesize_expert_results(
         str(item.get("product_id")): str(item.get("status"))
         for item in (alternative_eligibility_result or {}).get("products", [])
     }
-    alternatives = [
+    rerun_alternatives = [
         {**item, "eligibility_status": alternative_status.get(str(item.get("product_id")), "unknown")}
         for item in (alternative_product_result or {}).get("recommendations", [])
         if alternative_status.get(str(item.get("product_id")), "passed") == "passed"
-    ][:2]
+    ]
+    alternatives: List[Dict[str, Any]] = []
+    seen_alternative_ids: set[str] = set()
+    for item in [*accepted[1:], *rerun_alternatives]:
+        product_id = str(item.get("product_id"))
+        if product_id and product_id not in seen_alternative_ids:
+            alternatives.append(item)
+            seen_alternative_ids.add(product_id)
+        if len(alternatives) == 2:
+            break
 
     missing: List[Dict[str, Any]] = []
     for product in eligibility_result.get("products", []):

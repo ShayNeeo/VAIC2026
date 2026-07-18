@@ -349,7 +349,11 @@ class IntakeService:
                     value=value,
                     normalized_value=value,
                     source_document_id=source,
-                    source_section="case_form" if source == "RM_INPUT" else "crm_profile",
+                    source_section=(
+                        "customer_form" if source == "CUSTOMER_INPUT"
+                        else "case_form" if source == "RM_INPUT"
+                        else "crm_profile"
+                    ),
                     source_text_span=str(value)[:300],
                     extraction_method="manual_input" if source == "RM_INPUT" else "crm_context",
                     confidence=1.0 if confirmed else confidence,
@@ -360,10 +364,18 @@ class IntakeService:
                 )
             )
 
-        add("company_identity.name", manual.get("company_name"), "RM_INPUT", 1.0, True, "high")
-        add("company_identity.tax_code", manual.get("tax_code"), "RM_INPUT", 1.0, True, "high")
-        add("company_identity.industry", manual.get("industry"), "RM_INPUT", 1.0, True, "medium")
-        add("explicit_needs", detect_needs(str(manual.get("need_text") or "")), "RM_INPUT", 1.0, True, "medium")
+        is_customer_submission = manual.get("submission_source") == "customer"
+        manual_source = "CUSTOMER_INPUT" if is_customer_submission else "RM_INPUT"
+        manual_confirmed = not is_customer_submission
+        add("company_identity.name", manual.get("company_name"), manual_source, 1.0, manual_confirmed, "high")
+        add("company_identity.tax_code", manual.get("tax_code"), manual_source, 1.0, manual_confirmed, "high")
+        add("company_identity.industry", manual.get("industry"), manual_source, 1.0, manual_confirmed, "medium")
+        add("explicit_needs", detect_needs(str(manual.get("need_text") or "")), manual_source, 1.0, manual_confirmed, "medium")
+        add("business_profile.employees_count", manual.get("employees_count"), manual_source, 0.95, manual_confirmed, "high")
+        add("business_profile.annual_revenue", manual.get("annual_revenue"), manual_source, 0.95, manual_confirmed, "high")
+        add("business_profile.operating_years", manual.get("operating_years"), manual_source, 0.95, manual_confirmed, "high")
+        add("financing_profile.requested_amount_vnd", manual.get("requested_amount_vnd"), manual_source, 0.95, manual_confirmed, "high")
+        add("operating_model.preferred_timeline", manual.get("preferred_timeline"), manual_source, 0.95, manual_confirmed, "medium")
         add("business_profile.employees_count", crm.get("employees_count"), "CRM_PROFILE", 0.9, False, "high")
         add("business_profile.annual_revenue", crm.get("annual_revenue"), "CRM_PROFILE", 0.9, False, "high")
         add("business_profile.operating_years", crm.get("operating_years"), "CRM_PROFILE", 0.9, False, "high")

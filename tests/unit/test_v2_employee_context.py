@@ -51,10 +51,24 @@ def auth_headers(demo_token: str) -> dict:
 
 
 RM = auth_headers("demo-rm-999")
+CUSTOMER = auth_headers("demo-user-mp-001")
 LEGAL = auth_headers("demo-spec-legal-001")
 PRODUCT = auth_headers("demo-spec-prod-001")
 INSURANCE = auth_headers("demo-spec-insurance-001")
 MANAGER = auth_headers("demo-mgr-hn-01")
+
+
+def test_customer_user_has_input_only_role_and_minimum_permissions(client):
+    response = client.get("/api/v2/me/context", headers=CUSTOMER)
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["authorization_context"]["roles"] == ["customer_user"]
+    assert payload["authorization_context"]["customer_scope"] == ["COMP-MP"]
+    assert set(payload["authorization_context"]["permissions"]) == {
+        "case:create", "case:read", "case:write"
+    }
+    assert has_capability(RoleType.CUSTOMER_USER, "case:create") is True
+    assert has_capability(RoleType.CUSTOMER_USER, "action:approve_own") is False
 
 
 # ---------------------------------------------------------------------------

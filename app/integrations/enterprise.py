@@ -113,6 +113,17 @@ class SQLiteSSOAdapter(EnterpriseSQLiteBase):
 
 
 _EMPLOYEE_COPILOT_DEMO_PERSONAS: list[tuple[str, str, str, list[str], dict]] = [
+    # (employee_id, coarse_role, organization_unit, permissions, access_scope)
+    # RM-999 already exists in enterprise_core.sqlite3 from the original
+    # seed; these four were only ever seeded into the newer, separate
+    # employee_db.py (data/state/v2.sqlite3) SQLite file, which meant
+    # SQLiteSSOAdapter/SQLiteIAMAdapter could never resolve them. Adding
+    # them here (idempotently) makes IAMPort/SSOPort the single place that
+    # knows about every demo employee, instead of two disconnected seed
+    # sources for the same five-person demo cast.
+    ("USER-MP-001", "Customer", "Minh Phat Customer Portal",
+     ["case:create", "case:read", "case:write"],
+     {"managed_customer_ids": ["COMP-MP"], "branch": "CUSTOMER_PORTAL"}),
     ("SPEC-LEGAL-001", "Specialist", "Legal & Compliance",
      ["case:read", "case:verify_evidence", "legal:check_issue", "legal:block_non_eligible", "legal:manage_knowledge"],
      {"managed_customer_ids": ["COMP-ABC", "COMP-MP", "COMP-XYZ"], "branch": "HN01"}),
@@ -163,6 +174,8 @@ def ensure_employee_copilot_demo_personas(db_path: Path | str | None = None) -> 
 def map_enterprise_role_to_role_type(role: str, organization_unit: str) -> str:
     role_lower = role.lower()
     unit_lower = organization_unit.lower()
+    if role_lower == "customer":
+        return "customer_user"
     if role_lower == "rm":
         return "relationship_manager"
     if role_lower == "manager":

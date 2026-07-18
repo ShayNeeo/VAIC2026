@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class RoleType(str, Enum):
+    CUSTOMER_USER = "customer_user"
     RM = "relationship_manager"
     PRODUCT_SPECIALIST = "product_specialist"
     LEGAL_SPECIALIST = "legal_specialist"

@@ -306,6 +306,29 @@ class V2Repository:
             result.append(StoredIntake(session=session, version=int(row["version"])))
         return result
 
+    def list_intakes_for_customers(self, customer_ids: List[str]) -> List[StoredIntake]:
+        """Return intake drafts in the caller's customer scope.
+
+        Used by an assigned RM to receive a customer-submitted intake while
+        preserving the original submitter as the intake owner/audit actor.
+        Empty scope is fail-closed.
+        """
+        if not customer_ids:
+            return []
+        with self._connect() as connection:
+            placeholders = ",".join("?" for _ in customer_ids)
+            rows = connection.execute(
+                f"SELECT state_json,version FROM intake_sessions "
+                f"WHERE customer_id IN ({placeholders}) ORDER BY updated_at DESC",
+                tuple(customer_ids),
+            ).fetchall()
+        result: List[StoredIntake] = []
+        for row in rows:
+            session = IntakeSession.model_validate_json(row["state_json"])
+            session.version = int(row["version"])
+            result.append(StoredIntake(session=session, version=int(row["version"])))
+        return result
+
     def save_intake_document(
         self,
         intake_id: str,

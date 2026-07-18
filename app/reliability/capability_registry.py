@@ -10,6 +10,13 @@ from typing import Dict, List, Set
 from app.schemas.v2.employee import RoleType
 
 ROLE_CAPABILITIES: Dict[RoleType, Set[str]] = {
+    RoleType.CUSTOMER_USER: {
+        "case:read",
+        "case:write",
+        "case:create",
+        "document:upload",
+        "document:process",
+    },
     RoleType.RM: {
         "case:read",
         "case:write",

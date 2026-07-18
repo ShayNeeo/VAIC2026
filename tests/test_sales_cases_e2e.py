@@ -11,6 +11,7 @@ from app.storage.repository import V2Repository
 
 
 HEADERS = {"X-Employee-ID": "RM-999", "X-Session-ID": "SESS-MP"}
+CUSTOMER_HEADERS = {"X-Employee-ID": "USER-MP-001", "X-Session-ID": "SESS-MP"}
 
 
 def client(tmp_path: Path) -> TestClient:
@@ -108,6 +109,100 @@ UBO = """THONG TIN CHU SO HUU HUONG LOI
 Cong ty Co phan Thiet bi Minh Phat
 UBO da xac minh theo ho so KYC demo.
 SYNTHETIC DEMO DATA."""
+
+
+def test_customer_user_submits_once_and_rm_receives_case_without_privilege_leak(tmp_path: Path):
+    http = client(tmp_path)
+    created = http.post(
+        "/api/v2/sales-cases",
+        headers={**CUSTOMER_HEADERS, "Idempotency-Key": "customer-handoff-001"},
+        json={
+            "company_name": "Công ty Cổ phần Thiết bị Minh Phát",
+            "tax_code": "0109988665",
+            "industry": "Phân phối thiết bị công nghiệp",
+            "contact": "Nguyễn Minh Anh · 0901 234 567",
+            "employees_count": 500,
+            "annual_revenue": 120_000_000_000,
+            "operating_years": 8,
+            "preferred_timeline": "Trong tháng này",
+            "need_text": "Doanh nghiệp muốn chi lương cho 500 nhân viên và quản lý dòng tiền tập trung.",
+            "priority": "normal",
+            "current_products": [],
+        },
+    )
+    assert created.status_code == 201, created.text
+    draft = created.json()
+    assert draft["manual_input"]["submission_source"] == "customer"
+    assert draft["profile"]["source_map"]["company_identity.name"] == "CUSTOMER_INPUT"
+    case_id = draft["case_id"]
+
+    files = [("files", ("business_registration.txt", REGISTRATION.encode("utf-8"), "text/plain"))]
+    uploaded = http.post(
+        f"/api/v2/sales-cases/{case_id}/documents", headers=CUSTOMER_HEADERS, files=files
+    )
+    assert uploaded.status_code == 200, uploaded.text
+    processed = http.post(
+        f"/api/v2/sales-cases/{case_id}/process-documents", headers=CUSTOMER_HEADERS
+    )
+    assert processed.status_code == 200, processed.text
+    review = processed.json()
+    assert review["intake_status"] == "profile_review_required"
+
+    customer_confirm = http.post(
+        f"/api/v2/sales-cases/{case_id}/confirm-profile",
+        headers=CUSTOMER_HEADERS,
+        json={"expected_version": review["version"], "attestation": True},
+    )
+    assert customer_confirm.status_code == 403
+    assert customer_confirm.json()["detail"]["code"] == "PERMISSION_DENIED"
+
+    rm_cases = http.get("/api/v2/sales-cases", headers=HEADERS)
+    assert rm_cases.status_code == 200, rm_cases.text
+    assert case_id in {item["case_id"] for item in rm_cases.json()}
+
+    # Customer/CRM/document disagreement is intentionally not auto-merged;
+    # the assigned RM must select the value that was actually checked.
+    for conflict in [item for item in review["conflicts"] if item["requires_confirmation"]]:
+        preferred = next(
+            (
+                item for item in conflict["candidates"]
+                if str(item["source_id"]).startswith("DOC-")
+                or item["source_id"] == "CUSTOMER_INPUT"
+            ),
+            conflict["candidates"][0],
+        )
+        resolved = http.patch(
+            f"/api/v2/sales-cases/{case_id}/extracted-profile",
+            headers=HEADERS,
+            json={
+                "expected_version": review["version"],
+                "changes": [{
+                    "field_name": conflict["field_name"],
+                    "value": preferred["value"],
+                    "reason": "RM đối chiếu thông tin khách hàng với hồ sơ nguồn",
+                }],
+            },
+        )
+        assert resolved.status_code == 200, resolved.text
+        review = resolved.json()
+
+    rm_confirm = http.post(
+        f"/api/v2/sales-cases/{case_id}/confirm-profile",
+        headers=HEADERS,
+        json={"expected_version": review["version"], "attestation": True},
+    )
+    assert rm_confirm.status_code == 200, rm_confirm.text
+    analysis = http.post(
+        f"/api/v2/sales-cases/{case_id}/run-analysis",
+        headers=HEADERS,
+        json={"expected_version": rm_confirm.json()["version"]},
+    )
+    assert analysis.status_code == 200, analysis.text
+    assert analysis.json()["case"]["context"]["employee"]["employee_id"] == "RM-999"
+
+    # The customer can no longer read the RM-owned internal AI result/log.
+    leaked = http.get(f"/api/v2/sales-cases/{case_id}/ai-log", headers=CUSTOMER_HEADERS)
+    assert leaked.status_code == 403
 
 
 def test_payroll_journey_reaches_approval_executes_mock_and_exposes_ai_log(tmp_path: Path):
