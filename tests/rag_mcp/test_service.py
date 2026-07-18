@@ -78,8 +78,8 @@ def test_builtin_corpus_is_persistent_versioned_and_healthy(service):
     health = service.health()
     assert health.status == "ok"
     assert health.source_count == 4
-    assert health.chunk_count == 190
-    assert health.chunks_by_domain == {"credit": 17, "legal": 37, "operations": 59, "product": 77}
+    assert health.chunk_count == 201
+    assert health.chunks_by_domain == {"credit": 17, "legal": 48, "operations": 59, "product": 77}
     assert health.db_quick_check == "ok"
 
 

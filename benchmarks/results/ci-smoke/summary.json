@@ -3,10 +3,10 @@
     "dataset_id": "corporate-sales-single-vs-multi-agent-v1",
     "dataset_version": "2026.07.18-v1",
     "data_label": "SYNTHETIC BENCHMARK DATA",
-    "run_timestamp": "2026-07-17T23:26:43.559135+00:00",
+    "run_timestamp": "2026-07-18T14:13:03.682785+00:00",
     "cache_mode": "warm",
     "case_count": 5,
-    "git_commit": "2e76c27c6763c8a3789cc87efdc1beb3cb366ac9",
+    "git_commit": "0787ade58f0fe106ec2fbcc93d284e153a194472",
     "working_tree_dirty": true,
     "configuration": {
       "rag_provider": "local",
@@ -26,7 +26,7 @@
       "unsupported_claim_rate": null,
       "abstention_accuracy": 0.75,
       "forbidden_violation_rate": 0.0,
-      "avg_latency_ms": 1.6273,
+      "avg_latency_ms": 11.3247,
       "token_usage": null,
       "cost": null,
       "cost_status": "NOT_CALCULATED"
@@ -43,7 +43,7 @@
       "unsupported_claim_rate": 0.0,
       "abstention_accuracy": 0.75,
       "forbidden_violation_rate": 0.0,
-      "avg_latency_ms": 4.4842,
+      "avg_latency_ms": 21.897,
       "token_usage": null,
       "cost": null,
       "cost_status": "NOT_CALCULATED"
@@ -53,7 +53,7 @@
       "missing_info_recall": 1.0,
       "legal_flag_recall": 1.0,
       "citation_validity": null,
-      "avg_latency_ms": 2.8569
+      "avg_latency_ms": 10.5723
     }
   },
   "per_case": [
@@ -72,7 +72,7 @@
         "unsupported_claim_rate": null,
         "abstention_correct": true,
         "final_status_matches_expected": null,
-        "latency_ms": 1.455
+        "latency_ms": 11.08
       },
       "multi_agent": {
         "product_recall": null,
@@ -85,7 +85,7 @@
         "unsupported_claim_rate": 0.0,
         "abstention_correct": true,
         "final_status_matches_expected": null,
-        "latency_ms": 3.642
+        "latency_ms": 17.619
       }
     },
     {
@@ -103,7 +103,7 @@
         "unsupported_claim_rate": null,
         "abstention_correct": true,
         "final_status_matches_expected": false,
-        "latency_ms": 1.644
+        "latency_ms": 11.137
       },
       "multi_agent": {
         "product_recall": 1.0,
@@ -116,7 +116,7 @@
         "unsupported_claim_rate": 0.0,
         "abstention_correct": true,
         "final_status_matches_expected": true,
-        "latency_ms": 5.622
+        "latency_ms": 22.914
       }
     },
     {
@@ -134,7 +134,7 @@
         "unsupported_claim_rate": null,
         "abstention_correct": true,
         "final_status_matches_expected": false,
-        "latency_ms": 1.465
+        "latency_ms": 11.309
       },
       "multi_agent": {
         "product_recall": 1.0,
@@ -147,7 +147,7 @@
         "unsupported_claim_rate": 0.0,
         "abstention_correct": true,
         "final_status_matches_expected": true,
-        "latency_ms": 3.255
+        "latency_ms": 24.222
       }
     },
     {
@@ -165,7 +165,7 @@
         "unsupported_claim_rate": null,
         "abstention_correct": false,
         "final_status_matches_expected": null,
-        "latency_ms": 1.945
+        "latency_ms": 11.773
       },
       "multi_agent": {
         "product_recall": null,
@@ -178,7 +178,7 @@
         "unsupported_claim_rate": 0.0,
         "abstention_correct": false,
         "final_status_matches_expected": null,
-        "latency_ms": 5.418
+        "latency_ms": 22.833
       }
     },
     {
