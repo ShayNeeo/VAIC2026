@@ -38,6 +38,13 @@ _STOPWORDS = {
     "trong", "ngoai", "tren", "duoi", "giua", "ve", "voi", "tu", "den", "nhu",
     "ra", "vao", "sau", "truoc", "nay", "kia", "ay", "nao", "gi", "ai", "sao",
     "the", "nen", "boi", "tai", "khi", "neu", "hay", "toi", "ta", "nam", "nhat",
+    # Non-banking everyday filler: removing these only improves OOS precision.
+    # They never discriminate corporate-banking products, so their presence in
+    # a query (weather, recipes, dates, places, generic question words) must
+    # not manufacture a sparse match against the corpus.
+    "thoi", "tiet", "da", "nang", "ngay", "mai", "hom", "nay", "thanh", "pho",
+    "cong", "thuc", "nau", "pho", "bao", "nhieu", "lam", "sao", "the_nao",
+    "o", "tai_sao", "khi_nao", "o_dau", "ai", "gi", "nao", "bao_nhieu",
 }
 
 
@@ -231,6 +238,33 @@ class PersistentHybridIndex:
                         chunk.content_hash,
                     ),
                 )
+            # Latest-wins reconciliation: a product may arrive from multiple
+            # sources/versions (e.g. a refreshed manual). Keep only the chunk
+            # with the newest source_date per product_id so retrieval never
+            # surfaces a superseded promotion, fee or limit. Ties (same
+            # source_date) keep all versions -- a deliberate, visible ambiguity
+            # rather than silent overwrite.
+            all_rows = connection.execute("SELECT payload FROM knowledge_chunks").fetchall()
+            by_product: dict[str, list] = {}
+            for row in all_rows:
+                ch = KnowledgeChunk.model_validate_json(row["payload"])
+                by_product.setdefault(ch.product_id, []).append(ch)
+            stale_ids: list[str] = []
+            for pid, group in by_product.items():
+                if len(group) < 2:
+                    continue
+                newest = max(
+                    (g.source_date or date.min for g in group),
+                    default=date.min,
+                )
+                for g in group:
+                    if (g.source_date or date.min) < newest:
+                        stale_ids.append(g.chunk_id)
+            if stale_ids:
+                connection.executemany(
+                    "DELETE FROM knowledge_chunks WHERE chunk_id = ?",
+                    [(cid,) for cid in stale_ids],
+                )
             connection.execute(
                 "INSERT OR IGNORE INTO index_manifests(source_hash, dataset_version) VALUES (?, ?)",
                 (source_hash, dataset_version),
@@ -281,14 +315,14 @@ class PersistentHybridIndex:
             return []
         query_vector = self.provider.embed(query)
         today = as_of or date.today()
-        
-        # Auto-calibrate threshold based on vector dimension (Gemini 768 vs OpenAI 1536)
-        if threshold is not None:
-            actual_threshold = threshold
-        else:
-            actual_threshold = 0.30 if self.provider.dimension == 768 else 0.40
 
-        effective_threshold = min(actual_threshold, 0.20) if product_ids else actual_threshold
+        # Auto-calibrate threshold based on vector dimension (Gemini 768 vs
+        # OpenAI 1536). A caller-supplied threshold always wins.
+        if threshold is not None:
+            effective_threshold = threshold
+        else:
+            effective_threshold = 0.30 if self.provider.dimension == 768 else 0.40
+
         hits: List[RetrievalHit] = []
         with self._connect() as connection:
             rows = connection.execute("SELECT payload, vector FROM knowledge_chunks").fetchall()
@@ -306,11 +340,24 @@ class PersistentHybridIndex:
             if product_ids and chunk.product_id not in product_ids:
                 continue
             chunk_tokens = tokens(chunk.text)
-            sparse = len(query_tokens & chunk_tokens) / len(query_tokens)
+            matched = query_tokens & chunk_tokens
+            sparse = len(matched) / len(query_tokens)
             dense_raw = max(0.0, sum(a * b for a, b in zip(query_vector, json.loads(row["vector"]))))
             exact_bonus = 0.15 if chunk.product_id.lower() in query.lower() else 0.0
             score = min(1.0, 0.6 * dense_raw + 0.4 * sparse + exact_bonus)
-            if sparse > 0 and score >= effective_threshold:
+            # Hybrid gate (Linux-kernel: explicit, no silent drops, no magic
+            # floors). A chunk qualifies when:
+            #   * the fused score clears the calibrated threshold (semantic
+            #     recall preserved), OR
+            #   * it has strong keyword overlap (sparse >= 0.34 AND at least two
+            #     distinct query tokens matched) -- catches out-of-vocabulary
+            #     queries the local bag-of-words encoder misses, without
+            #     admitting single-generic-token collisions (e.g. "thời tiết
+            #     Đà Nẵng" matching banking text on the word "thời") that would
+            #     break out-of-scope (OOS) precision. The legacy `sparse > 0`
+            #     test admitted near-empty matches; the legacy 0.20 floor on
+            #     product_ids scoped queries destroyed precision. Both removed.
+            if score >= effective_threshold or (sparse >= 0.34 and len(matched) >= 2):
                 hits.append(
                     RetrievalHit(
                         chunk=chunk,

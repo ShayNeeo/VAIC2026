@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -10,7 +11,7 @@ from app.config import settings
 from app.data_catalog.registry import require_serving_approval
 from app.knowledge.index import PersistentHybridIndex
 from app.knowledge.ingestion import load_product_chunks
-from app.knowledge.models import IngestReport, RetrievalHit
+from app.knowledge.models import IngestReport, KnowledgeChunk, RetrievalHit
 from app.knowledge.rag_provider import (
     CircuitBreaker, RagProviderRouter, SearchOutcome, compute_health, make_async_bridge,
 )
@@ -18,9 +19,18 @@ from app.knowledge.rag_provider import (
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PRODUCTS = ROOT / "data" / "synthetic" / "v2" / "products.json"
+DEFAULT_PRODUCTS_SHB = ROOT / "data" / "synthetic" / "v2" / "products_shb.json"
 DEFAULT_SOURCE_CARD = ROOT / "data" / "catalog" / "source_cards" / "synthetic_product_catalog.json"
+DEFAULT_SOURCE_CARD_SHB = ROOT / "data" / "catalog" / "source_cards" / "shb_product_manual.json"
 
 _logger = logging.getLogger(__name__)
+
+
+def _multi_hash(paths: Sequence[str]) -> str:
+    h = hashlib.sha256()
+    for p in paths:
+        h.update(p.encode("utf-8"))
+    return h.hexdigest()
 
 
 class ProductKnowledgeService:
@@ -51,13 +61,44 @@ class ProductKnowledgeService:
 
     def ingest(
         self,
-        source_path: str | Path = DEFAULT_PRODUCTS,
-        source_card_path: str | Path = DEFAULT_SOURCE_CARD,
+        source_paths: Sequence[str | Path] | None = None,
+        source_card_paths: Sequence[str | Path] | None = None,
     ) -> IngestReport:
-        require_serving_approval(source_card_path)
-        chunks, report = load_product_chunks(source_path)
-        self.index.upsert(chunks, source_hash=report.source_hash, dataset_version=report.dataset_version)
-        return report
+        """Idempotent ingestion of one or more product corpora.
+
+        Default ingests both the synthetic catalog and the SHB public-source
+        product manual. Each corpus is served by its own source-card approval,
+        so a missing/unapproved card for one source does not block the others.
+        """
+        if source_paths is None:
+            source_paths = [DEFAULT_PRODUCTS, DEFAULT_PRODUCTS_SHB]
+        if source_card_paths is None:
+            source_card_paths = [DEFAULT_SOURCE_CARD, DEFAULT_SOURCE_CARD_SHB]
+        card_by_source = dict(zip(source_paths, source_card_paths))
+        all_chunks: List[KnowledgeChunk] = []
+        combined = IngestReport(
+            dataset_version="multi",
+            source_path=";".join(str(p) for p in source_paths),
+            source_hash="",
+            accepted=0, rejected=0, indexed=0, errors=[],
+        )
+        for src in source_paths:
+            card = card_by_source.get(src)
+            if card is not None:
+                try:
+                    require_serving_approval(card)
+                except Exception as exc:  # a missing/unapproved card skips that source only
+                    _logger.warning("event=ingest_source_skipped source=%s reason=%s", src, exc)
+                    continue
+            chunks, report = load_product_chunks(src)
+            all_chunks.extend(chunks)
+            combined.accepted += report.accepted
+            combined.rejected += report.rejected
+            combined.indexed += report.indexed
+            combined.errors.extend(report.errors)
+        combined.source_hash = _multi_hash([str(p) for p in source_paths])
+        self.index.upsert(all_chunks, source_hash=combined.source_hash, dataset_version=combined.dataset_version)
+        return combined
 
     def ensure_index(self) -> None:
         if self.index.count() == 0:
