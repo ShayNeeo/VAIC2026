@@ -1,0 +1,69 @@
+"""Policy registry mapping employee roles to allowed capabilities (Policy Mapper).
+
+Note: The source of truth for identity, roles, and permissions is SSOAdapter and IAMPort.
+This registry only maps roles to policies to evaluate authorization requests at the gateway.
+"""
+
+from __future__ import annotations
+
+from typing import Dict, List, Set
+from app.schemas.v2.employee import RoleType
+
+ROLE_CAPABILITIES: Dict[RoleType, Set[str]] = {
+    RoleType.RM: {
+        "case:read",
+        "case:write",
+        "case:create",
+        "profile:edit",
+        "specialist_review:request",
+        "action:draft",
+        "action:approve_own",
+        "document:upload",
+        "document:process"
+    },
+    RoleType.PRODUCT_SPECIALIST: {
+        "case:read",
+        "product:recommend",
+        "product:verify_fit",
+        "product:add_justification",
+        "proposal:review"
+    },
+    RoleType.LEGAL_SPECIALIST: {
+        "case:read",
+        "case:verify_evidence",
+        "legal:verify_evidence",
+        "legal:check_issue",
+        "legal:block_non_eligible",
+        "proposal:review"
+    },
+    RoleType.OPERATIONS_SPECIALIST: {
+        "case:read",
+        "task:update",
+        "ops:prepare_task",
+        "ops:generate_checklist",
+        "ops:update_implementation"
+    },
+    RoleType.MANAGER: {
+        "case:read",
+        "team:view_workload",
+        "team:view_blocked_cases",
+        "team:view_sla_risks",
+        "team:view_aggregate_utilization"
+    },
+    RoleType.AUDITOR: {
+        "case:read",
+        "audit:view_history",
+        "audit:export_report"
+    },
+    RoleType.ADMIN: {
+        "system:manage_personalization",
+        "system:configure_retention",
+        "system:update_prompt_version"
+    }
+}
+
+
+def has_capability(role: RoleType, capability: str) -> bool:
+    """Evaluate if a role is permitted to perform a capability according to the policy mapper."""
+    allowed = ROLE_CAPABILITIES.get(role, set())
+    return capability in allowed

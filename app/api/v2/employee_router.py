@@ -1,0 +1,970 @@
+"""API Router for Employee personalization, work context, consent and Next Best Work.
+
+Identity flow (P0 fix, see docs/ROLE_AWARE_REPO_VERIFICATION_REPORT.md P0-1/P0-2):
+
+    Authorization: Bearer <token>  (or, in DEMO_AUTH_ENABLED mode, X-Employee-ID)
+    -> require_verified_identity()
+    -> EmployeeContextService(SQLiteSSOAdapter, SQLiteIAMAdapter)   [the SAME
+       ports app/api/v2/router.py already uses -- one IAM, not two]
+    -> VerifiedIdentity (role/permissions/customer_scope from IAM, never from
+       request body/query, never from the employee_db personalization store)
+
+`employee_db` (data/state/v2.sqlite3) is now used ONLY for what it should
+always have been: personalization preferences, consent, habits, work items
+and recommendation feedback -- never identity, role or permission lookup.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import logging
+import sqlite3
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from pydantic import BaseModel
+
+from app.config import settings
+from app.context.employee_service import EmployeeContextService
+from app.context.next_best_work import get_next_best_work
+from app.integrations.enterprise import (
+    SQLiteIAMAdapter,
+    SQLiteSSOAdapter,
+    ensure_employee_copilot_demo_personas,
+    map_enterprise_role_to_role_type,
+)
+from app.integrations.errors import ContextError, UpstreamTimeoutError, UpstreamUnavailableError
+from app.observability.runtime import JsonEventLogger, metrics
+from app.reliability.capability_registry import has_capability
+from app.storage.repository import StateConflictError, V2Repository
+from app.schemas.v2.employee import (
+    AuthorizationContext,
+    ConsentModel,
+    EmployeeContextSnapshot,
+    HabitModel,
+    HabitStatus,
+    PersonalizationContext,
+    ProvenanceMetadata,
+    ProvenanceType,
+    RoleType,
+    VerifiedIdentity,
+    WorkContext,
+)
+from app.schemas.v2.planning import NextBestQuestion
+from app.schemas.v2.shared_case_state import ApprovalStatus, CaseStatus
+from app.schemas.v2.specialist_review import (
+    OperationalReadinessRequest,
+    OperationalReadinessSnapshot,
+    SpecialistReviewRecord,
+    SpecialistReviewRequest,
+    SpecialistReviewResult,
+)
+from app.storage.employee_db import (
+    cleared_roles_for_case_version,
+    confirm_habit,
+    create_work_item,
+    delete_habit,
+    get_consent,
+    get_db_connection,
+    get_habits,
+    get_operational_readiness,
+    get_preferences,
+    init_employee_db,
+    list_specialist_reviews,
+    reject_habit,
+    save_consent,
+    save_operational_readiness,
+    save_preferences,
+    save_recommendation_feedback,
+    save_specialist_review,
+)
+from app.workflow.engine import V2WorkflowEngine
+from app.workflow.state_machine import transition
+
+logger = logging.getLogger(__name__)
+_event_logger = JsonEventLogger(settings.AUDIT_LOG_PATH)
+
+# Schema/seed setup runs once at process start (mirrors V2Repository's
+# create-table-if-not-exists-on-construct convention -- see
+# app/storage/repository.py). Previously init_employee_db() was defined but
+# never called anywhere, so a fresh checkout/CI run had no `employees` table
+# at all; every /api/v2/me/* call would have raised sqlite3.OperationalError.
+init_employee_db()
+ensure_employee_copilot_demo_personas()
+# get_my_context()/get_team_workload() read the `cases` table directly
+# (read-only cross-module query); ensure it exists even if this module is
+# the first thing to touch settings.V2_DB_PATH (e.g. a fresh isolated test
+# DB, or the employee layer being hit before any sales-case flow has run).
+V2Repository(settings.V2_DB_PATH)
+
+
+def _repo() -> V2Repository:
+    """Construct fresh on every call (never cache the instance at module
+    scope) so it reads settings.V2_DB_PATH live -- mirrors
+    app/storage/employee_db.py's get_db_connection(). A module-level
+    singleton here would bind to whatever V2_DB_PATH was at import time,
+    silently ignoring a test's monkeypatched isolated DB (the exact bug
+    already found and fixed once for employee_db.py's old module-level
+    DB_PATH constant -- see docs/ROLE_AWARE_P0_FIX_IMPLEMENTATION_REPORT.md)."""
+    return V2Repository(settings.V2_DB_PATH)
+
+
+router = APIRouter(prefix="/me", tags=["Employee Copilot"])
+recommendation_router = APIRouter(prefix="/recommendations", tags=["Employee Copilot"])
+case_action_router = APIRouter(prefix="/cases", tags=["Specialist Review"])
+
+_DEMO_TOKEN_PREFIX = "demo-"
+
+
+class ErrorResponse(BaseModel):
+    code: str
+    message: str
+    retryable: bool
+    request_id: str
+
+
+def _error(status_code: int, code: str, message: str, *, retryable: bool = False) -> HTTPException:
+    return HTTPException(
+        status_code=status_code,
+        detail={"error": {"code": code, "message": message, "retryable": retryable,
+                           "request_id": f"REQ-{uuid.uuid4().hex[:8].upper()}"}},
+    )
+
+
+def _resolve_demo_employee_id(raw: str) -> str:
+    """"demo-rm-999" -> "RM-999", "demo-spec-legal-001" -> "SPEC-LEGAL-001"."""
+    if raw.lower().startswith(_DEMO_TOKEN_PREFIX):
+        return raw[len(_DEMO_TOKEN_PREFIX):].upper()
+    return raw
+
+
+def require_verified_identity(
+    authorization: Optional[str] = Header(None),
+    x_employee_id: Optional[str] = Header(None),
+    x_session_id: Optional[str] = Header(None),
+) -> VerifiedIdentity:
+    """The single place identity is resolved for every route in this file
+    and in recommendation_router. Never trusts a role/employee_id from the
+    request body or query string -- only from a header, and only ever used
+    to look an identity up via SSOPort/IAMPort (it is never itself treated
+    as authorization)."""
+    correlation_id = f"TRACE-{uuid.uuid4().hex.upper()}"
+    session_id = x_session_id or "SESS-DEFAULT"
+
+    raw_credential: Optional[str] = None
+    auth_source: str = "demo"
+
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+        if token == "EXPIRED_TOKEN":
+            _event_logger.emit("authentication_failed", reason="token_expired", correlation_id=correlation_id)
+            raise _error(status.HTTP_401_UNAUTHORIZED, "TOKEN_EXPIRED", "Token phien dang nhap da het han.")
+        if token.lower().startswith(_DEMO_TOKEN_PREFIX):
+            if not settings.DEMO_AUTH_ENABLED:
+                _event_logger.emit("authentication_failed", reason="demo_auth_disabled", correlation_id=correlation_id)
+                raise _error(status.HTTP_401_UNAUTHORIZED, "UNAUTHENTICATED", "Demo auth dang bi tat.")
+            raw_credential = _resolve_demo_employee_id(token)
+            auth_source = "demo"
+        else:
+            # No real external SSO exists in this synthetic MVP; a
+            # non-demo bearer token is treated as an already-verified
+            # session's employee_id and is STILL required to resolve
+            # through SSOPort/IAMPort below -- an unrecognized value is
+            # rejected there (403), not trusted blindly.
+            raw_credential = token
+            auth_source = "sso"
+    elif x_employee_id:
+        if not settings.DEMO_AUTH_ENABLED:
+            _event_logger.emit("authentication_failed", reason="header_auth_disabled", correlation_id=correlation_id)
+            raise _error(status.HTTP_401_UNAUTHORIZED, "UNAUTHENTICATED", "X-Employee-ID khong duoc chap nhan ngoai demo mode.")
+        if x_employee_id == "EXPIRED_TOKEN":
+            _event_logger.emit("authentication_failed", reason="token_expired", correlation_id=correlation_id)
+            raise _error(status.HTTP_401_UNAUTHORIZED, "TOKEN_EXPIRED", "Token phien dang nhap da het han.")
+        raw_credential = x_employee_id
+        auth_source = "demo"
+
+    if not raw_credential:
+        _event_logger.emit("authentication_failed", reason="no_credential", correlation_id=correlation_id)
+        raise _error(status.HTTP_401_UNAUTHORIZED, "UNAUTHENTICATED", "Khong co hoac token khong hop le.")
+
+    fail_for = {"IAM_ERROR"}
+    try:
+        employee = EmployeeContextService(
+            SQLiteSSOAdapter(fail_for=fail_for),
+            SQLiteIAMAdapter(fail_for=fail_for),
+        ).get(raw_credential, correlation_id=correlation_id)
+    except UpstreamUnavailableError:
+        metrics.increment("security.authorization_denied")
+        _event_logger.emit("authorization_denied", reason="unknown_identity", correlation_id=correlation_id)
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Nhan vien khong ton tai hoac khong duoc cap quyen truy cap.")
+    except (UpstreamTimeoutError, ContextError):
+        metrics.increment("security.iam_unavailable")
+        _event_logger.emit("iam_unavailable", correlation_id=correlation_id)
+        raise _error(status.HTTP_503_SERVICE_UNAVAILABLE, "IAM_SERVICE_UNAVAILABLE",
+                     "Khong the ket noi den he thong xac thuc IAM tai thoi diem nay.", retryable=True)
+
+    role_value = map_enterprise_role_to_role_type(employee.role, employee.organization_unit)
+    identity = VerifiedIdentity(
+        employee_id=employee.employee_id,
+        session_id=session_id,
+        roles=[RoleType(role_value)],
+        permissions=employee.permissions,
+        customer_scope=list(employee.access_scope.get("managed_customer_ids", [])),
+        organization_unit=employee.organization_unit,
+        auth_source=auth_source,
+        identity_verified=True,
+    )
+    _event_logger.emit(
+        "identity_verified", employee_id=identity.employee_id, role=role_value,
+        auth_source=auth_source, correlation_id=correlation_id,
+    )
+    return identity
+
+
+def require_capability(identity: VerifiedIdentity, capability: str) -> None:
+    """Revalidate a capability at the point of use: IAM-granted permission
+    AND role policy must both allow it. Never a cached snapshot -- backed
+    by the identity resolved fresh on this request."""
+    role = identity.roles[0]
+    if capability not in identity.permissions or not has_capability(role, capability):
+        metrics.increment("security.authorization_denied")
+        _event_logger.emit(
+            "authorization_denied", employee_id=identity.employee_id,
+            capability=capability, reason="capability_not_granted",
+        )
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", f"Ban khong co quyen '{capability}'.")
+
+
+@router.get("", response_model=Dict[str, Any])
+def get_my_profile(identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, Any]:
+    return identity.model_dump(mode="json")
+
+
+@router.get("/context", response_model=EmployeeContextSnapshot)
+def get_my_context(identity: VerifiedIdentity = Depends(require_verified_identity)) -> EmployeeContextSnapshot:
+    """Assembles the complete Employee Context Snapshot with Provenance mapping."""
+    emp_id = identity.employee_id
+    now = datetime.now(timezone.utc)
+
+    # 1. Authorization Context -- entirely from the verified identity, never
+    # re-derived from the personalization store.
+    auth_ctx = AuthorizationContext(
+        identity_verified=True,
+        roles=identity.roles,
+        permissions=identity.permissions,
+        customer_scope=identity.customer_scope,
+        verified_at=now,
+        expires_at=now + timedelta(hours=1),
+    )
+
+    # 2. Personalization & Fallback Logic (fail-soft: a personalization
+    # store failure must never touch identity/customer_scope above).
+    personalization_enabled = True
+    preferences: Dict[str, Any] = {}
+    confirmed_habits: List[HabitModel] = []
+    personalization_degraded = False
+
+    try:
+        consent = get_consent(emp_id)
+        if consent:
+            personalization_enabled = consent["personalization_enabled"]
+        if personalization_enabled:
+            preferences = get_preferences(emp_id)
+            confirmed_habits = [h for h in get_habits(emp_id) if h.status == HabitStatus.CONFIRMED]
+    except Exception as exc:
+        logger.error(f"Personalization database failed, falling back to default UI: {exc}")
+        metrics.increment("reliability.personalization_degraded")
+        _event_logger.emit("personalization_degraded", employee_id=emp_id, reason=str(exc)[:200])
+        personalization_enabled = False
+        personalization_degraded = True
+        preferences = {
+            "default_case_view": "dashboard",
+            "preferred_email_template": "default",
+            "show_evidence_expanded": False,
+        }
+
+    p_ctx = PersonalizationContext(
+        enabled=personalization_enabled,
+        preferences=preferences,
+        confirmed_habits=confirmed_habits,
+        context_version=1,
+        personalization_degraded=personalization_degraded,
+    )
+
+    # 3. Work Context (derived from active DB state).
+    work_ctx = WorkContext(
+        active_case_id=None,
+        assigned_customer_ids=identity.customer_scope,
+        pending_task_ids=[],
+        blocked_case_ids=[],
+        waiting_for_roles=[],
+    )
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT case_id FROM cases WHERE employee_id = ? ORDER BY updated_at DESC LIMIT 1", (emp_id,))
+        case_row = cursor.fetchone()
+        if case_row:
+            work_ctx.active_case_id = case_row[0]
+        cursor.execute("SELECT item_id FROM employee_work_items WHERE employee_id = ? AND status != 'completed'", (emp_id,))
+        work_ctx.pending_task_ids = [r[0] for r in cursor.fetchall()]
+        cursor.execute("SELECT case_id FROM cases WHERE json_extract(state_json, '$.status') = 'blocked'")
+        work_ctx.blocked_case_ids = [r[0] for r in cursor.fetchall()]
+        # Which specialist subtype(s) this employee's own pending_review
+        # cases are actually waiting on -- derived from the SAME
+        # risk_gate_result.required_reviewer_roles the specialist-reviews
+        # endpoint (case_action_router) uses to decide who may clear them,
+        # not a hardcoded "always legal_specialist" guess (see
+        # docs/EMPLOYEE_ROLE_DESIGN_EVALUATION_REPORT.md §9).
+        cursor.execute(
+            "SELECT state_json FROM cases WHERE employee_id = ? AND json_extract(state_json, '$.status') = 'pending_review'",
+            (emp_id,),
+        )
+        waiting_roles: set[str] = set()
+        for r in cursor.fetchall():
+            try:
+                risk_result = json.loads(r[0]).get("risk_gate_result") or {}
+            except (TypeError, ValueError):
+                risk_result = {}
+            waiting_roles.update(risk_result.get("required_reviewer_roles") or ["legal_specialist"])
+        work_ctx.waiting_for_roles = sorted(waiting_roles)
+        conn.close()
+    except Exception as exc:
+        logger.warning(f"Failed to query active work context: {exc}")
+
+    # 4. Provenance Mapping
+    provenance_map = {
+        "authorization_context.roles": ProvenanceMetadata(
+            source="iam_sso_portal", source_version="v1.2", refreshed_at=now,
+            expires_at=now + timedelta(hours=1), confidence=1.0, type=ProvenanceType.VERIFIED,
+        ),
+        "authorization_context.permissions": ProvenanceMetadata(
+            source="iam_sso_portal", source_version="v1.2", refreshed_at=now,
+            confidence=1.0, type=ProvenanceType.VERIFIED,
+        ),
+        "work_context.active_case_id": ProvenanceMetadata(
+            source="case_repository", source_version="v2.1", refreshed_at=now,
+            confidence=1.0, type=ProvenanceType.VERIFIED,
+        ),
+        "personalization_context.preferences": ProvenanceMetadata(
+            source="personalization_store", source_version="1", refreshed_at=now,
+            confidence=0.9 if not personalization_degraded else 0.0,
+            type=ProvenanceType.PREFERENCE,
+        ),
+    }
+
+    return EmployeeContextSnapshot(
+        employee_id=emp_id,
+        authorization_context=auth_ctx,
+        work_context=work_ctx,
+        personalization_context=p_ctx,
+        provenance_map=provenance_map,
+        generated_at=now,
+    )
+
+
+@router.get("/work-queue", response_model=List[Any])
+def get_my_work_queue(identity: VerifiedIdentity = Depends(require_verified_identity)) -> List[Any]:
+    """Calculates Next Best Work queue for the employee."""
+    conn = get_db_connection()
+    try:
+        nbw_list = get_next_best_work(
+            employee_id=identity.employee_id,
+            role=identity.roles[0],
+            permissions=identity.permissions,
+            customer_scope=identity.customer_scope,
+            conn=conn,
+        )
+    finally:
+        conn.close()
+    _event_logger.emit("next_best_work_ranked", employee_id=identity.employee_id, count=len(nbw_list))
+    return nbw_list
+
+
+@router.get("/preferences", response_model=Dict[str, Any])
+def get_my_preferences(identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, Any]:
+    return get_preferences(identity.employee_id)
+
+
+@router.patch("/preferences", response_model=Dict[str, Any])
+def patch_my_preferences(prefs: Dict[str, Any], identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, Any]:
+    save_preferences(identity.employee_id, prefs)
+    _event_logger.emit("preference_updated", employee_id=identity.employee_id, keys=list(prefs.keys()))
+    return get_preferences(identity.employee_id)
+
+
+@router.get("/habits", response_model=List[HabitModel])
+def get_my_habits(identity: VerifiedIdentity = Depends(require_verified_identity)) -> List[HabitModel]:
+    return get_habits(identity.employee_id)
+
+
+@router.post("/habits/{habit_id}/confirm")
+def post_confirm_habit(habit_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    success = confirm_habit(identity.employee_id, habit_id)
+    if success:
+        _event_logger.emit("habit_confirmed", employee_id=identity.employee_id, habit_id=habit_id)
+    return {"success": success}
+
+
+@router.post("/habits/{habit_id}/reject")
+def post_reject_habit(habit_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    success = reject_habit(identity.employee_id, habit_id)
+    return {"success": success}
+
+
+@router.delete("/habits/{habit_id}")
+def delete_my_habit(habit_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    success = delete_habit(identity.employee_id, habit_id)
+    if success:
+        _event_logger.emit("habit_deleted", employee_id=identity.employee_id, habit_id=habit_id)
+    return {"success": success}
+
+
+@router.get("/personalization", response_model=Dict[str, Any])
+def get_my_personalization(identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, Any]:
+    consent = get_consent(identity.employee_id)
+    if not consent:
+        return {
+            "enabled": True, "activity_learning_enabled": False,
+            "allowed_event_categories": [], "consent_version": "v1",
+            "personalization_degraded": False,
+        }
+    return {
+        "enabled": consent["personalization_enabled"],
+        "activity_learning_enabled": consent["activity_learning_enabled"],
+        "allowed_event_categories": consent["allowed_event_categories"],
+        "consent_version": consent["consent_version"],
+        "personalization_degraded": False,
+    }
+
+
+@router.post("/personalization/enable")
+def post_enable_personalization(identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    return _set_personalization(identity.employee_id, True)
+
+
+@router.post("/personalization/disable")
+def post_disable_personalization(identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    return _set_personalization(identity.employee_id, False)
+
+
+def _set_personalization(employee_id: str, enabled: bool) -> Dict[str, bool]:
+    consent = get_consent(employee_id)
+    model = ConsentModel(
+        employee_id=employee_id,
+        personalization_enabled=enabled,
+        activity_learning_enabled=consent["activity_learning_enabled"] if consent else enabled,
+        allowed_event_categories=consent["allowed_event_categories"] if consent else [],
+        consent_version=consent["consent_version"] if consent else "v1",
+        confirmed_at=datetime.now(timezone.utc),
+    )
+    save_consent(model)
+    _event_logger.emit(
+        "personalization_enabled" if enabled else "personalization_disabled",
+        employee_id=employee_id,
+    )
+    return {"success": True}
+
+
+# --- Recommendation feedback -----------------------------------------------
+# Registered on a dedicated, correctly-mounted router (see app/main.py:
+# app.include_router(recommendation_router, prefix="/api/v2")) so the final
+# path is exactly /api/v2/recommendations/{id}/... . The previous version
+# of this file registered these on a throwaway `APIRouter()` instance that
+# was never included anywhere, so all three 404'd unconditionally -- see
+# docs/ROLE_AWARE_REPO_VERIFICATION_REPORT.md §14.
+
+_VALID_FEEDBACK = {"accepted", "edited", "rejected", "not_applicable"}
+
+
+class RecommendationFeedbackBody(BaseModel):
+    feedback: str
+    original: Optional[Dict[str, Any]] = None
+    edited: Optional[Dict[str, Any]] = None
+
+
+def _submit_feedback(rec_id: str, identity: VerifiedIdentity, feedback: str,
+                      orig_val: Optional[Dict[str, Any]] = None, edit_val: Optional[Dict[str, Any]] = None) -> Dict[str, bool]:
+    if feedback not in _VALID_FEEDBACK:
+        raise _error(status.HTTP_422_UNPROCESSABLE_ENTITY, "INVALID_FEEDBACK", f"feedback phai la mot trong {sorted(_VALID_FEEDBACK)}")
+    save_recommendation_feedback(
+        feedback_id=f"FEEDBACK-{rec_id}-{identity.employee_id}",
+        employee_id=identity.employee_id, rec_id=rec_id, feedback=feedback,
+        orig_val=orig_val, edit_val=edit_val,
+    )
+    _event_logger.emit(f"recommendation_{feedback}", employee_id=identity.employee_id, recommendation_id=rec_id)
+    return {"success": True}
+
+
+@recommendation_router.post("/{rec_id}/accept")
+def post_accept_recommendation(rec_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    return _submit_feedback(rec_id, identity, "accepted")
+
+
+@recommendation_router.post("/{rec_id}/edit")
+def post_edit_recommendation(rec_id: str, payload: Dict[str, Any], identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    return _submit_feedback(rec_id, identity, "edited", payload.get("original"), payload.get("edited"))
+
+
+@recommendation_router.post("/{rec_id}/reject")
+def post_reject_recommendation(rec_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    return _submit_feedback(rec_id, identity, "rejected")
+
+
+@recommendation_router.post("/{rec_id}/feedback")
+def post_recommendation_feedback(rec_id: str, body: RecommendationFeedbackBody, identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, bool]:
+    """Unified alternative to accept/edit/reject, per spec §8.3."""
+    return _submit_feedback(rec_id, identity, body.feedback, body.original, body.edited)
+
+
+# --- Manager Dashboard -------------------------------------------------------
+@router.get("/team/workload", tags=["Manager Console"])
+def get_team_workload(identity: VerifiedIdentity = Depends(require_verified_identity)) -> Dict[str, Any]:
+    """Manager console view: Aggregate dashboard only. Strictly isolation of individual RM preferences."""
+    if RoleType.MANAGER not in identity.roles:
+        metrics.increment("security.authorization_denied")
+        _event_logger.emit("authorization_denied", employee_id=identity.employee_id, reason="not_manager")
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Ban khong co quyen truy cap Manager Dashboard.")
+    require_capability(identity, "team:view_workload")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT COUNT(*) FROM cases WHERE json_extract(state_json, '$.status') = 'blocked'")
+        blocked_count = cursor.fetchone()[0]
+    except sqlite3.OperationalError:
+        # `cases` belongs to V2Repository's schema, not this module's --
+        # tolerate it not existing yet (e.g. a fresh DB the sales-case
+        # workflow hasn't touched) rather than 500ing the whole dashboard.
+        blocked_count = 0
+    cursor.execute("SELECT COUNT(*) FROM employee_work_items WHERE status != 'completed' AND urgency >= 0.8")
+    sla_breaches = cursor.fetchone()[0]
+    cursor.execute("SELECT feedback, COUNT(*) FROM employee_recommendation_feedback GROUP BY feedback")
+    utilization = {r[0]: r[1] for r in cursor.fetchall()}
+    cursor.execute("SELECT COUNT(DISTINCT employee_id) FROM employees")
+    cohort_size = cursor.fetchone()[0]
+    conn.close()
+
+    return {
+        "branch_id": "BRANCH-HN-01",
+        "cohort_size": cohort_size,
+        "aggregate_metrics": {
+            "blocked_cases": blocked_count,
+            "sla_risks": sla_breaches,
+            "ai_recommendation_utilization": {
+                "cohort_minimum_size_met": cohort_size >= 5,
+                "utilization_summary": utilization,
+            },
+        },
+    }
+
+
+# --- Specialist Review (Product/Legal/Operations act on a case) ------------
+# Closes docs/EMPLOYEE_ROLE_DESIGN_EVALUATION_REPORT.md gap #1/#2/#3:
+# previously every case-mutating endpoint in app/api/v2/router.py was
+# owned()-gated (RM-only); a specialist could see a work-queue item but had
+# no endpoint to act on it, and a PENDING_REVIEW case had no defined human
+# resolver at all.
+#
+# Scope of this round (see docs/... implementation report for full reasoning):
+#   - Legal Specialist and Product Specialist get REAL case-status-changing
+#     power, but ONLY over the exact reason RiskGuardrailGate blocked the
+#     case (RiskGateDecision.required_reviewer_roles, derived from
+#     Evidence.module + eligibility outcome) -- never a blanket "any
+#     specialist can clear anything" grant.
+#   - Operations Specialist review is recorded, audited and surfaced to the
+#     RM, but is advisory-only: the deterministic engine has no "operations
+#     block" gate to resolve (OperationsService's checklist is auto-computed
+#     from document status on every run, not a manual to-do list a human
+#     checks off), so letting an Operations decision flip case status would
+#     fabricate a control that does not exist in the engine. Left as P1.
+#   - A multi-domain block (e.g. both Product AND Legal evidence invalid)
+#     requires EVERY named role to clear before the case advances --
+#     cleared_roles_for_case_version() stops one specialist from unilaterally
+#     clearing a block that is only partly theirs to resolve.
+
+
+def _reviewer_capability(role: RoleType, decision: str) -> str:
+    if role == RoleType.LEGAL_SPECIALIST:
+        return "legal:block_non_eligible" if decision == "blocked" else "legal:check_issue"
+    if role == RoleType.PRODUCT_SPECIALIST:
+        return "product:verify_fit"
+    return "ops:update_implementation"
+
+
+def _notification_item_id(
+    *, case_id: str, case_version: int, event_type: str, target_employee_id: str, role_set: List[str],
+) -> str:
+    """Deterministic (not random-per-request) work-item id, so a genuine
+    retry -- client timeout-and-resend, two specialists finishing within
+    the same case_version -- REPLACES the same notification row instead of
+    creating a duplicate (create_work_item does INSERT OR REPLACE keyed on
+    item_id). Keyed on exactly the facts that make two notifications "the
+    same event": which case+version, what kind of outcome, who it is for,
+    and which role-set it was resolving (so a later, different block on the
+    same case_version -- rare, but possible if a second issue is found --
+    still gets its own row)."""
+    role_hash = hashlib.sha256(",".join(sorted(role_set)).encode("utf-8")).hexdigest()[:12]
+    return f"REVIEW-NOTIFY-{case_id}-{case_version}-{event_type}-{target_employee_id}-{role_hash}"
+
+
+def _notify_rm(
+    state_value: Any, *, item_id: str, title: str, urgency: float, risk_severity: float,
+) -> None:
+    """Surfaces a completed specialist review back into the owning RM's
+    existing Next Best Work queue -- the real "specialist -> RM return path"
+    the role design evaluation report found missing, built on the same
+    employee_work_items table/ranking engine the RM already watches rather
+    than inventing a second, parallel notification channel."""
+    create_work_item(
+        {
+            "item_id": item_id,
+            "employee_id": state_value.context.employee.employee_id,
+            "title": title,
+            "urgency": urgency,
+            "risk_severity": risk_severity,
+            "business_impact": 0.6,
+            "customer_commitment": 0.3,
+            "dependency_unblock": 0.5,
+            "ownership_match": 1.0,
+            "estimated_effort": 0.2,
+            "dependency_ids": [],
+            "role_required": RoleType.RM.value,
+            "customer_id": str(state_value.context.customer.customer_id),
+        }
+    )
+
+
+@case_action_router.get("/{case_id}/review-context")
+def get_case_review_context(
+    case_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)
+) -> Dict[str, Any]:
+    """The minimum a specialist needs to write an informed review: current
+    blocking reasons and the specific evidence claims involved -- not the
+    full case (customer PII / full audit trail stay out of scope, matching
+    the least-data-necessary finding in the role design evaluation report).
+    Without this, a specialist had no way to even discover the evidence_ids
+    a review is supposed to reference."""
+    stored = _repo().get_case(case_id)
+    if stored is None:
+        raise _error(status.HTTP_404_NOT_FOUND, "CASE_NOT_FOUND", "Case khong ton tai.")
+    state_value = stored.state
+    if state_value.context.customer.customer_id not in identity.customer_scope:
+        metrics.increment("security.case_scope_denied")
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Case ngoai pham vi khach hang duoc giao.")
+    risk_result = state_value.risk_gate_result or {}
+    return {
+        "case_id": case_id,
+        "case_version": stored.version,
+        "case_status": state_value.status.value,
+        "customer_id": state_value.context.customer.customer_id,
+        "required_reviewer_roles": risk_result.get("required_reviewer_roles", []),
+        "reasons": risk_result.get("reasons", []),
+        "triggered_rules": risk_result.get("triggered_rules", []),
+        "cleared_roles": cleared_roles_for_case_version(case_id, stored.version),
+        "evidences": [
+            {
+                "claim_id": item.claim_id,
+                "module": item.module,
+                "claim": item.claim,
+                "source_document_id": item.source_document_id,
+                "quote": item.quote,
+                "is_valid": item.is_valid,
+            }
+            for item in state_value.evidences
+        ],
+    }
+
+
+@case_action_router.get("/{case_id}/specialist-reviews", response_model=List[SpecialistReviewRecord])
+def get_case_specialist_reviews(
+    case_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)
+) -> List[SpecialistReviewRecord]:
+    stored = _repo().get_case(case_id)
+    if stored is None:
+        raise _error(status.HTTP_404_NOT_FOUND, "CASE_NOT_FOUND", "Case khong ton tai.")
+    state_value = stored.state
+    is_owner = state_value.context.employee.employee_id == identity.employee_id
+    in_scope = state_value.context.customer.customer_id in identity.customer_scope
+    if not (is_owner or in_scope):
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Khong co quyen xem case nay.")
+    return [SpecialistReviewRecord(**row) for row in list_specialist_reviews(case_id)]
+
+
+@case_action_router.post(
+    "/{case_id}/specialist-reviews",
+    response_model=SpecialistReviewResult,
+    status_code=status.HTTP_201_CREATED,
+)
+def submit_specialist_review(
+    case_id: str,
+    body: SpecialistReviewRequest,
+    identity: VerifiedIdentity = Depends(require_verified_identity),
+) -> SpecialistReviewResult:
+    role = identity.roles[0]
+    if role != body.review_type:
+        metrics.increment("security.authorization_denied")
+        _event_logger.emit(
+            "authorization_denied", employee_id=identity.employee_id, case_id=case_id,
+            reason="review_type_role_mismatch", claimed_review_type=body.review_type.value,
+        )
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Vai tro cua ban khong khop review_type.")
+    require_capability(identity, _reviewer_capability(role, body.decision))
+
+    if body.decision == "blocked" and not body.findings:
+        raise _error(status.HTTP_422_UNPROCESSABLE_ENTITY, "FINDINGS_REQUIRED",
+                     "Quyet dinh 'blocked' yeu cau it nhat mot finding.")
+    if body.decision == "needs_more_information" and not body.required_information:
+        raise _error(status.HTTP_422_UNPROCESSABLE_ENTITY, "REQUIRED_INFORMATION_REQUIRED",
+                     "Quyet dinh 'needs_more_information' yeu cau required_information.")
+
+    repo = _repo()
+    stored = repo.get_case(case_id)
+    if stored is None:
+        raise _error(status.HTTP_404_NOT_FOUND, "CASE_NOT_FOUND", "Case khong ton tai.")
+    state_value = stored.state
+
+    if state_value.context.customer.customer_id not in identity.customer_scope:
+        metrics.increment("security.case_scope_denied")
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Case ngoai pham vi khach hang duoc giao.")
+    if state_value.status != CaseStatus.PENDING_REVIEW:
+        raise _error(status.HTTP_409_CONFLICT, "CASE_NOT_PENDING_REVIEW",
+                     "Case hien khong o trang thai cho specialist review.")
+    if body.expected_case_version is not None and body.expected_case_version != stored.version:
+        raise _error(
+            status.HTTP_409_CONFLICT, "CASE_VERSION_CONFLICT",
+            f"Case da doi tu version {body.expected_case_version} sang {stored.version}; "
+            "hay tai lai /review-context truoc khi gui lai.",
+            retryable=True,
+        )
+
+    known_claim_ids = {item.claim_id for item in state_value.evidences}
+    unknown_evidence = [eid for eid in body.evidence_ids if eid not in known_claim_ids]
+    if unknown_evidence:
+        raise _error(status.HTTP_422_UNPROCESSABLE_ENTITY, "UNKNOWN_EVIDENCE_ID",
+                     f"evidence_ids khong ton tai tren case: {unknown_evidence}")
+
+    risk_result = state_value.risk_gate_result or {}
+    required_roles = set(risk_result.get("required_reviewer_roles") or ["legal_specialist"])
+
+    if role in {RoleType.LEGAL_SPECIALIST, RoleType.PRODUCT_SPECIALIST}:
+        if role.value not in required_roles:
+            raise _error(status.HTTP_409_CONFLICT, "SPECIALIST_REVIEW_NOT_APPLICABLE",
+                         "Case hien khong cho review tu vai tro nay.")
+        advisory_only = False
+        if body.decision == "cleared":
+            # The single most safety-critical check in this endpoint: a
+            # specialist may only clear a block the deterministic engine
+            # (or the eligibility rule registry, via
+            # EligibilityRule.human_review_allowed) has explicitly marked
+            # human-overridable. Missing mandatory documents, absolute
+            # numeric thresholds, bad-debt history, an unresolved evidence
+            # citation failure, or an unrecognized status all default to
+            # NOT overridable -- see app/workflow/risk_gate.py.
+            if not risk_result.get("human_review_allowed"):
+                metrics.increment("security.override_denied")
+                _event_logger.emit(
+                    "specialist_override_denied", employee_id=identity.employee_id, case_id=case_id,
+                    review_type=role.value, reasons=risk_result.get("reasons", []),
+                    triggered_rules=risk_result.get("triggered_rules", []),
+                )
+                raise _error(
+                    status.HTTP_409_CONFLICT, "BLOCK_NOT_OVERRIDABLE",
+                    "Ly do chan case nay khong duoc phep gia han boi specialist "
+                    "(rule/evidence bat buoc, khong phai judgment call).",
+                )
+            if not body.findings:
+                raise _error(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY, "FINDINGS_REQUIRED",
+                    "Gia han (cleared) mot block phai co it nhat mot finding lam can cu.",
+                )
+    else:
+        advisory_only = True  # Operations: recorded + audited, never flips case status this round.
+
+    review_id = f"REVIEW-{uuid.uuid4().hex[:12].upper()}"
+    now = datetime.now(timezone.utc)
+    case_status_changed = False
+    still_waiting_for: List[str] = []
+    notify_title: Optional[str] = None
+    notify_urgency = 0.5
+    notify_risk = 0.4
+    notify_event_type: Optional[str] = None
+
+    if advisory_only:
+        if body.decision != "cleared":
+            notify_title = f"Operations ghi nhan '{body.decision}' tren case {case_id}: {body.summary}"
+            notify_event_type = f"advisory_{body.decision}"
+    elif body.decision == "blocked":
+        state_value.status = transition(state_value.status, CaseStatus.REJECTED)
+        state_value.approval.status = ApprovalStatus.REJECTED
+        state_value.audit_events.append(
+            {
+                "actor": identity.employee_id, "action": "case_rejected_by_specialist_review",
+                "at": now.isoformat(),
+                "payload": {"review_id": review_id, "review_type": role.value, "summary": body.summary},
+            }
+        )
+        case_status_changed = True
+        notify_title = f"Case {case_id} bi {role.value} tu choi: {body.summary}"
+        notify_urgency, notify_risk = 0.9, 0.8
+        notify_event_type = "blocked"
+    elif body.decision == "needs_more_information":
+        state_value.status = transition(state_value.status, CaseStatus.IN_ANALYSIS)
+        state_value.status = transition(state_value.status, CaseStatus.PENDING_INFORMATION)
+        for info in body.required_information:
+            state_value.next_best_questions.append(
+                NextBestQuestion(
+                    question_id=f"NBQ-{uuid.uuid4().hex[:10].upper()}",
+                    question=f"{role.value} yeu cau bo sung: {info}",
+                    reason=body.summary,
+                    target_field=f"specialist_review.{info}",
+                    source_gap=info,
+                    decision_impact="high",
+                    priority=1,
+                    answer_type="value",
+                    blocking_steps=["specialist_review"],
+                ).model_dump(mode="json")
+            )
+        state_value.audit_events.append(
+            {
+                "actor": identity.employee_id, "action": "specialist_requested_more_information",
+                "at": now.isoformat(),
+                "payload": {
+                    "review_id": review_id, "review_type": role.value,
+                    "required_information": body.required_information,
+                },
+            }
+        )
+        case_status_changed = True
+        notify_title = f"Case {case_id} can bo sung thong tin theo yeu cau cua {role.value}"
+        notify_urgency, notify_risk = 0.8, 0.5
+        notify_event_type = "needs_more_information"
+    else:  # cleared, and role is a named required reviewer for this case
+        previously_cleared = set(cleared_roles_for_case_version(case_id, stored.version))
+        still_waiting_for = sorted(required_roles - previously_cleared - {role.value})
+        if not still_waiting_for:
+            engine = V2WorkflowEngine()
+            state_value = engine.clear_specialist_block(state_value)
+            case_status_changed = True
+            notify_title = f"Case {case_id} da duoc {role.value} thong qua -- san sang phe duyet"
+            notify_urgency, notify_risk = 0.7, 0.3
+            notify_event_type = "cleared"
+
+    save_specialist_review(
+        review_id=review_id, case_id=case_id, case_version=stored.version,
+        reviewer_employee_id=identity.employee_id, review_type=role.value,
+        decision=body.decision, summary=body.summary,
+        findings=[f.model_dump(mode="json") for f in body.findings],
+        required_information=body.required_information, evidence_ids=body.evidence_ids,
+        case_status_changed=case_status_changed, advisory_only=advisory_only,
+    )
+
+    final_version = stored.version
+    if case_status_changed:
+        repo.append_audit(
+            event_id=f"EVT-{uuid.uuid4().hex}", case_id=case_id, trace_id=state_value.trace_id,
+            actor=identity.employee_id, action=f"specialist_review_{body.decision}",
+            payload={
+                "review_id": review_id, "review_type": role.value, "summary": body.summary,
+                "overridden_reasons": risk_result.get("reasons", []),
+                "overridden_rules": risk_result.get("triggered_rules", []),
+                "findings": [f.model_dump(mode="json") for f in body.findings],
+            },
+        )
+        try:
+            updated = repo.save_case(state_value, expected_version=stored.version)
+        except StateConflictError as exc:
+            raise _error(status.HTTP_409_CONFLICT, "STATE_VERSION_CONFLICT", str(exc), retryable=True) from exc
+        final_version = updated.version
+
+    _event_logger.emit(
+        "specialist_review_submitted", employee_id=identity.employee_id, case_id=case_id,
+        review_type=role.value, decision=body.decision, case_status_changed=case_status_changed,
+        advisory_only=advisory_only, still_waiting_for=still_waiting_for,
+    )
+    if notify_title and notify_event_type:
+        item_id = _notification_item_id(
+            case_id=case_id, case_version=stored.version, event_type=notify_event_type,
+            target_employee_id=state_value.context.employee.employee_id, role_set=sorted(required_roles),
+        )
+        _notify_rm(state_value, item_id=item_id, title=notify_title, urgency=notify_urgency, risk_severity=notify_risk)
+
+    return SpecialistReviewResult(
+        review_id=review_id, case_id=case_id, case_version=final_version,
+        reviewer_employee_id=identity.employee_id, review_type=role, decision=body.decision,
+        summary=body.summary, case_status=state_value.status.value, case_status_changed=case_status_changed,
+        advisory_only=advisory_only, still_waiting_for=still_waiting_for, created_at=now,
+    )
+
+
+# --- Operational Readiness (Operations Specialist's real action surface) ---
+# A separate, manual domain object -- NOT the same thing as
+# app/operations/service.py's OperationsService checklist, which recomputes
+# itself from document status on every analysis run and therefore cannot be
+# durably "checked off" by a person. This is the real, human-maintained
+# readiness tracker the role design evaluation report's Operations gap
+# actually called for -- it never touches CaseStatus or legal/product
+# eligibility, matching the separation of duties already enforced for
+# specialist-reviews above.
+
+@case_action_router.get("/{case_id}/operational-readiness", response_model=Optional[OperationalReadinessSnapshot])
+def get_operational_readiness_endpoint(
+    case_id: str, identity: VerifiedIdentity = Depends(require_verified_identity)
+) -> Optional[OperationalReadinessSnapshot]:
+    stored = _repo().get_case(case_id)
+    if stored is None:
+        raise _error(status.HTTP_404_NOT_FOUND, "CASE_NOT_FOUND", "Case khong ton tai.")
+    state_value = stored.state
+    is_owner = state_value.context.employee.employee_id == identity.employee_id
+    in_scope = state_value.context.customer.customer_id in identity.customer_scope
+    if not (is_owner or in_scope):
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Khong co quyen xem case nay.")
+    row = get_operational_readiness(case_id)
+    return OperationalReadinessSnapshot(**row) if row else None
+
+
+@case_action_router.put("/{case_id}/operational-readiness", response_model=OperationalReadinessSnapshot)
+def put_operational_readiness(
+    case_id: str,
+    body: OperationalReadinessRequest,
+    identity: VerifiedIdentity = Depends(require_verified_identity),
+) -> OperationalReadinessSnapshot:
+    if RoleType.OPERATIONS_SPECIALIST not in identity.roles:
+        metrics.increment("security.authorization_denied")
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Chi Operations Specialist duoc cap nhat readiness.")
+    require_capability(identity, "ops:update_implementation")
+
+    stored = _repo().get_case(case_id)
+    if stored is None:
+        raise _error(status.HTTP_404_NOT_FOUND, "CASE_NOT_FOUND", "Case khong ton tai.")
+    state_value = stored.state
+    if state_value.context.customer.customer_id not in identity.customer_scope:
+        metrics.increment("security.case_scope_denied")
+        raise _error(status.HTTP_403_FORBIDDEN, "FORBIDDEN", "Case ngoai pham vi khach hang duoc giao.")
+
+    overall_status = "ready" if all(item.status == "completed" for item in body.items) else "not_ready"
+    save_operational_readiness(
+        case_id=case_id, status=overall_status,
+        items=[item.model_dump(mode="json") for item in body.items],
+        summary=body.summary, updated_by=identity.employee_id,
+    )
+    _event_logger.emit(
+        "operational_readiness_updated", employee_id=identity.employee_id, case_id=case_id,
+        status=overall_status, item_count=len(body.items),
+    )
+    if overall_status == "not_ready":
+        blocked_codes = [item.code for item in body.items if item.status != "completed"]
+        item_id = _notification_item_id(
+            case_id=case_id, case_version=stored.version, event_type="operational_readiness_not_ready",
+            target_employee_id=state_value.context.employee.employee_id, role_set=["operations_specialist"],
+        )
+        _notify_rm(
+            state_value, item_id=item_id,
+            title=f"Operations: case {case_id} chua san sang thuc thi -- con thieu {', '.join(blocked_codes)}",
+            urgency=0.6, risk_severity=0.4,
+        )
+    row = get_operational_readiness(case_id)
+    return OperationalReadinessSnapshot(**row)
