@@ -10,57 +10,47 @@ _$ApprovalTokenResponseImpl _$$ApprovalTokenResponseImplFromJson(
         Map<String, dynamic> json) =>
     _$ApprovalTokenResponseImpl(
       caseId: json['caseId'] as String,
-      stateVersion: (json['stateVersion'] as num).toInt(),
       approvalToken: json['approvalToken'] as String,
-      expiresAt: (json['expiresAt'] as num).toInt(),
+      expiresIn: (json['expiresIn'] as num).toInt(),
     );
 
 Map<String, dynamic> _$$ApprovalTokenResponseImplToJson(
         _$ApprovalTokenResponseImpl instance) =>
     <String, dynamic>{
       'caseId': instance.caseId,
-      'stateVersion': instance.stateVersion,
       'approvalToken': instance.approvalToken,
-      'expiresAt': instance.expiresAt,
+      'expiresIn': instance.expiresIn,
     };
 
 _$ApprovalResultImpl _$$ApprovalResultImplFromJson(Map<String, dynamic> json) =>
     _$ApprovalResultImpl(
       caseId: json['caseId'] as String,
-      stateVersion: (json['stateVersion'] as num).toInt(),
-      status: json['status'] as String,
-      result: json['result'] as String,
+      approvalStatus: json['approvalStatus'] as String,
+      finalStatus: json['finalStatus'] as String,
+      actionsExecuted: json['actionsExecuted'] as List<dynamic>,
     );
 
 Map<String, dynamic> _$$ApprovalResultImplToJson(
         _$ApprovalResultImpl instance) =>
     <String, dynamic>{
       'caseId': instance.caseId,
-      'stateVersion': instance.stateVersion,
-      'status': instance.status,
-      'result': instance.result,
+      'approvalStatus': instance.approvalStatus,
+      'finalStatus': instance.finalStatus,
+      'actionsExecuted': instance.actionsExecuted,
     };
 
-_$ApprovalPreviewImpl _$$ApprovalPreviewImplFromJson(
+_$ProductSearchResultImpl _$$ProductSearchResultImplFromJson(
         Map<String, dynamic> json) =>
-    _$ApprovalPreviewImpl(
-      caseId: json['caseId'] as String,
-      stateVersion: (json['stateVersion'] as num).toInt(),
-      action: json['action'] as String,
-      target: json['target'] as String,
-      payloadHash: json['payloadHash'] as String,
-      reversible: json['reversible'] as bool,
+    _$ProductSearchResultImpl(
+      results: (json['results'] as List<dynamic>)
+          .map((e) => ProductMatch.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
-Map<String, dynamic> _$$ApprovalPreviewImplToJson(
-        _$ApprovalPreviewImpl instance) =>
+Map<String, dynamic> _$$ProductSearchResultImplToJson(
+        _$ProductSearchResultImpl instance) =>
     <String, dynamic>{
-      'caseId': instance.caseId,
-      'stateVersion': instance.stateVersion,
-      'action': instance.action,
-      'target': instance.target,
-      'payloadHash': instance.payloadHash,
-      'reversible': instance.reversible,
+      'results': instance.results,
     };
 
 _$ProductMatchImpl _$$ProductMatchImplFromJson(Map<String, dynamic> json) =>

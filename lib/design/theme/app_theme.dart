@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 
 /// App color scheme matching SHB Opportunity OS reference (mobile/index.html)
 class AppColors {
-  // Brand (navy + premium gold accent)
+  // Brand
   static const Color navy950 = Color(0xFF06172D);
   static const Color navy900 = Color(0xFF071A33);
   static const Color navy800 = Color(0xFF0E2F57);
   static const Color navy700 = Color(0xFF164778);
   static const Color blue = Color(0xFF2D7Bdd);
   static const Color blue100 = Color(0xFFE9F2FF);
-  static const Color gold = Color(0xFFB8893A);        // premium gold accent
-  static const Color gold100 = Color(0xFFF6EEDD);
   static const Color orange = Color(0xFFED6B1A);
   static const Color orange700 = Color(0xFFC94F0D);
   static const Color orange100 = Color(0xFFFFF0E6);
@@ -59,7 +57,7 @@ ThemeData lightTheme() => ThemeData(
     outline: AppColors.line,
   ),
   scaffoldBackgroundColor: AppColors.background,
-  fontFamily: 'Sora',
+  fontFamily: 'Inter',
   textTheme: _textTheme,
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
@@ -128,7 +126,7 @@ ThemeData darkTheme() => ThemeData(
     outline: const Color(0xFF333A47),
   ),
   scaffoldBackgroundColor: const Color(0xFF0C141F),
-  fontFamily: 'Sora',
+  fontFamily: 'Inter',
   textTheme: _textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
@@ -180,8 +178,7 @@ ThemeData darkTheme() => ThemeData(
   ),
 );
 
-/// Shared text theme. Headings use Sora (set via Theme.fontFamily);
-/// body/label/data use IBM Plex Sans for readability at small sizes.
+/// Shared text theme (Inter-like system font fallback)
 const TextTheme _textTheme = TextTheme(
   displayLarge: TextStyle(fontSize: 57, fontWeight: FontWeight.w400, letterSpacing: -0.25),
   displayMedium: TextStyle(fontSize: 45, fontWeight: FontWeight.w400),
@@ -192,10 +189,10 @@ const TextTheme _textTheme = TextTheme(
   titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, letterSpacing: 0.0),
   titleMedium: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: 0.15),
   titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
-  bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.2, fontFamily: 'IBM Plex Sans'),
-  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.1, fontFamily: 'IBM Plex Sans'),
-  bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.2, fontFamily: 'IBM Plex Sans'),
-  labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1, fontFamily: 'IBM Plex Sans'),
-  labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.3, fontFamily: 'IBM Plex Sans'),
-  labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.3, fontFamily: 'IBM Plex Sans'),
+  bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.5),
+  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.25),
+  bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.4),
+  labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.1),
+  labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.5),
+  labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, letterSpacing: 0.5),
 );

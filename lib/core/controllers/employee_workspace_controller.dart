@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../api_client.dart';
-import '../api_config.dart';
 import '../models/employee_models.dart';
 
 /// Demo personas mapped to backend Bearer tokens -- see
@@ -20,8 +19,7 @@ const Map<String, String> kDemoPersonas = {
 /// personalization, and (for managers) the team aggregate dashboard.
 class EmployeeWorkspaceController extends ChangeNotifier {
   final ApiClient api;
-  String currentEmployeeId = '';
-  bool isAuthenticated = false;
+  String currentPersona = 'demo-rm-999';
 
   EmployeeContext? context;
   List<WorkQueueItem> workQueue = [];
@@ -29,47 +27,13 @@ class EmployeeWorkspaceController extends ChangeNotifier {
   bool isLoading = false;
   String? error;
 
-  EmployeeWorkspaceController({ApiClient? apiClient}) : api = apiClient ?? buildApiClient();
+  EmployeeWorkspaceController({ApiClient? apiClient}) : api = apiClient ?? ApiClient();
 
   bool get isManager => context?.authorizationContext.primaryRole == 'manager';
 
-  Future<void> login(String employeeId, String password) async {
-    isLoading = true;
-    error = null;
-    notifyListeners();
-    try {
-      await api.login(employeeId.trim().toUpperCase(), password);
-      currentEmployeeId = employeeId.trim().toUpperCase();
-      isAuthenticated = true;
-      await _refreshAuthenticated();
-    } catch (e) {
-      isAuthenticated = false;
-      error = e.toString();
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  void logout() {
-    api.clearAuthToken();
-    currentEmployeeId = '';
-    isAuthenticated = false;
-    context = null;
-    workQueue = [];
-    teamWorkload = null;
-    error = null;
-    notifyListeners();
-  }
-
   Future<void> switchPersona(String demoToken) async {
-    // Kept for backwards compatibility with older internal navigation.
-    final employeeId = demoToken.replaceFirst('demo-', '').toUpperCase();
-    final password = 'demo1234';
-    await login(employeeId, password);
-  }
-
-  Future<void> _refreshAuthenticated() async {
+    currentPersona = demoToken;
+    api.setAuthToken(demoToken);
     await refresh();
   }
 
@@ -78,6 +42,7 @@ class EmployeeWorkspaceController extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
+      api.setAuthToken(currentPersona);
       context = await api.getMyContext();
       if (isManager) {
         teamWorkload = await api.getTeamWorkload();
