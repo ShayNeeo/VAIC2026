@@ -79,6 +79,14 @@ class EnterprisePostgresBase:
         return psycopg2.connect(self.database_url, connect_timeout=5)
 
 
+def _json_loads(value: Any) -> Any:
+    """psycopg2 decodes JSONB columns to Python objects already; SQLite
+    stored them as JSON text. Accept both so the adapter is backend-agnostic."""
+    if isinstance(value, (str, bytes, bytearray)):
+        return json.loads(value)
+    return value
+
+
 class PostgresCRMAdapter(EnterprisePostgresBase):
     def get_customer_profile(self, customer_id: str, *, correlation_id: str) -> CustomerProfile:
         if customer_id in self._fail_for:
@@ -100,7 +108,7 @@ class PostgresCRMAdapter(EnterprisePostgresBase):
         return {
             "customer_id": customer_id,
             "profile_version": row[0],
-            "attributes": json.loads(row[1]),
+            "attributes": _json_loads(row[1]),
             "observed_at": datetime.now(timezone.utc).isoformat(),
         }
 
@@ -122,8 +130,8 @@ class PostgresIAMAdapter(EnterprisePostgresBase):
             return {"permissions": [], "access_scope": {"managed_customer_ids": [], "branch": None}}
 
         return {
-            "permissions": json.loads(row[0]),
-            "access_scope": json.loads(row[1]),
+            "permissions": _json_loads(row[0]),
+            "access_scope": _json_loads(row[1]),
         }
 
 
