@@ -14,10 +14,10 @@ from app.reliability.capability_registry import has_capability
 from app.schemas.v2.employee import NextBestWorkItem, RoleType
 
 
-def get_task_status_in_db(cursor: sqlite3.Cursor, item_id: str) -> str:
+def get_task_status_in_db(cursor: Any, item_id: str) -> str:
     cursor.execute("SELECT status FROM employee_work_items WHERE item_id = ?", (item_id,))
     row = cursor.fetchone()
-    return row[0] if row else "unknown"
+    return row["status"] if row else "unknown"
 
 
 def get_next_best_work(

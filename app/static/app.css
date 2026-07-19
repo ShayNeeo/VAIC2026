@@ -494,6 +494,16 @@ p {
   background: var(--navy-light);
 }
 
+.button.danger {
+  background: #fff;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.button.danger:hover {
+  background: var(--danger-bg);
+}
+
 .button.ghost {
   background: #fff;
   border-color: #cbd6dc;

@@ -24,8 +24,27 @@ from app.integrations.enterprise import (
     SQLiteSSOAdapter,
     map_enterprise_role_to_role_type,
 )
+from app.integrations.pg import (
+    PostgresCRMAdapter,
+    PostgresIAMAdapter,
+    PostgresSSOAdapter,
+)
 from app.integrations.errors import ContextAccessDeniedError, ContextError, UpstreamTimeoutError, UpstreamUnavailableError
 from app.integrations.resilient import ResilientCRMAdapter
+
+
+def _sso_adapter():
+    """CRM/IAM/SSO come from PostgreSQL when DATABASE_URL is set (pilot/prod),
+    else the local SQLite mirror (dev). Same ports, so callers are unchanged."""
+    return PostgresSSOAdapter() if settings.DATABASE_URL else SQLiteSSOAdapter()
+
+
+def _iam_adapter():
+    return PostgresIAMAdapter() if settings.DATABASE_URL else SQLiteIAMAdapter()
+
+
+def _crm_adapter():
+    return PostgresCRMAdapter() if settings.DATABASE_URL else SQLiteCRMAdapter()
 from app.intake import IntakeService, IntakeValidationError
 from app.knowledge.service import DEFAULT_SOURCE_CARD as PRODUCT_SOURCE_CARD, ProductKnowledgeService
 from app.knowledge.legal_service import DEFAULT_SOURCE_CARD as LEGAL_SOURCE_CARD, LegalKnowledgeService
@@ -170,9 +189,9 @@ def _default_assembler() -> ContextAssembler:
         active_case_id=None, active_task_id=None, selected_product_ids=[],
     )
     return ContextAssembler(
-        EmployeeContextService(SQLiteSSOAdapter(), SQLiteIAMAdapter()),
+        EmployeeContextService(_sso_adapter(), _iam_adapter()),
         WorkspaceContextService(sessions),
-        CustomerContextService(ResilientCRMAdapter(SQLiteCRMAdapter())),
+        CustomerContextService(ResilientCRMAdapter(_crm_adapter())),
         ConversationStateService(ConversationStateStore()),
     )
 
@@ -259,7 +278,7 @@ def create_router(
     def actor_role(employee_id: str) -> str:
         correlation_id = f"TRACE-{uuid.uuid4().hex.upper()}"
         try:
-            identity = SQLiteSSOAdapter().get_employee_identity(employee_id, correlation_id=correlation_id)
+            identity = _sso_adapter().get_employee_identity(employee_id, correlation_id=correlation_id)
         except ContextError as exc:
             raise HTTPException(status_code=503, detail={"code": "IAM_UNAVAILABLE"}) from exc
         return map_enterprise_role_to_role_type(identity["role"], identity["organization_unit"])
@@ -342,7 +361,7 @@ def create_router(
     def iam_grant(employee_id: str) -> Dict[str, Any]:
         correlation_id = f"TRACE-{uuid.uuid4().hex.upper()}"
         try:
-            return SQLiteIAMAdapter().get_permissions(employee_id, correlation_id=correlation_id)
+            return _iam_adapter().get_permissions(employee_id, correlation_id=correlation_id)
         except ContextError as exc:
             raise HTTPException(status_code=503, detail={"code": "IAM_UNAVAILABLE"}) from exc
 

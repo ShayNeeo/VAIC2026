@@ -26,7 +26,8 @@ ROLE_CAPABILITIES: Dict[RoleType, Set[str]] = {
         "action:draft",
         "action:approve_own",
         "document:upload",
-        "document:process"
+        "document:process",
+        "credit:forward",
     },
     RoleType.PRODUCT_SPECIALIST: {
         "case:read",
@@ -49,6 +50,7 @@ ROLE_CAPABILITIES: Dict[RoleType, Set[str]] = {
         "case:read",
         "credit:analyze_file",
         "credit:review_structure",
+        "credit:final_approve",
         "credit:manage_knowledge"
     },
     RoleType.INSURANCE_SPECIALIST: {
