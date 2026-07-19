@@ -19,11 +19,14 @@ class CaseDetailScreen extends StatefulWidget {
 }
 
 class _CaseDetailScreenState extends State<CaseDetailScreen> {
-  final _ctrl = SalesCaseController();
+  late final SalesCaseController _ctrl;
 
   @override
   void initState() {
     super.initState();
+    _ctrl = SalesCaseController(
+      apiClient: context.read<EmployeeWorkspaceController>().api,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) => _ctrl.openCase(widget.caseId));
   }
 

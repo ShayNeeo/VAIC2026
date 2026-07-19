@@ -15,13 +15,16 @@ class ManagerConsoleScreen extends StatefulWidget {
 }
 
 class _ManagerConsoleScreenState extends State<ManagerConsoleScreen> {
-  final SalesCaseController _salesCaseController = SalesCaseController();
+  late final SalesCaseController _salesCaseController;
   Map<String, dynamic>? _selectedCase;
   bool _isProcessingAction = false;
 
   @override
   void initState() {
     super.initState();
+    _salesCaseController = SalesCaseController(
+      apiClient: context.read<EmployeeWorkspaceController>().api,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EmployeeWorkspaceController>().refresh();
       _salesCaseController.loadCases();

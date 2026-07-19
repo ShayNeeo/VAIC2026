@@ -21,7 +21,7 @@ class _CustomerWorkspaceScreenState extends State<CustomerWorkspaceScreen> {
   final _company = TextEditingController(text: 'Minh Phát JSC');
   final _tax = TextEditingController(text: '0305123456');
   final _need = TextEditingController();
-  final _controller = SalesCaseController();
+  late final SalesCaseController _controller;
 
   // Selected local files for customer upload
   final List<String> _selectedFiles = [];
@@ -45,6 +45,9 @@ class _CustomerWorkspaceScreenState extends State<CustomerWorkspaceScreen> {
   @override
   void initState() {
     super.initState();
+    _controller = SalesCaseController(
+      apiClient: context.read<EmployeeWorkspaceController>().api,
+    );
     _controller.loadCases();
   }
 

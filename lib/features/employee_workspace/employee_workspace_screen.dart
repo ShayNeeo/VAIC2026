@@ -19,7 +19,7 @@ class EmployeeWorkspaceScreen extends StatefulWidget {
 
 class _EmployeeWorkspaceScreenState extends State<EmployeeWorkspaceScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final SalesCaseController _salesCaseController = SalesCaseController();
+  late final SalesCaseController _salesCaseController;
 
   // Page 2 State variables
   String? _selectedCaseId;
@@ -51,6 +51,9 @@ class _EmployeeWorkspaceScreenState extends State<EmployeeWorkspaceScreen> with 
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _salesCaseController = SalesCaseController(
+      apiClient: context.read<EmployeeWorkspaceController>().api,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EmployeeWorkspaceController>().refresh();
       _salesCaseController.loadCases();
