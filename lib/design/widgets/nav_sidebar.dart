@@ -58,7 +58,7 @@ class NavSidebar extends StatelessWidget {
                 borderRadius: BorderRadius.circular(11),
                 boxShadow: [BoxShadow(color: AppColors.cyan.withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 3))],
               ),
-              child: const Center(child: Icon(Icons.bolt_outlined, color: AppColors.ink900, size: 20)),
+              child: const Center(child: Icon(Icons.bolt_outlined, color: Colors.white, size: 20)),
             ),
             const SizedBox(width: 11),
             const Expanded(
@@ -88,16 +88,16 @@ class NavSidebar extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 3),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: active ? AppColors.cyan.withValues(alpha: 0.14) : Colors.transparent,
+              color: active ? AppColors.orange.withValues(alpha: 0.12) : Colors.transparent,
               borderRadius: BorderRadius.circular(10),
-              border: active ? Border.all(color: AppColors.cyan.withValues(alpha: 0.5)) : null,
+              border: active ? Border.all(color: AppColors.orange.withValues(alpha: 0.5)) : null,
             ),
             child: Row(
               children: [
-                Icon(icon, size: 18, color: active ? AppColors.cyan : AppColors.muted),
+                Icon(icon, size: 18, color: active ? AppColors.orange : AppColors.textSecondary),
                 const SizedBox(width: 11),
                 Expanded(child: Text(label, style: TextStyle(color: active ? AppColors.txt : AppColors.txt2, fontSize: 13, fontWeight: active ? FontWeight.w700 : FontWeight.w500))),
-                if (active) Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.cyan, shape: BoxShape.circle)),
+                if (active) Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.orange, shape: BoxShape.circle)),
               ],
             ),
           ),
@@ -109,7 +109,7 @@ class NavSidebar extends StatelessWidget {
         decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.lineSoft))),
         child: Row(
           children: [
-            CircleAvatar(radius: 15, backgroundColor: AppColors.violet, child: Text(employeeId.isNotEmpty ? employeeId[0] : 'A', style: const TextStyle(color: AppColors.ink900, fontSize: 11, fontWeight: FontWeight.w800))),
+            CircleAvatar(radius: 15, backgroundColor: AppColors.navy, child: Text(employeeId.isNotEmpty ? employeeId[0] : 'A', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800))),
             const SizedBox(width: 10),
             Expanded(
               child: Column(

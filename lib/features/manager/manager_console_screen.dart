@@ -39,8 +39,8 @@ class _ManagerConsoleScreenState extends State<ManagerConsoleScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Branch Console', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt)),
-              const Text('HN01 · Aggregate team workload', style: TextStyle(fontSize: 11, color: AppColors.review)),
+              Text('Branch Console', style: GoogleFonts.beVietnamPro(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt)),
+              const Text('HN01 · Aggregate team workload', style: TextStyle(fontSize: 11, color: AppColors.orange)),
             ]),
             actions: [
               if (ctrl.context != null) Padding(padding: const EdgeInsets.only(right: 6), child: Center(child: Text(ctrl.context!.employeeId, style: const TextStyle(color: AppColors.txt2, fontWeight: FontWeight.w700)))),
@@ -49,7 +49,7 @@ class _ManagerConsoleScreenState extends State<ManagerConsoleScreen> {
             ],
           ),
           body: ctrl.isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.review))
+              ? const Center(child: CircularProgressIndicator(color: AppColors.orange))
               : ctrl.error != null
                   ? _Error(message: ctrl.error!, onRetry: ctrl.refresh)
                   : _Body(ctrl: ctrl),
@@ -90,7 +90,7 @@ class _Body extends StatelessWidget {
       padding: responsivePadding(context),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GlassCard(
-          glow: AppColors.review,
+          glow: AppColors.violet,
           child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             AgentKicker(label: 'Manager Console', icon: Icons.shield_outlined),
             SizedBox(height: 10),
@@ -106,8 +106,8 @@ class _Body extends StatelessWidget {
               spacing: 12,
               runSpacing: 12,
               children: [
-                SizedBox(width: w, child: const NeonMetric(label: 'Tổng cases', value: '0', icon: Icons.cases_outlined, accent: AppColors.cyan, sub: 'live pipeline')),
-                SizedBox(width: w, child: NeonMetric(label: 'Đang mở', value: '$total', icon: Icons.timelapse_outlined, accent: AppColors.review, sub: 'in workflow')),
+                SizedBox(width: w, child: const NeonMetric(label: 'Tổng cases', value: '0', icon: Icons.cases_outlined, accent: AppColors.navy, sub: 'live pipeline')),
+                SizedBox(width: w, child: NeonMetric(label: 'Đang mở', value: '$total', icon: Icons.timelapse_outlined, accent: AppColors.orange, sub: 'in workflow')),
                 SizedBox(width: w, child: NeonMetric(label: 'Chặn / SLA', value: '$blocked / $sla', icon: Icons.warning_amber_outlined, accent: AppColors.block, sub: 'needs attention')),
               ],
             );
