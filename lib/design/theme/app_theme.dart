@@ -7,41 +7,42 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// ── SHB color tokens ────────────────────────────────────────────────────────
 class AppColors {
-  // Brand
-  static const Color navy = Color(0xFF1E245F);
-  static const Color navyDark = Color(0xFF10142F);
-  static const Color navySurface = Color(0xFF181D45);
+  // Brand (Orange and White focus, Orange dominates)
+  static const Color orange = Color(0xFFF36F21); // SHB Orange
+  static const Color orangeDark = Color(0xFFC84B02); // Darker orange
+  static const Color orangeLight = Color(0xFFFFF1E8); // Light orange tint
+  static const Color orangeBackground = Color(0xFFFFF8F3); // Warm cream background
 
-  static const Color orange = Color(0xFFF36F21);
-  static const Color orangeDark = Color(0xFFD95712);
-  static const Color orangeLight = Color(0xFFFFF1E8);
+  // Accents (using orange shades instead of navy/violet to keep it orange-centric)
+  static const Color navy = Color(0xFFE65100); // Redirect navy to Deep Orange
+  static const Color navyDark = Color(0xFFBF360C); // Redirect to Dark Orange
+  static const Color navySurface = Color(0xFFFFCCBC); // Redirect to Light Orange
 
-  // Accents
-  static const Color blue = Color(0xFF3E63DD);
-  static const Color violet = Color(0xFF7259D9);
+  static const Color blue = Color(0xFFE65100); // Redirect to Deep Orange
+  static const Color violet = Color(0xFFD84315); // Redirect to Rust Orange
 
   // Neutrals
-  static const Color background = Color(0xFFF5F7FB);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceAlt = Color(0xFFFAFBFD);
-  static const Color border = Color(0xFFE2E6EF);
+  static const Color background = Color(0xFFFFF8F3); // Very light orange/white cream
+  static const Color surface = Color(0xFFFFFFFF); // White container frames
+  static const Color surfaceAlt = Color(0xFFFFFDFB);
+  static const Color border = Color(0xFFFFDCC8); // Light orange border
 
-  static const Color textPrimary = Color(0xFF171A2E);
-  static const Color textSecondary = Color(0xFF62697B);
-  static const Color textDisabled = Color(0xFF9BA1B1);
+  static const Color textPrimary = Color(0xFF2E1A0F); // Deep warm brown for readability
+  static const Color textSecondary = Color(0xFF7A685D);
+  static const Color textDisabled = Color(0xFFBCAAA4);
 
   // Semantic
-  static const Color success = Color(0xFF168A5B);
-  static const Color warning = Color(0xFFD99100);
-  static const Color error = Color(0xFFD64545);
-  static const Color info = Color(0xFF3178C6);
+  static const Color success = Color(0xFF2E7D32);
+  static const Color warning = Color(0xFFEF6C00);
+  static const Color error = Color(0xFFC62828);
+  static const Color info = Color(0xFF1565C0);
 
   // ── Backwards-compatible aliases (old neon token names → SHB) ──
   static const Color ink900 = navyDark;
-  static const Color ink850 = navy;
-  static const Color ink800 = navySurface;
-  static const Color ink700 = Color(0xFF232A5C);
-  static const Color ink600 = Color(0xFF2D3570);
+  static const Color ink850 = orange;
+  static const Color ink800 = orangeLight;
+  static const Color ink700 = Color(0xFFE65100);
+  static const Color ink600 = Color(0xFFF57C00);
   static const Color line = border;
   static const Color lineSoft = border;
 
@@ -51,13 +52,13 @@ class AppColors {
   static const Color lime = success;
 
   static const Color ready = success;
-  static const Color readyBg = Color(0xFFE8F7F0);
+  static const Color readyBg = Color(0xFFE8F5E9);
   static const Color needInfo = warning;
-  static const Color needInfoBg = Color(0xFFFFF7DF);
+  static const Color needInfoBg = Color(0xFFFFF3E0);
   static const Color block = error;
-  static const Color blockBg = Color(0xFFFDECEC);
-  static const Color review = violet;
-  static const Color reviewBg = Color(0xFFF2EEFC);
+  static const Color blockBg = Color(0xFFFFEBEE);
+  static const Color review = orangeDark;
+  static const Color reviewBg = Color(0xFFFFF1E8);
 
   static const Color txt = textPrimary;
   static const Color txt2 = textSecondary;
@@ -65,14 +66,14 @@ class AppColors {
   static const Color subtle = textSecondary;
 
   static const Color onSurface = textPrimary;
-  static const Color primary = navy;
-  static const Color secondary = violet;
+  static const Color primary = orange;
+  static const Color secondary = orangeDark;
   static const Color outline = border;
 }
 
-/// SHB gradients (used sparingly).
+/// SHB gradients (using warm orange gradients).
 const shbPrimaryGradient = LinearGradient(
-  colors: [Color(0xFF1E245F), Color(0xFF303A8C)],
+  colors: [Color(0xFFF36F21), Color(0xFFE65100)],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
 );
@@ -82,7 +83,7 @@ const shbOpportunityGradient = LinearGradient(
   end: Alignment.bottomRight,
 );
 const shbPremiumGradient = LinearGradient(
-  colors: [Color(0xFF10142F), Color(0xFF252B68)],
+  colors: [Color(0xFFC84B02), Color(0xFFE65100)],
   begin: Alignment.topLeft,
   end: Alignment.bottomRight,
 );
