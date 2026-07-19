@@ -65,7 +65,7 @@ class NavSidebar extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('VAIC', style: TextStyle(color: AppColors.txt, fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 1.2, fontFamily: 'Space Grotesk')),
+                  Text('VAIC', style: TextStyle(color: AppColors.txt, fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 1.2, fontFamily: 'BeVietnamPro')),
                   Text('Agent Sales Copilot', style: TextStyle(color: AppColors.cyanSoft, fontSize: 10)),
                 ],
               ),

@@ -85,11 +85,11 @@ class _Body extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const AgentKicker(label: 'Submit Intake', icon: Icons.upload_file_outlined),
             const SizedBox(height: 14),
-            TextField(controller: company, style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'), decoration: const InputDecoration(labelText: 'Tên doanh nghiệp', prefixIcon: Icon(Icons.business_outlined))),
+            TextField(controller: company, style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'), decoration: const InputDecoration(labelText: 'Tên doanh nghiệp', prefixIcon: Icon(Icons.business_outlined))),
             const SizedBox(height: 12),
-            TextField(controller: tax, style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'), decoration: const InputDecoration(labelText: 'Mã số thuế', prefixIcon: Icon(Icons.tag_outlined))),
+            TextField(controller: tax, style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'), decoration: const InputDecoration(labelText: 'Mã số thuế', prefixIcon: Icon(Icons.tag_outlined))),
             const SizedBox(height: 12),
-            TextField(controller: need, maxLines: 3, style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'), decoration: const InputDecoration(labelText: 'Nhu cầu tín dụng / sản phẩm', prefixIcon: Icon(Icons.edit_note_outlined))),
+            TextField(controller: need, maxLines: 3, style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'), decoration: const InputDecoration(labelText: 'Nhu cầu tín dụng / sản phẩm', prefixIcon: Icon(Icons.edit_note_outlined))),
             const SizedBox(height: 16),
             if (ctrl.error != null) ...[
               Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.blockBg, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.block.withValues(alpha: 0.5))), child: Text(ctrl.error!, style: const TextStyle(color: AppColors.block, fontSize: 12))),

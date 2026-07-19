@@ -1,183 +1,225 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// VAIC — Agent OS design language.
-/// Dark glassmorphism, neon cyan/violet, AI-stream accents.
-/// No bundled "normal" fonts: distinctive display/body/mono faces
-/// pulled from Google Fonts at runtime (Space Grotesk / Hanken Grotesk / JetBrains Mono).
+/// VAIC — SHB-inspired enterprise banking design language.
+/// Institutional, intelligent, precise, modern, controlled.
+/// 65% neutral white/gray, 20% navy, 10% orange, 5% semantic accents.
 
+/// ── SHB color tokens ────────────────────────────────────────────────────────
 class AppColors {
-  // Base canvas — deep space navy
-  static const Color ink900 = Color(0xFF05070E);
-  static const Color ink850 = Color(0xFF080B16);
-  static const Color ink800 = Color(0xFF0C1120);
-  static const Color ink700 = Color(0xFF121A2E);
-  static const Color ink600 = Color(0xFF1A2540);
-  static const Color line = Color(0xFF243154);
-  static const Color lineSoft = Color(0xFF1A2440);
+  // Brand
+  static const Color navy = Color(0xFF1E245F);
+  static const Color navyDark = Color(0xFF10142F);
+  static const Color navySurface = Color(0xFF181D45);
 
-  // Neon accents — AI agent glow
-  static const Color cyan = Color(0xFF26E6F0);
-  static const Color cyanSoft = Color(0xFF7DF2FF);
-  static const Color violet = Color(0xFF8B5CF6);
-  static const Color violetSoft = Color(0xFFC4B5FD);
-  static const Color magenta = Color(0xFFE553C9);
-  static const Color lime = Color(0xFF56F0B0);
+  static const Color orange = Color(0xFFF36F21);
+  static const Color orangeDark = Color(0xFFD95712);
+  static const Color orangeLight = Color(0xFFFFF1E8);
 
-  // Semantic status (banking-grade, per brief §12)
-  static const Color ready = Color(0xFF35D6A0);
-  static const Color readyBg = Color(0xFF0E2A22);
-  static const Color needInfo = Color(0xFFE0A93C);
-  static const Color needInfoBg = Color(0xFF2A2110);
-  static const Color block = Color(0xFFF0566B);
-  static const Color blockBg = Color(0xFF2E1119);
-  static const Color review = Color(0xFF9B7BF0);
-  static const Color reviewBg = Color(0xFF1A1640);
+  // Accents
+  static const Color blue = Color(0xFF3E63DD);
+  static const Color violet = Color(0xFF7259D9);
 
-  // Text
-  static const Color txt = Color(0xFFF2F6FF);
-  static const Color txt2 = Color(0xFFB9C4DC);
-  static const Color muted = Color(0xFF7A88A8);
-  static const Color subtle = Color(0xFF566183);
+  // Neutrals
+  static const Color background = Color(0xFFF5F7FB);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceAlt = Color(0xFFFAFBFD);
+  static const Color border = Color(0xFFE2E6EF);
 
-  static const Color onSurface = Color(0xFFF2F6FF);
-  static const Color surface = Color(0xFF0E1424);
-  static const Color background = Color(0xFF05070E);
-  static const Color primary = Color(0xFF26E6F0);
-  static const Color secondary = Color(0xFF8B5CF6);
-  static const Color error = Color(0xFFF0566B);
-  static const Color outline = Color(0xFF243154);
+  static const Color textPrimary = Color(0xFF171A2E);
+  static const Color textSecondary = Color(0xFF62697B);
+  static const Color textDisabled = Color(0xFF9BA1B1);
+
+  // Semantic
+  static const Color success = Color(0xFF168A5B);
+  static const Color warning = Color(0xFFD99100);
+  static const Color error = Color(0xFFD64545);
+  static const Color info = Color(0xFF3178C6);
+
+  // ── Backwards-compatible aliases (old neon token names → SHB) ──
+  static const Color ink900 = navyDark;
+  static const Color ink850 = navy;
+  static const Color ink800 = navySurface;
+  static const Color ink700 = Color(0xFF232A5C);
+  static const Color ink600 = Color(0xFF2D3570);
+  static const Color line = border;
+  static const Color lineSoft = border;
+
+  static const Color cyan = orange; // CTA / active accent
+  static const Color cyanSoft = orangeLight;
+  static const Color magenta = violet;
+  static const Color lime = success;
+
+  static const Color ready = success;
+  static const Color readyBg = Color(0xFFE8F7F0);
+  static const Color needInfo = warning;
+  static const Color needInfoBg = Color(0xFFFFF7DF);
+  static const Color block = error;
+  static const Color blockBg = Color(0xFFFDECEC);
+  static const Color review = violet;
+  static const Color reviewBg = Color(0xFFF2EEFC);
+
+  static const Color txt = textPrimary;
+  static const Color txt2 = textSecondary;
+  static const Color muted = textDisabled;
+  static const Color subtle = textSecondary;
+
+  static const Color onSurface = textPrimary;
+  static const Color primary = navy;
+  static const Color secondary = violet;
+  static const Color outline = border;
 }
 
-/// Display + heading face.
-TextTheme _display(TextTheme base) => base.copyWith(
-      displayLarge: (base.displayLarge ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -1.5),
-      displayMedium: (base.displayMedium ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -1.0),
-      displaySmall: (base.displaySmall ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: -0.5),
-      headlineLarge: (base.headlineLarge ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w700, letterSpacing: -0.8),
-      headlineMedium: (base.headlineMedium ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: -0.5),
-      headlineSmall: (base.headlineSmall ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600),
-      titleLarge: (base.titleLarge ?? const TextStyle()).copyWith(fontFamily: 'Space Grotesk', fontWeight: FontWeight.w600, letterSpacing: 0),
-      titleMedium: (base.titleMedium ?? const TextStyle()).copyWith(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w600),
-      titleSmall: (base.titleSmall ?? const TextStyle()).copyWith(fontFamily: 'Hanken Grotesk', fontWeight: FontWeight.w600),
-    );
-
-const TextTheme _bodyText = TextTheme(
-  bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.1, fontFamily: 'Hanken Grotesk'),
-  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.1, fontFamily: 'Hanken Grotesk'),
-  bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.2, fontFamily: 'Hanken Grotesk'),
-  labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.1, fontFamily: 'Hanken Grotesk'),
-  labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.3, fontFamily: 'Hanken Grotesk'),
-  labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.4, fontFamily: 'Hanken Grotesk'),
+/// SHB gradients (used sparingly).
+const shbPrimaryGradient = LinearGradient(
+  colors: [Color(0xFF1E245F), Color(0xFF303A8C)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
+const shbOpportunityGradient = LinearGradient(
+  colors: [Color(0xFFF36F21), Color(0xFFFFA15C)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+);
+const shbPremiumGradient = LinearGradient(
+  colors: [Color(0xFF10142F), Color(0xFF252B68)],
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
 );
 
-/// Monospace face for data, IDs, trace hashes, code.
+/// Primary typeface — Be Vietnam Pro (Vietnamese-ready, enterprise-clean).
+TextTheme _display(TextTheme base) => base.copyWith(
+      displayLarge: _bv(32, FontWeight.w700, height: 1.2),
+      displayMedium: _bv(28, FontWeight.w700, height: 1.25),
+      displaySmall: _bv(28, FontWeight.w700, height: 1.25),
+      headlineLarge: _bv(28, FontWeight.w700, height: 1.25),
+      headlineMedium: _bv(22, FontWeight.w600, height: 1.3),
+      headlineSmall: _bv(22, FontWeight.w600, height: 1.3),
+      titleLarge: _bv(18, FontWeight.w600, height: 1.35),
+      titleMedium: _bv(18, FontWeight.w600, height: 1.35),
+      titleSmall: _bv(16, FontWeight.w600, height: 1.4),
+      bodyLarge: _bv(16, FontWeight.w400, height: 1.5),
+      bodyMedium: _bv(14, FontWeight.w400, height: 1.5),
+      bodySmall: _bv(14, FontWeight.w400, height: 1.5),
+      labelLarge: _bv(13, FontWeight.w600),
+      labelMedium: _bv(13, FontWeight.w600),
+      labelSmall: _bv(12, FontWeight.w500),
+    );
+
+TextStyle _bv(double size, FontWeight weight, {double? height}) =>
+    GoogleFonts.beVietnamPro(fontSize: size, fontWeight: weight, height: height);
+
+const TextTheme _bodyText = TextTheme(
+  bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.1, fontFamily: 'BeVietnamPro'),
+  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.1, fontFamily: 'BeVietnamPro'),
+  bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.2, fontFamily: 'BeVietnamPro'),
+  labelLarge: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.1, fontFamily: 'BeVietnamPro'),
+  labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.3, fontFamily: 'BeVietnamPro'),
+  labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.4, fontFamily: 'BeVietnamPro'),
+);
+
+/// Monospace for IDs, technical logs, model outputs (tabular figures).
 TextStyle get mono => GoogleFonts.jetBrainsMono(
       fontSize: 12,
       fontWeight: FontWeight.w500,
       letterSpacing: 0.2,
-      color: AppColors.txt2,
+      color: AppColors.textSecondary,
+      fontFeatures: const [FontFeature.tabularFigures()],
     );
 
 ThemeData agentTheme(Brightness brightness) {
+  final dark = brightness == Brightness.dark;
   final base = ThemeData(
     useMaterial3: true,
     brightness: brightness,
-    colorScheme: ColorScheme.dark(
-      primary: AppColors.cyan,
-      onPrimary: AppColors.ink900,
-      secondary: AppColors.violet,
-      error: AppColors.block,
-      surface: AppColors.surface,
-      onSurface: AppColors.txt,
-      outline: AppColors.line,
-      brightness: brightness,
+    colorScheme: dark
+        ? ColorScheme.dark(
+            primary: AppColors.orange,
+            onPrimary: Colors.white,
+            secondary: AppColors.violet,
+            error: AppColors.error,
+            surface: AppColors.navySurface,
+            onSurface: Colors.white,
+            outline: AppColors.border,
+            brightness: brightness,
+          )
+        : ColorScheme.light(
+            primary: AppColors.navy,
+            onPrimary: Colors.white,
+            secondary: AppColors.violet,
+            error: AppColors.error,
+            surface: AppColors.surface,
+            onSurface: AppColors.textPrimary,
+            outline: AppColors.border,
+            brightness: brightness,
+          ),
+    scaffoldBackgroundColor: dark ? AppColors.navyDark : AppColors.background,
+    fontFamily: GoogleFonts.beVietnamPro().fontFamily,
+    textTheme: _display(
+      (dark ? ThemeData.dark() : ThemeData.light()).textTheme.apply(
+            bodyColor: dark ? Colors.white : AppColors.textPrimary,
+            displayColor: dark ? Colors.white : AppColors.textPrimary,
+          ),
     ),
-    scaffoldBackgroundColor: AppColors.background,
-    fontFamily: 'Hanken Grotesk',
-    textTheme: _display(ThemeData(brightness: brightness).textTheme),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.cyan,
-        foregroundColor: AppColors.ink900,
+        backgroundColor: AppColors.orange,
+        foregroundColor: Colors.white,
         elevation: 0,
-        shadowColor: AppColors.cyan.withValues(alpha: 0.5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
-        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.2, fontFamily: 'Hanken Grotesk'),
+        shadowColor: AppColors.orange.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        textStyle: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.2),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.txt,
-        side: const BorderSide(color: AppColors.line),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+        foregroundColor: dark ? Colors.white : AppColors.navy,
+        side: BorderSide(color: dark ? AppColors.navySurface : AppColors.border),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: AppColors.cyan,
-        foregroundColor: AppColors.ink900,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, fontFamily: 'Hanken Grotesk'),
+        backgroundColor: AppColors.orange,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w700, fontSize: 13),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.ink800,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.line)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.line)),
+      fillColor: dark ? AppColors.navySurface : AppColors.surface,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: dark ? AppColors.navySurface : AppColors.border)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: dark ? AppColors.navySurface : AppColors.border)),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+        borderRadius: BorderRadius.circular(8),
+        borderSide: const BorderSide(color: AppColors.orange, width: 2),
       ),
-      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.block)),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      labelStyle: const TextStyle(color: AppColors.muted, fontFamily: 'Hanken Grotesk'),
-      hintStyle: const TextStyle(color: AppColors.subtle, fontFamily: 'Hanken Grotesk'),
+      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.error)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      labelStyle: TextStyle(color: dark ? Colors.white70 : AppColors.textSecondary, fontFamily: 'BeVietnamPro'),
+      hintStyle: TextStyle(color: dark ? Colors.white38 : AppColors.textDisabled, fontFamily: 'BeVietnamPro'),
     ),
     cardTheme: CardThemeData(
-      color: AppColors.surface,
+      color: dark ? AppColors.navySurface : AppColors.surface,
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: const BorderSide(color: AppColors.lineSoft)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: dark ? AppColors.navySurface : AppColors.border),
+      ),
       margin: const EdgeInsets.all(0),
     ),
-    dividerTheme: const DividerThemeData(color: AppColors.lineSoft, thickness: 1, space: 1),
+    dividerTheme: DividerThemeData(color: dark ? AppColors.navySurface : AppColors.border, thickness: 1, space: 1),
     chipTheme: ChipThemeData(
-      backgroundColor: AppColors.ink700,
-      side: const BorderSide(color: AppColors.line),
-      labelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.txt2, fontFamily: 'Hanken Grotesk'),
+      backgroundColor: dark ? AppColors.navySurface : AppColors.orangeLight,
+      side: BorderSide(color: dark ? AppColors.navySurface : AppColors.border),
+      labelStyle: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: dark ? Colors.white : AppColors.textSecondary, fontFamily: 'BeVietnamPro'),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
     ),
   );
   return base;
 }
 
-ThemeData lightAgentTheme() => agentTheme(Brightness.light).copyWith(
-      colorScheme: ColorScheme.light(
-        primary: AppColors.cyan,
-        onPrimary: AppColors.ink900,
-        secondary: AppColors.violet,
-        error: AppColors.block,
-        surface: const Color(0xFFF4F7FD),
-        onSurface: const Color(0xFF0A1020),
-        outline: const Color(0xFFD7E0F0),
-      ),
-      scaffoldBackgroundColor: const Color(0xFFEEF3FB),
-      textTheme: _display(ThemeData(brightness: Brightness.light).textTheme.apply(bodyColor: const Color(0xFF0A1020), displayColor: const Color(0xFF0A1020))),
-      cardTheme: CardThemeData(
-        color: const Color(0xFFFFFFFF),
-        elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: const BorderSide(color: Color(0xFFD7E0F0))),
-        margin: const EdgeInsets.all(0),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFFFFFFFF),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFD7E0F0))),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFD7E0F0))),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.cyan, width: 2)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      ),
-    );
+ThemeData lightAgentTheme() => agentTheme(Brightness.light);

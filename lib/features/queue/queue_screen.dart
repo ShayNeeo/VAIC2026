@@ -92,14 +92,14 @@ class _QueueScreenState extends State<QueueScreen> {
             const SizedBox(height: 14),
             TextField(
               controller: _company,
-              style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+              style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
               decoration: const InputDecoration(labelText: 'Tên doanh nghiệp', prefixIcon: Icon(Icons.business_outlined)),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _need,
               maxLines: 3,
-              style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+              style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
               decoration: const InputDecoration(labelText: 'Nhu cầu tín dụng / sản phẩm', prefixIcon: Icon(Icons.edit_note_outlined)),
             ),
             const SizedBox(height: 18),
@@ -152,7 +152,7 @@ class _Body extends StatelessWidget {
               const Spacer(),
               SizedBox(width: 220, child: TextField(
                 controller: search,
-                style: const TextStyle(color: AppColors.txt, fontSize: 13, fontFamily: 'Hanken Grotesk'),
+                style: const TextStyle(color: AppColors.txt, fontSize: 13, fontFamily: 'BeVietnamPro'),
                 decoration: const InputDecoration(hintText: 'Tìm doanh nghiệp…', prefixIcon: Icon(Icons.search, size: 18), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
               )),
             ]),

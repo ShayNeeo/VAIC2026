@@ -112,14 +112,14 @@ class _Panel extends StatelessWidget {
           TextField(
             controller: employee,
             textCapitalization: TextCapitalization.characters,
-            style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+            style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
             decoration: const InputDecoration(labelText: 'Employee ID', prefixIcon: Icon(Icons.badge_outlined)),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: password,
             obscureText: true,
-            style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+            style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
             decoration: const InputDecoration(labelText: 'Mật khẩu', prefixIcon: Icon(Icons.lock_outline)),
           ),
           const SizedBox(height: 16),
