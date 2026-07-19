@@ -1,13 +1,12 @@
-"""SQLite storage layer for employee personalization, consent, habits, and work items."""
+"""PostgreSQL storage layer for employee personalization, consent, habits, and work items."""
 
 from __future__ import annotations
 
-import sqlite3
 import json
-from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from app.config import settings
+from app.storage import pg
 from app.schemas.v2.employee import (
     EmployeeContextSnapshot,
     AuthorizationContext,
@@ -21,15 +20,12 @@ from app.schemas.v2.employee import (
     ProvenanceType,
 )
 
-def get_db_connection() -> sqlite3.Connection:
-    # Read settings.V2_DB_PATH on every call (not cached at import time) so
-    # tests can monkeypatch it to an isolated temp file per-test/per-module
-    # instead of writing into the same DB the live app/demo uses.
-    db_path = Path(settings.V2_DB_PATH)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-    return conn
+def get_db_connection():
+    # PostgreSQL connection (target from settings.DATABASE_URL). The returned
+    # connection uses a cursor that accepts the legacy "?" placeholder style and
+    # yields dict-like rows, so the rest of this module is unchanged apart from
+    # a few dialect fixes (ON CONFLICT instead of INSERT OR IGNORE/REPLACE).
+    return pg.raw_connection()
 
 
 def init_employee_db() -> None:
@@ -37,9 +33,9 @@ def init_employee_db() -> None:
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 1. Employees table
+    # 1. Local persona mirror. Keep it separate from enterprise SSO `employees`.
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS employees (
+    CREATE TABLE IF NOT EXISTS employee_personas (
         employee_id TEXT PRIMARY KEY,
         role TEXT NOT NULL,
         organization_unit TEXT NOT NULL,
@@ -163,8 +159,8 @@ def init_employee_db() -> None:
     conn.commit()
 
     # Seed mock data if empty
-    cursor.execute("SELECT COUNT(*) FROM employees")
-    if cursor.fetchone()[0] == 0:
+    cursor.execute("SELECT COUNT(*) AS n FROM employee_personas")
+    if cursor.fetchone()["n"] == 0:
         # Seed Employees
         employees_data = [
             ("USER-MP-001", "customer_user", "Minh Phat Customer Portal",
@@ -190,7 +186,7 @@ def init_employee_db() -> None:
              json.dumps(["COMP-ABC", "COMP-MP", "COMP-XYZ"]))
         ]
         cursor.executemany(
-            "INSERT INTO employees VALUES (?, ?, ?, ?, ?)", employees_data
+            "INSERT INTO employee_personas VALUES (?, ?, ?, ?, ?)", employees_data
         )
 
         # Seed default Preferences
@@ -314,10 +310,33 @@ def init_employee_db() -> None:
     cursor.execute("DELETE FROM employee_preferences WHERE employee_id = ?", ("SPEC-OPS-001",))
     cursor.execute("DELETE FROM employee_consent WHERE employee_id = ?", ("SPEC-OPS-001",))
     cursor.execute("DELETE FROM employee_habits WHERE employee_id = ?", ("SPEC-OPS-001",))
-    cursor.execute("DELETE FROM employees WHERE employee_id = ?", ("SPEC-OPS-001",))
+    cursor.execute("DELETE FROM employee_personas WHERE employee_id = ?", ("SPEC-OPS-001",))
     cursor.execute(
         """
-        INSERT INTO employees (employee_id, role, organization_unit, permissions, customer_scope)
+        INSERT INTO employee_personas (employee_id, role, organization_unit, permissions, customer_scope)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(employee_id) DO UPDATE SET
+            role = excluded.role,
+            organization_unit = excluded.organization_unit,
+            permissions = excluded.permissions,
+            customer_scope = excluded.customer_scope
+        """,
+        (
+            "USER-MP-001", "customer_user", "Minh Phat Customer Portal",
+            json.dumps(["case:create", "case:read", "case:write"]),
+            json.dumps(["COMP-MP"]),
+        ),
+    )
+    cursor.execute(
+        "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (employee_id) DO NOTHING",
+        (
+            "USER-MP-001", 0, 0, json.dumps([]),
+            "v1", datetime.utcnow().isoformat(),
+        ),
+    )
+    cursor.execute(
+        """
+        INSERT INTO employee_personas (employee_id, role, organization_unit, permissions, customer_scope)
         VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(employee_id) DO UPDATE SET
             role = excluded.role,
@@ -355,7 +374,7 @@ def init_employee_db() -> None:
         ),
     )
     cursor.execute(
-        "INSERT OR IGNORE INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (employee_id) DO NOTHING",
         (
             "SPEC-CREDIT-001", 1, 0, json.dumps(["ui_preferences"]),
             "v1", datetime.utcnow().isoformat(),
@@ -363,7 +382,7 @@ def init_employee_db() -> None:
     )
     cursor.execute(
         """
-        INSERT INTO employees (employee_id, role, organization_unit, permissions, customer_scope)
+        INSERT INTO employee_personas (employee_id, role, organization_unit, permissions, customer_scope)
         VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(employee_id) DO UPDATE SET
             role = excluded.role,
@@ -378,7 +397,7 @@ def init_employee_db() -> None:
         ),
     )
     cursor.execute(
-        "INSERT OR IGNORE INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (employee_id) DO NOTHING",
         (
             "SPEC-INSURANCE-001", 1, 0, json.dumps(["ui_preferences"]),
             "v1", datetime.utcnow().isoformat(),
@@ -386,7 +405,8 @@ def init_employee_db() -> None:
     )
     cursor.execute(
         """
-        INSERT OR IGNORE INTO employee_work_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO employee_work_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (item_id) DO NOTHING
         """,
         (
             "TASK-501", "SPEC-INSURANCE-001", "Rà soát yêu cầu bảo hiểm cho hồ sơ Minh Phát", "pending",
@@ -397,7 +417,8 @@ def init_employee_db() -> None:
     )
     cursor.execute(
         """
-        INSERT OR IGNORE INTO employee_work_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO employee_work_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (item_id) DO NOTHING
         """,
         (
             "TASK-401", "SPEC-CREDIT-001",
@@ -415,7 +436,7 @@ def init_employee_db() -> None:
 def get_employee(employee_id: str) -> Optional[Dict[str, Any]]:
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM employees WHERE employee_id = ?", (employee_id,))
+    cursor.execute("SELECT * FROM employee_personas WHERE employee_id = ?", (employee_id,))
     row = cursor.fetchone()
     conn.close()
     if row:
@@ -706,12 +727,28 @@ def create_work_item(item: Dict[str, Any]) -> None:
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT OR REPLACE INTO employee_work_items (
+        INSERT INTO employee_work_items (
             item_id, employee_id, title, status, business_impact, urgency,
             customer_commitment, risk_severity, dependency_unblock,
             ownership_match, estimated_effort, created_at, due_at,
             dependency_ids, role_required, customer_id
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT (item_id) DO UPDATE SET
+            employee_id = excluded.employee_id,
+            title = excluded.title,
+            status = excluded.status,
+            business_impact = excluded.business_impact,
+            urgency = excluded.urgency,
+            customer_commitment = excluded.customer_commitment,
+            risk_severity = excluded.risk_severity,
+            dependency_unblock = excluded.dependency_unblock,
+            ownership_match = excluded.ownership_match,
+            estimated_effort = excluded.estimated_effort,
+            created_at = excluded.created_at,
+            due_at = excluded.due_at,
+            dependency_ids = excluded.dependency_ids,
+            role_required = excluded.role_required,
+            customer_id = excluded.customer_id
         """,
         (
             item["item_id"], item["employee_id"], item["title"], item.get("status", "pending"),
