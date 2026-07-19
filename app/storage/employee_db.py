@@ -351,7 +351,7 @@ def init_employee_db() -> None:
         ),
     )
     cursor.execute(
-        "INSERT OR IGNORE INTO employee_consent VALUES (?, ?, ?, ?, ?, ?)",
+        "INSERT INTO employee_consent VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(employee_id) DO NOTHING",
         (
             "USER-MP-001", 0, 0, json.dumps([]),
             "v1", datetime.utcnow().isoformat(),
