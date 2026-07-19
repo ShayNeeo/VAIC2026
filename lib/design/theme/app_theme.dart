@@ -109,15 +109,6 @@ TextTheme _display(TextTheme base) => base.copyWith(
 TextStyle _bv(double size, FontWeight weight, {double? height}) =>
     GoogleFonts.beVietnamPro(fontSize: size, fontWeight: weight, height: height);
 
-const TextTheme _bodyText = TextTheme(
-  bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, letterSpacing: 0.1, fontFamily: 'BeVietnamPro'),
-  bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, letterSpacing: 0.1, fontFamily: 'BeVietnamPro'),
-  bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, letterSpacing: 0.2, fontFamily: 'BeVietnamPro'),
-  labelLarge: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.1, fontFamily: 'BeVietnamPro'),
-  labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.3, fontFamily: 'BeVietnamPro'),
-  labelSmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.4, fontFamily: 'BeVietnamPro'),
-);
-
 /// Monospace for IDs, technical logs, model outputs (tabular figures).
 TextStyle get mono => GoogleFonts.jetBrainsMono(
       fontSize: 12,
