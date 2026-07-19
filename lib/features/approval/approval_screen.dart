@@ -74,7 +74,7 @@ class _ApprovalScreenState extends State<ApprovalScreen> {
             elevation: 0,
             leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.txt2), onPressed: () => context.go('/case/${widget.caseId}')),
             title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Approval Gate', style: GoogleFonts.spaceGrotesk(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.txt)),
+              Text('Approval Gate', style: GoogleFonts.beVietnamPro(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.txt)),
               Text('Case ${widget.caseId}', style: GoogleFonts.jetBrainsMono(fontSize: 11, color: AppColors.cyanSoft)),
             ]),
           ),

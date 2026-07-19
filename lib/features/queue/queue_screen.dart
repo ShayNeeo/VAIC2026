@@ -46,8 +46,8 @@ class _QueueScreenState extends State<QueueScreen> {
           appBar: _appBar(context, ctrl),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _showCreate(context, ctrl),
-            backgroundColor: AppColors.cyan,
-            foregroundColor: AppColors.ink900,
+            backgroundColor: AppColors.orange,
+            foregroundColor: Colors.white,
             icon: const Icon(Icons.add),
             label: const Text('Tạo sales case', style: TextStyle(fontWeight: FontWeight.w800)),
           ),
@@ -63,13 +63,13 @@ class _QueueScreenState extends State<QueueScreen> {
         title: Row(children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.cyan, AppColors.violet]), borderRadius: BorderRadius.circular(11)),
-            child: const Icon(Icons.bolt_outlined, color: AppColors.ink900, size: 18),
+            decoration: BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.circular(11)),
+            child: const Icon(Icons.bolt_outlined, color: Colors.white, size: 18),
           ),
           const SizedBox(width: 12),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Command Center', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt)),
-            const Text('Multi-Agent Sales Workflow', style: TextStyle(fontSize: 11, color: AppColors.cyanSoft)),
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Command Center', style: GoogleFonts.beVietnamPro(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt)),
+            const Text('Multi-Agent Sales Workflow', style: TextStyle(fontSize: 11, color: AppColors.orange)),
           ]),
         ]),
         actions: [
@@ -82,7 +82,7 @@ class _QueueScreenState extends State<QueueScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: AppColors.ink800,
+            backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         contentPadding: const EdgeInsets.all(22),
         content: SizedBox(
@@ -92,14 +92,14 @@ class _QueueScreenState extends State<QueueScreen> {
             const SizedBox(height: 14),
             TextField(
               controller: _company,
-              style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+              style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
               decoration: const InputDecoration(labelText: 'Tên doanh nghiệp', prefixIcon: Icon(Icons.business_outlined)),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _need,
               maxLines: 3,
-              style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+              style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
               decoration: const InputDecoration(labelText: 'Nhu cầu tín dụng / sản phẩm', prefixIcon: Icon(Icons.edit_note_outlined)),
             ),
             const SizedBox(height: 18),
@@ -152,13 +152,13 @@ class _Body extends StatelessWidget {
               const Spacer(),
               SizedBox(width: 220, child: TextField(
                 controller: search,
-                style: const TextStyle(color: AppColors.txt, fontSize: 13, fontFamily: 'Hanken Grotesk'),
+                style: const TextStyle(color: AppColors.txt, fontSize: 13, fontFamily: 'BeVietnamPro'),
                 decoration: const InputDecoration(hintText: 'Tìm doanh nghiệp…', prefixIcon: Icon(Icons.search, size: 18), contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
               )),
             ]),
             const SizedBox(height: 12),
             if (ctrl.isLoading)
-              const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator(color: AppColors.cyan)))
+              const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator(color: AppColors.orange)))
             else if (visible.isEmpty)
               _Empty(ctrl: ctrl)
             else
@@ -189,10 +189,10 @@ class _Metrics extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            SizedBox(width: w, child: const NeonMetric(label: 'Cases', value: '0', icon: Icons.cases_outlined, accent: AppColors.cyan, sub: 'live v2 queue')),
-            SizedBox(width: w, child: NeonMetric(label: 'Đang mở', value: '$open', icon: Icons.timelapse_outlined, accent: AppColors.violet, sub: 'intake + analysis')),
-            SizedBox(width: w, child: NeonMetric(label: 'In Analysis', value: '$inAnalysis', icon: Icons.hub_outlined, accent: AppColors.lime, sub: 'agents running')),
-            SizedBox(width: w, child: NeonMetric(label: 'Failed', value: '$blocked', icon: Icons.error_outline, accent: AppColors.block, sub: 'needs review')),
+            SizedBox(width: w, child: const NeonMetric(label: 'Cases', value: '0', icon: Icons.cases_outlined, accent: AppColors.navy, sub: 'live v2 queue')),
+            SizedBox(width: w, child: NeonMetric(label: 'Đang mở', value: '$open', icon: Icons.timelapse_outlined, accent: AppColors.orange, sub: 'intake + analysis')),
+            SizedBox(width: w, child: NeonMetric(label: 'In Analysis', value: '$inAnalysis', icon: Icons.hub_outlined, accent: AppColors.blue, sub: 'agents running')),
+            SizedBox(width: w, child: NeonMetric(label: 'Failed', value: '$blocked', icon: Icons.error_outline, accent: AppColors.error, sub: 'needs review')),
           ],
         );
       },
@@ -208,7 +208,7 @@ class _Empty extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(36),
           child: Column(children: [
-            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.cyan.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.auto_awesome_outlined, size: 34, color: AppColors.cyan)),
+            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.auto_awesome_outlined, size: 34, color: AppColors.orange)),
             const SizedBox(height: 14),
             const Text('Chưa có sales case nào', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.txt)),
             const SizedBox(height: 6),
@@ -241,8 +241,8 @@ class _CaseTile extends StatelessWidget {
             Container(
               width: 44,
               height: 44,
-              decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.cyan, AppColors.violet]), borderRadius: BorderRadius.circular(12)),
-              child: Center(child: Text(name.isNotEmpty ? name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase() : '?', style: const TextStyle(color: AppColors.ink900, fontWeight: FontWeight.w800, fontSize: 14))),
+              decoration: BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.circular(12)),
+              child: Center(child: Text(name.isNotEmpty ? name.substring(0, name.length >= 2 ? 2 : 1).toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14))),
             ),
             const SizedBox(width: 13),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

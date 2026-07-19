@@ -50,8 +50,8 @@ class _CustomerWorkspaceScreenState extends State<CustomerWorkspaceScreen> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Customer Portal', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt)),
-                const Text('Gửi nhu cầu · Theo dõi hồ sơ', style: TextStyle(fontSize: 11, color: AppColors.lime)),
+                Text('Customer Portal', style: GoogleFonts.beVietnamPro(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.txt)),
+                const Text('Gửi nhu cầu · Theo dõi hồ sơ', style: TextStyle(fontSize: 11, color: AppColors.orange)),
               ]),
               actions: [
                 IconButton(icon: const Icon(Icons.logout, color: AppColors.txt2), onPressed: () { emp.logout(); context.go('/login'); }),
@@ -81,15 +81,15 @@ class _Body extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         GlassCard(
-          glow: AppColors.lime,
+          glow: AppColors.orange,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const AgentKicker(label: 'Submit Intake', icon: Icons.upload_file_outlined),
             const SizedBox(height: 14),
-            TextField(controller: company, style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'), decoration: const InputDecoration(labelText: 'Tên doanh nghiệp', prefixIcon: Icon(Icons.business_outlined))),
+            TextField(controller: company, style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'), decoration: const InputDecoration(labelText: 'Tên doanh nghiệp', prefixIcon: Icon(Icons.business_outlined))),
             const SizedBox(height: 12),
-            TextField(controller: tax, style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'), decoration: const InputDecoration(labelText: 'Mã số thuế', prefixIcon: Icon(Icons.tag_outlined))),
+            TextField(controller: tax, style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'), decoration: const InputDecoration(labelText: 'Mã số thuế', prefixIcon: Icon(Icons.tag_outlined))),
             const SizedBox(height: 12),
-            TextField(controller: need, maxLines: 3, style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'), decoration: const InputDecoration(labelText: 'Nhu cầu tín dụng / sản phẩm', prefixIcon: Icon(Icons.edit_note_outlined))),
+            TextField(controller: need, maxLines: 3, style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'), decoration: const InputDecoration(labelText: 'Nhu cầu tín dụng / sản phẩm', prefixIcon: Icon(Icons.edit_note_outlined))),
             const SizedBox(height: 16),
             if (ctrl.error != null) ...[
               Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.blockBg, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.block.withValues(alpha: 0.5))), child: Text(ctrl.error!, style: const TextStyle(color: AppColors.block, fontSize: 12))),
@@ -102,9 +102,9 @@ class _Body extends StatelessWidget {
         const SectionHeader(title: 'Hồ sơ của bạn', caption: 'Được quản lý bởi RM · theo dõi trạng thái', icon: Icons.folder_outlined),
         const SizedBox(height: 12),
         if (ctrl.info != null)
-          Padding(padding: const EdgeInsets.only(bottom: 10), child: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.cyan.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)), child: Text(ctrl.info!, style: const TextStyle(color: AppColors.cyanSoft, fontSize: 12)))),
+          Padding(padding: const EdgeInsets.only(bottom: 10), child: Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)), child: Text(ctrl.info!, style: const TextStyle(color: AppColors.orange, fontSize: 12)))),
         if (ctrl.isLoading)
-          const Center(child: Padding(padding: EdgeInsets.all(30), child: CircularProgressIndicator(color: AppColors.lime)))
+          const Center(child: Padding(padding: EdgeInsets.all(30), child: CircularProgressIndicator(color: AppColors.orange)))
         else if (ctrl.cases.isEmpty)
           Center(child: Padding(padding: const EdgeInsets.all(30), child: Text('Chưa có hồ sơ nào.', style: TextStyle(color: AppColors.muted))))
         else
@@ -126,10 +126,10 @@ class _CaseRow extends StatelessWidget {
     final status = (c['intake_status'] ?? 'draft').toString();
     final map = {
       'draft': AppColors.muted,
-      'files_uploaded': AppColors.cyanSoft,
+      'files_uploaded': AppColors.orangeLight,
       'extraction_completed': AppColors.needInfo,
       'profile_confirmed': AppColors.ready,
-      'analysis_completed': AppColors.review,
+      'analysis_completed': AppColors.violet,
       'processing_failed': AppColors.block,
     };
     final labelMap = {
@@ -149,16 +149,25 @@ class _CaseRow extends StatelessWidget {
         child: GlassCard(
           padding: const EdgeInsets.all(15),
           child: Row(children: [
-            Container(width: 42, height: 42, decoration: BoxDecoration(gradient: const LinearGradient(colors: [AppColors.lime, AppColors.cyan]), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?', style: const TextStyle(color: AppColors.ink900, fontWeight: FontWeight.w800)))),
+            Container(width: 42, height: 42, decoration: BoxDecoration(color: AppColors.navy, borderRadius: BorderRadius.circular(12)), child: Center(child: Text(name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)))),
             const SizedBox(width: 13),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.txt)),
               Text(id, style: GoogleFonts.jetBrainsMono(fontSize: 11, color: AppColors.muted)),
             ])),
-            StatusToken(status: AgentStatus.idle, label: label),
+            StatusToken(status: _statusFor(fg), label: label),
           ]),
         ),
       ),
     );
   }
 }
+
+AgentStatus _statusFor(Color fg) => switch (fg) {
+      AppColors.orangeLight => AgentStatus.idle,
+      AppColors.needInfo => AgentStatus.needInfo,
+      AppColors.ready => AgentStatus.ready,
+      AppColors.violet => AgentStatus.review,
+      AppColors.block => AgentStatus.block,
+      _ => AgentStatus.idle,
+    };

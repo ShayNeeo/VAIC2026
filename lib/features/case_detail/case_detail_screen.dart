@@ -41,7 +41,7 @@ class _CaseDetailScreenState extends State<CaseDetailScreen> {
               elevation: 0,
               leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppColors.txt2), onPressed: () => context.go('/queue')),
               title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Case ${widget.caseId}', style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.txt)),
+                Text('Case ${widget.caseId}', style: GoogleFonts.beVietnamPro(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.txt)),
                 const Text('Multi-Agent Decision Workspace', style: TextStyle(fontSize: 11, color: AppColors.cyanSoft)),
               ]),
               actions: [

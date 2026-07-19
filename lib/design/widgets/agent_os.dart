@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:animations/animations.dart';
 import 'package:shimmer/shimmer.dart';
 import '../theme/app_theme.dart';
 
-/// ── Agent OS building blocks ──────────────────────────────────────────────
-/// Dark-glass, neon-glow UI primitives. All screens compose from these.
+/// ── VAIC building blocks — SHB-inspired professional UI ─────────────────────
+/// Light surfaces, navy structure, orange CTAs, blue/violet analytical accents.
 
-/// Animated AI mesh backdrop — drifting cyan/violet blobs over deep space.
+/// Subtle branded backdrop — soft navy/orange glow over cool-neutral canvas.
 class AgentMeshBackground extends StatefulWidget {
   final Widget child;
   final bool showGrid;
@@ -28,23 +27,24 @@ class _AgentMeshBackgroundState extends State<AgentMeshBackground>
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       children: [
-        Positioned.fill(child: Container(color: AppColors.background)),
+        Positioned.fill(child: Container(color: dark ? AppColors.navyDark : AppColors.background)),
         AnimatedBuilder(
           animation: _c,
           builder: (_, __) => Stack(
             children: [
-              _blob(AppColors.cyan.withValues(alpha: 0.16), 0.30, -0.2 + _c.value * 0.5, 0.1 + _c.value * 0.3, 380),
-              _blob(AppColors.violet.withValues(alpha: 0.16), 0.7 + _c.value * 0.3, 0.5, 0.7 - _c.value * 0.4, 420),
-              _blob(AppColors.magenta.withValues(alpha: 0.10), 0.1, 0.6, 0.2 + _c.value * 0.4, 300),
+              _blob(AppColors.navy.withValues(alpha: dark ? 0.35 : 0.06), 0.30, -0.2 + _c.value * 0.5, 0.1 + _c.value * 0.3, 380),
+              _blob(AppColors.orange.withValues(alpha: dark ? 0.18 : 0.07), 0.7 + _c.value * 0.3, 0.5, 0.7 - _c.value * 0.4, 420),
+              _blob(AppColors.blue.withValues(alpha: dark ? 0.18 : 0.06), 0.1, 0.6, 0.2 + _c.value * 0.4, 300),
             ],
           ),
         ),
         if (widget.showGrid)
           Opacity(
-            opacity: 0.4,
-            child: CustomPaint(size: Size.infinite, painter: _GridPainter()),
+            opacity: dark ? 0.35 : 0.5,
+            child: CustomPaint(size: Size.infinite, painter: _GridPainter(dark)),
           ),
         Positioned.fill(child: widget.child),
       ],
@@ -64,23 +64,21 @@ class _AgentMeshBackgroundState extends State<AgentMeshBackground>
 }
 
 class _GridPainter extends CustomPainter {
+  final bool dark;
+  _GridPainter(this.dark);
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = AppColors.lineSoft.withValues(alpha: 0.5)..strokeWidth = 1;
+    final paint = Paint()..color = (dark ? Colors.white : AppColors.border).withValues(alpha: 0.5)..strokeWidth = 1;
     const step = 48.0;
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
+    for (double x = 0; x < size.width; x += step) canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    for (double y = 0; y < size.height; y += step) canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter old) => false;
 }
 
-/// Frosted-glass surface with neon hairline border.
+/// Frosted surface with subtle hairline border.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -98,15 +96,15 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.72),
+        color: dark ? AppColors.navySurface : AppColors.surface,
         borderRadius: BorderRadius.circular(radius),
-        border: border ? Border.all(color: (glow ?? cs.outline).withValues(alpha: 0.6)) : null,
-        boxShadow: [
-          if (glow != null) BoxShadow(color: glow!.withValues(alpha: 0.18), blurRadius: 30, offset: const Offset(0, 8)),
+        border: border ? Border.all(color: (glow ?? AppColors.border).withValues(alpha: 0.7)) : null,
+        boxShadow: const [
+          BoxShadow(blurRadius: 12, offset: Offset(0, 4), color: Color(0x0A000000)),
         ],
       ),
       child: child,
@@ -114,11 +112,11 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-/// Neon gradient pill used for brand + section acccents.
+/// Orange gradient pill used for brand + section accents.
 class NeonPill extends StatelessWidget {
   final Widget child;
   final List<Color> colors;
-  const NeonPill({super.key, required this.child, this.colors = const [AppColors.cyan, AppColors.violet]});
+  const NeonPill({super.key, required this.child, this.colors = const [AppColors.orange, AppColors.orangeDark]});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -126,13 +124,13 @@ class NeonPill extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: colors),
           borderRadius: BorderRadius.circular(999),
-          boxShadow: [BoxShadow(color: colors.first.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 4))],
+          boxShadow: [BoxShadow(color: colors.first.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 4))],
         ),
         child: child,
       );
 }
 
-/// Animated kicker that "types" then glows — AI agent feel.
+/// Section kicker with orange/blue AI accent.
 class AgentKicker extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -145,13 +143,13 @@ class AgentKicker extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [AppColors.cyan, AppColors.violet]),
+              gradient: shbOpportunityGradient,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(icon, color: AppColors.ink900, size: 15),
+            child: Icon(icon, color: Colors.white, size: 15),
           ),
           const SizedBox(width: 9),
-          Text(label.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: AppColors.cyanSoft)),
+          Text(label.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: AppColors.orange)),
         ],
       );
 }
@@ -182,15 +180,15 @@ class StatusToken extends StatelessWidget {
   }
 
   (Color, Color, IconData) _cfg(AgentStatus s) => switch (s) {
-        AgentStatus.ready => (AppColors.ready, AppColors.readyBg, Icons.check_circle_outlined),
-        AgentStatus.needInfo => (AppColors.needInfo, AppColors.needInfoBg, Icons.info_outline),
-        AgentStatus.review => (AppColors.review, AppColors.reviewBg, Icons.gavel_outlined),
-        AgentStatus.block => (AppColors.block, AppColors.blockBg, Icons.block_outlined),
-        AgentStatus.idle => (AppColors.muted, AppColors.ink700, Icons.circle_outlined),
+        AgentStatus.ready => (AppColors.success, AppColors.readyBg, Icons.check_circle_outlined),
+        AgentStatus.needInfo => (AppColors.warning, AppColors.needInfoBg, Icons.info_outline),
+        AgentStatus.review => (AppColors.violet, AppColors.reviewBg, Icons.gavel_outlined),
+        AgentStatus.block => (AppColors.error, AppColors.blockBg, Icons.block_outlined),
+        AgentStatus.idle => (AppColors.textDisabled, AppColors.border, Icons.circle_outlined),
       };
 }
 
-/// Neon metric tile with animated count-in.
+/// Metric tile with brand accent.
 class NeonMetric extends StatelessWidget {
   final String label;
   final String value;
@@ -210,7 +208,7 @@ class NeonMetric extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.muted, letterSpacing: 0.6)),
+              Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textSecondary, letterSpacing: 0.6)),
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(color: accent.withValues(alpha: 0.14), borderRadius: BorderRadius.circular(10)),
@@ -219,8 +217,8 @@ class NeonMetric extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Text(value, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.txt, letterSpacing: -1, fontFamily: 'Space Grotesk')),
-          if (sub != null) ...[const SizedBox(height: 3), Text(sub!, style: const TextStyle(fontSize: 10, color: AppColors.muted))],
+          Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: -1, fontFamily: 'BeVietnamPro')),
+          if (sub != null) ...[const SizedBox(height: 3), Text(sub!, style: TextStyle(fontSize: 10, color: AppColors.textSecondary))],
         ],
       ),
     );
@@ -271,7 +269,7 @@ class AgentPipeline extends StatelessWidget {
     final (label, icon) = _stages[i];
     final done = doneStages.contains(i);
     final active = i == activeStage;
-    final accent = active ? AppColors.cyan : done ? AppColors.lime : AppColors.subtle;
+    final accent = active ? AppColors.orange : done ? AppColors.success : AppColors.textDisabled;
     return Expanded(
       child: Column(
         children: [
@@ -281,15 +279,15 @@ class AgentPipeline extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: active || done ? const LinearGradient(colors: [AppColors.cyan, AppColors.violet]) : null,
-              color: active || done ? null : AppColors.ink700,
+              gradient: active || done ? shbOpportunityGradient : null,
+              color: active || done ? null : AppColors.surface,
               border: Border.all(color: accent.withValues(alpha: 0.7), width: 2),
-              boxShadow: active ? [BoxShadow(color: AppColors.cyan.withValues(alpha: 0.5), blurRadius: 18)] : null,
+              boxShadow: active ? [BoxShadow(color: AppColors.orange.withValues(alpha: 0.4), blurRadius: 18)] : null,
             ),
-            child: Center(child: Icon(icon, color: (active || done) ? AppColors.ink900 : AppColors.subtle, size: 22)),
+            child: Center(child: Icon(icon, color: (active || done) ? Colors.white : AppColors.textDisabled, size: 22)),
           ),
           const SizedBox(height: 8),
-          Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: active || done ? AppColors.txt : AppColors.muted)),
+          Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: active || done ? AppColors.textPrimary : AppColors.textSecondary)),
         ],
       ),
     );
@@ -302,7 +300,7 @@ class AgentPipeline extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 26),
         height: 2,
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [reached ? AppColors.cyan : AppColors.line, reached ? AppColors.violet : AppColors.line]),
+          gradient: LinearGradient(colors: [reached ? AppColors.orange : AppColors.border, reached ? AppColors.orangeDark : AppColors.border]),
         ),
       ),
     );
@@ -312,7 +310,7 @@ class AgentPipeline extends StatelessWidget {
     final (label, icon) = _stages[i];
     final done = doneStages.contains(i);
     final active = i == activeStage;
-    final accent = active ? AppColors.cyan : done ? AppColors.lime : AppColors.subtle;
+    final accent = active ? AppColors.orange : done ? AppColors.success : AppColors.textDisabled;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -322,28 +320,28 @@ class AgentPipeline extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: active || done ? const LinearGradient(colors: [AppColors.cyan, AppColors.violet]) : null,
-              color: active || done ? null : AppColors.ink700,
+              gradient: active || done ? shbOpportunityGradient : null,
+              color: active || done ? null : AppColors.surface,
               border: Border.all(color: accent, width: 2),
             ),
-            child: Center(child: Icon(icon, color: (active || done) ? AppColors.ink900 : AppColors.subtle, size: 18)),
+            child: Center(child: Icon(icon, color: (active || done) ? Colors.white : AppColors.textDisabled, size: 18)),
           ),
           const SizedBox(width: 12),
           Container(
             margin: const EdgeInsets.only(bottom: 0),
             width: 26,
             height: 2,
-            color: (i < activeStage || doneStages.contains(i)) ? AppColors.cyan : AppColors.line,
+            color: (i < activeStage || doneStages.contains(i)) ? AppColors.orange : AppColors.border,
           ),
           const SizedBox(width: 12),
-          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: active || done ? AppColors.txt : AppColors.muted)),
+          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: active || done ? AppColors.textPrimary : AppColors.textSecondary)),
         ],
       ),
     );
   }
 }
 
-/// Shimmer placeholder for loading agent panels.
+/// Shimmer placeholder for loading panels.
 class AgentShimmer extends StatelessWidget {
   final double height;
   final double? width;
@@ -352,8 +350,8 @@ class AgentShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Shimmer.fromColors(
-        baseColor: AppColors.ink700,
-        highlightColor: AppColors.ink600,
+        baseColor: AppColors.border,
+        highlightColor: AppColors.orangeLight,
         child: Container(
           width: width,
           height: height,
@@ -362,7 +360,7 @@ class AgentShimmer extends StatelessWidget {
       );
 }
 
-/// Glowing section header used across screens.
+/// Section header used across screens.
 class SectionHeader extends StatelessWidget {
   final String title;
   final String? caption;
@@ -376,16 +374,16 @@ class SectionHeader extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: AppColors.cyan.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
-            child: Icon(icon, color: AppColors.cyan, size: 18),
+            decoration: BoxDecoration(color: AppColors.orange.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(11)),
+            child: Icon(icon, color: AppColors.orange, size: 18),
           ),
           const SizedBox(width: 11),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, color: AppColors.txt)),
-                if (caption != null) ...[const SizedBox(height: 2), Text(caption!, style: const TextStyle(fontSize: 12, color: AppColors.muted))],
+                Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17, color: AppColors.textPrimary)),
+                if (caption != null) ...[const SizedBox(height: 2), Text(caption!, style: TextStyle(fontSize: 12, color: AppColors.textSecondary))],
               ],
             ),
           ),

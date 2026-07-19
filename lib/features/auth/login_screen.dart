@@ -18,9 +18,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _employee = TextEditingController(text: 'RM-999');
   final _password = TextEditingController(text: 'demo1234');
   final _personas = const [
-    ('USER-MP-001', 'Customer', 'Khách hàng doanh nghiệp', Icons.business_outlined, AppColors.lime, 'customer'),
-    ('RM-999', 'Relationship Manager', 'Quản lý quan hệ', Icons.handshake_outlined, AppColors.cyan, 'rm'),
-    ('MGR-HN-01', 'Branch Manager', 'Quản lý chi nhánh', Icons.shield_outlined, AppColors.review, 'manager'),
+    ('USER-MP-001', 'Customer', 'Khách hàng doanh nghiệp', Icons.business_outlined, AppColors.blue, 'customer'),
+    ('RM-999', 'Relationship Manager', 'Quản lý quan hệ', Icons.handshake_outlined, AppColors.orange, 'rm'),
+    ('MGR-HN-01', 'Branch Manager', 'Quản lý chi nhánh', Icons.shield_outlined, AppColors.violet, 'manager'),
   ];
   String _selected = 'RM-999';
 
@@ -83,7 +83,7 @@ class _Panel extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.all(26),
-      glow: AppColors.cyan,
+      glow: AppColors.navy,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -92,17 +92,17 @@ class _Panel extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppColors.cyan, AppColors.violet]),
+                color: AppColors.navy,
                 borderRadius: BorderRadius.circular(13),
-                boxShadow: [BoxShadow(color: AppColors.cyan.withValues(alpha: 0.4), blurRadius: 16, offset: const Offset(0, 3))],
+                
               ),
-              child: const Center(child: Icon(Icons.bolt_outlined, color: AppColors.ink900, size: 24)),
+              child: const Center(child: Icon(Icons.bolt_outlined, color: Colors.white, size: 24)),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('VAIC Agent OS', style: GoogleFonts.spaceGrotesk(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.txt)),
-                const Text('Corporate Sales Copilot', style: TextStyle(fontSize: 12, color: AppColors.cyanSoft)),
+                Text('VAIC Agent OS', style: GoogleFonts.beVietnamPro(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.txt)),
+                const Text('Corporate Sales Copilot', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               ]),
             ),
           ]),
@@ -112,14 +112,14 @@ class _Panel extends StatelessWidget {
           TextField(
             controller: employee,
             textCapitalization: TextCapitalization.characters,
-            style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+            style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
             decoration: const InputDecoration(labelText: 'Employee ID', prefixIcon: Icon(Icons.badge_outlined)),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: password,
             obscureText: true,
-            style: const TextStyle(color: AppColors.txt, fontFamily: 'Hanken Grotesk'),
+            style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
             decoration: const InputDecoration(labelText: 'Mật khẩu', prefixIcon: Icon(Icons.lock_outline)),
           ),
           const SizedBox(height: 16),
