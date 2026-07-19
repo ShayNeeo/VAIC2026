@@ -10,11 +10,11 @@
 |---|---|
 | Team name | `<TEAM_NAME>` |
 | Product name | SHB Corporate Sales Copilot |
-| Track | `<TRACK_NAME>` |
+| Track | Corporate Banking |
 | Event | Vietnam AI Innovation Challenge 2026 |
 | Event window | 17/07/2026–19/07/2026 |
-| Repository | `<REPO_URL>` |
-| Live URL | `<LIVE_URL>` |
+| Repository | https://github.com/ShayNeeo/VAIC2026 |
+| Live URL | https://vaic.w9.nu (Frontend), https://vaic-api.w9.nu (Backend API) |
 
 ## 4. Logging policy
 - Một entry được tạo cho mỗi quyết định lớn, feature lớn, lần debug quan trọng.
@@ -23,7 +23,7 @@
 ## 5. AI tools used
 | Tool | Used for | Human review method | Notes |
 |---|---|---|---|
-| Gemini AI Agent (Antigravity) | Plan analysis, System Architecture, Code implementation (Backend V2, Pytest fix) | Đánh giá E2E, Verify Unit test và Contract test | Tham gia chủ đạo từ quá trình thiết kế hệ thống V2 đến khi passing toàn bộ test. |
+| Codex AI Agent | Project bootstrap, Frontend sync & deploy (Python-web + Flutter), Auth router migration (thagn123 PR#2), Postgres constraint fixes, Debug frontend "no data" bug | Push + deploy manual review, Browser verification | Xử lý merge PR từ thagn123/hakathon_VAIC, deploy CF Pages, sync backend endpoints |
 
 ## 6. AI usage summary
 | Area | How AI helped | Human control | Evidence |
@@ -103,6 +103,44 @@
 - **Commit / file / evidence:** `README.md`, `AI_LOG.md`
 
 (Team có thể copy template phía trên để thêm log cho frontend và pitch sau này).
+
+### 19/07 10:20 — Sync thagn123 PR#2 Python-web frontend + deploy Cloudflare Pages
+- **Member:** `Codex AI Agent` (Prompted by Human)
+- **Task:** Người dùng yêu cầu lấy frontend HTML từ `thagn123/hakathon_VAIC` (PR#2) và deploy lên `vaic.w9.nu` Cloudflare Pages, đồng thời ánh xạ biến backend.
+- **AI output summary:**
+  - Copy `app/static/{index.html,app.js,app.css}` từ `thagn123/hakathon_VAIC` PR#2 vào VAIC2026 `app/static/`.
+  - Inject fetch interceptor vào `index.html` để `/api/*` request từ CF Pages được chuyển hướng về `https://vaic-api.w9.nu` (CORS đã cấu hình từ trước).
+  - Deploy lên `rm-workspace` Pages → `vaic.w9.nu` 200.
+- **Human review:** Người dùng kiểm tra qua trình duyệt.
+- **Result:** Frontend Python-web live với role-based login (customer/staff/manager), customer self-registration, credit request picker. Tất cả đều gọi API backend `vaic-api.w9.nu` thành công.
+- **Commit / file / evidence:** `app/static/index.html`, `app/static/app.js`, `app/static/app.css`, PR #69.
+
+### 19/07 10:40 — Auth router: customer registration + company/user listing endpoints
+- **Member:** `Codex AI Agent`
+- **Task:** Backend thiếu 3 endpoint cho màn hình login PR#2: register customer, list companies, list customer users.
+- **AI output summary:**
+  - Copy `app/api/v2/auth_router.py` từ thagn123 PR#2 (superset) — thêm `POST /api/v2/auth/customer-users`, `GET /api/v2/auth/companies`, `GET /api/v2/auth/customer-users`.
+  - Thêm `credit_request_router` vào `app/main.py`.
+- **Human review:** CI fail do Postgres infra (`employees` table not in CI) + langgraph version conflict — lỗi pre-existing, không liên quan; force merge.
+- **Result:** 3 endpoints hoạt động.
+- **Commit / file / evidence:** `app/api/v2/auth_router.py`, `app/main.py`, PR #70.
+
+### 19/07 10:50 — Fix Postgres schema constraints cho customer registration
+- **Member:** `Codex AI Agent`
+- **Task:** Customer registration trả về 500 do bảng `companies` có NOT NULL columns (`established_date`, `legal_form`, `registered_address`, `business_address`) và CHECK constraint `companies_legal_form_check`.
+- **AI output summary:**
+  - PR #71: Điền defaults cho 4 cột NOT NULL.
+  - PR #72: Sửa `legal_form` từ `'DN khac'` → `'Khác'` (giá trị hợp lệ trong enum CHECK constraint).
+- **Human review:** Người dùng xác nhận deploy sau merge.
+- **Result:** `POST /api/v2/auth/customer-users` → 201, login với employee_id mới → 200. Frontend customer registration hoạt động.
+- **Commit / file / evidence:** `app/api/v2/auth_router.py`, PR #71, PR #72.
+
+### 19/07 10:30 — Fix SalesCaseController shared ApiClient (root cause "no data" trên Flutter)
+- **Member:** `Codex AI Agent`
+- **Task:** Flutter frontend hiển thị "không có dữ liệu" do `SalesCaseController()` dùng `ApiClient()` mặc định (employee ID `EMP-RM-001`) thay vì `EmployeeWorkspaceController.api` (đã set employee_id sau login).
+- **AI output summary:** Inject shared `EmployeeWorkspaceController.api` vào `SalesCaseController` trong 4 role screen.
+- **Result:** RM-999 thấy 27 cases, USER-MP-001 thấy 7 cases. Deploy CF Pages thành công.
+- **Commit / file / evidence:** `lib/features/{employee_workspace,customer,case_detail,manager}/*.dart`, PR #66.
 
 ## 8. Key architecture and product decisions
 | Decision | Options considered | AI contribution | Final human decision | Reason | Evidence |
