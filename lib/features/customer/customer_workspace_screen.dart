@@ -155,10 +155,19 @@ class _CaseRow extends StatelessWidget {
               Text(name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.txt)),
               Text(id, style: GoogleFonts.jetBrainsMono(fontSize: 11, color: AppColors.muted)),
             ])),
-            StatusToken(status: AgentStatus.idle, label: label),
+            StatusToken(status: _statusFor(fg), label: label),
           ]),
         ),
       ),
     );
   }
 }
+
+AgentStatus _statusFor(Color fg) => switch (fg) {
+      AppColors.orangeLight => AgentStatus.idle,
+      AppColors.needInfo => AgentStatus.needInfo,
+      AppColors.ready => AgentStatus.ready,
+      AppColors.violet => AgentStatus.review,
+      AppColors.block => AgentStatus.block,
+      _ => AgentStatus.idle,
+    };
