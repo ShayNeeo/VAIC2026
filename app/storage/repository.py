@@ -24,6 +24,27 @@ from app.schemas.v2.shared_case_state import SharedCaseState
 from app.storage.migrations import LATEST_SCHEMA_VERSION, apply_migrations
 
 
+def _mj(model, value):
+    """Parse a JSONB column into a pydantic model.
+
+    psycopg2 returns JSONB columns already decoded (dict), whereas SQLite
+    returned them as strings. Accept both so the Postgres backend works.
+    """
+    if isinstance(value, (dict, list)):
+        return model.model_validate(value)
+    return model.model_validate_json(value)
+
+
+def _jl(value):
+    """Parse a JSONB column into a python object (dict/list).
+
+    JSONB is already decoded by psycopg2; SQLite returned a JSON string.
+    """
+    if isinstance(value, (dict, list)):
+        return value
+    return json.loads(value)
+
+
 class StateConflictError(RuntimeError):
     pass
 
@@ -339,7 +360,7 @@ class V2Repository:
             ).fetchall()
         result: List[StoredIntake] = []
         for row in rows:
-            session = IntakeSession.model_validate_json(row["state_json"])
+            session = _mj(IntakeSession, row["state_json"])
             session.version = int(row["version"])
             result.append(StoredIntake(session=session, version=int(row["version"])))
         return result
@@ -395,10 +416,10 @@ class V2Repository:
             ).fetchall()
         if include_sections:
             return [
-                (IntakeDocument.model_validate_json(row["document_json"]), json.loads(row["sections_json"]))
+                (_mj(IntakeDocument, row["document_json"]), _jl(row["sections_json"]))
                 for row in rows
             ]
-        return [IntakeDocument.model_validate_json(row["document_json"]) for row in rows]
+        return [_mj(IntakeDocument, row["document_json"]) for row in rows]
 
     def find_intake_document_by_hash(self, intake_id: str, digest: str) -> Optional[IntakeDocument]:
         with self._connect() as connection:
@@ -406,7 +427,7 @@ class V2Repository:
                 "SELECT document_json FROM case_documents WHERE intake_id=? AND sha256=?",
                 (intake_id, digest),
             ).fetchone()
-        return IntakeDocument.model_validate_json(row["document_json"]) if row else None
+        return _mj(IntakeDocument, row["document_json"]) if row else None
 
     def save_processing_job(
         self,
@@ -544,7 +565,7 @@ class V2Repository:
     def audit_events(self, case_id: str) -> List[Dict[str, Any]]:
         with self._connect() as connection:
             rows = connection.execute("SELECT * FROM audit_events WHERE case_id=? ORDER BY sequence", (case_id,)).fetchall()
-        return [{**dict(row), "payload": json.loads(row["payload_json"])} for row in rows]
+        return [{**dict(row), "payload": _jl(row["payload_json"])} for row in rows]
 
     def verify_audit_chain(self, case_id: str) -> bool:
         previous = "GENESIS"
@@ -584,7 +605,7 @@ class V2Repository:
     def get_idempotent_result(self, key: str) -> Optional[Dict[str, Any]]:
         with self._connect() as connection:
             row = connection.execute("SELECT result_json FROM idempotency_records WHERE idempotency_key=?", (key,)).fetchone()
-        return json.loads(row["result_json"]) if row else None
+        return _jl(row["result_json"]) if row else None
 
     def save_idempotent_result(self, key: str, action: str, payload_hash: str, result: Dict[str, Any]) -> Dict[str, Any]:
         with self._lock, self._connect() as connection:
@@ -594,7 +615,7 @@ class V2Repository:
                 (key, action, payload_hash, _canonical(result), datetime.now(timezone.utc).isoformat()),
             )
             row = connection.execute("SELECT result_json FROM idempotency_records WHERE idempotency_key=?", (key,)).fetchone()
-        return json.loads(row["result_json"])
+        return _jl(row["result_json"])
 
     # --- Metadata Plane Operations ---
 
@@ -633,7 +654,7 @@ class V2Repository:
                 obj = MetadataObject(
                     object_id=version.object_id,
                     type=MetadataType(row["type"]),
-                    access_control=AccessControl.model_validate_json(row["access_control_json"]),
+                    access_control=_mj(AccessControl, row["access_control_json"]),
                     created_at=datetime.fromisoformat(row["created_at"]),
                     is_active=bool(row["is_active"]),
                     current_version_id=version.version_id,
@@ -671,7 +692,7 @@ class V2Repository:
             return MetadataObject(
                 object_id=row["object_id"],
                 type=MetadataType(row["type"]),
-                access_control=AccessControl.model_validate_json(row["access_control_json"]),
+                access_control=_mj(AccessControl, row["access_control_json"]),
                 created_at=datetime.fromisoformat(row["created_at"]),
                 is_active=bool(row["is_active"]),
                 current_version_id=row["current_version_id"],
@@ -688,7 +709,7 @@ class V2Repository:
                 version_id=row["version_id"],
                 object_id=row["object_id"],
                 version_number=row["version_number"],
-                payload=json.loads(row["payload_json"]),
+                payload=_jl(row["payload_json"]),
                 content_hash=row["content_hash"],
                 previous_hash=row["previous_hash"],
                 created_at=datetime.fromisoformat(row["created_at"]),
