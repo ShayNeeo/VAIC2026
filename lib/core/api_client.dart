@@ -17,12 +17,22 @@ class ApiClient {
   final String baseUrl;
   final http.Client _client;
   String? _authToken;
+  String _employeeId = kDemoEmployeeId;
+  String _sessionId = kDemoSessionId;
 
   ApiClient({this.baseUrl = kDefaultBaseUrl, http.Client? client})
       : _client = client ?? http.Client();
 
   void setAuthToken(String token) => _authToken = token;
   void clearAuthToken() => _authToken = null;
+
+  /// Bind the authenticated employee id (and an optional session id) so every
+  /// v2 request carries the correct `x-employee-id` header. Without this the
+  /// backend sees a constant demo id and returns empty/forbidden data.
+  void setEmployeeContext({required String employeeId, String? sessionId}) {
+    _employeeId = employeeId.trim().toUpperCase();
+    if (sessionId != null && sessionId.isNotEmpty) _sessionId = sessionId;
+  }
 
   Future<String> login(String employeeId, String password) async {
     final uri = Uri.parse('$baseUrl/api/v2/auth/login');
@@ -34,6 +44,7 @@ class ApiClient {
       final token = data['access_token']?.toString();
       if (token == null || token.isEmpty) throw const AuthException('Missing access token');
       setAuthToken(token);
+      setEmployeeContext(employeeId: employeeId);
       return token;
     }
     throw AuthException(_parseError(response.body));
@@ -41,8 +52,8 @@ class ApiClient {
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
-        'x-employee-id': kDemoEmployeeId,
-        'x-session-id': kDemoSessionId,
+        'x-employee-id': _employeeId,
+        'x-session-id': _sessionId,
         if (_authToken != null) 'Authorization': 'Bearer $_authToken',
       };
 
