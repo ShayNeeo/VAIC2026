@@ -350,11 +350,11 @@ def get_my_context(identity: VerifiedIdentity = Depends(require_verified_identit
         cursor.execute("SELECT case_id FROM cases WHERE employee_id = ? ORDER BY updated_at DESC LIMIT 1", (emp_id,))
         case_row = cursor.fetchone()
         if case_row:
-            work_ctx.active_case_id = case_row[0]
+            work_ctx.active_case_id = case_row["case_id"]
         cursor.execute("SELECT item_id FROM employee_work_items WHERE employee_id = ? AND status != 'completed'", (emp_id,))
-        work_ctx.pending_task_ids = [r[0] for r in cursor.fetchall()]
+        work_ctx.pending_task_ids = [r["item_id"] for r in cursor.fetchall()]
         cursor.execute("SELECT case_id FROM cases WHERE state_json->>'status' = 'blocked'")
-        work_ctx.blocked_case_ids = [r[0] for r in cursor.fetchall()]
+        work_ctx.blocked_case_ids = [r["case_id"] for r in cursor.fetchall()]
         # Which specialist subtype(s) this employee's own pending_review
         # cases are actually waiting on -- derived from the SAME
         # risk_gate_result.required_reviewer_roles the specialist-reviews
@@ -575,19 +575,18 @@ def get_team_workload(identity: VerifiedIdentity = Depends(require_verified_iden
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT COUNT(*) FROM cases WHERE state_json->>'status' = 'blocked'")
-        blocked_count = cursor.fetchone()[0]
-    except sqlite3.OperationalError:
-        # `cases` belongs to V2Repository's schema, not this module's --
-        # tolerate it not existing yet (e.g. a fresh DB the sales-case
-        # workflow hasn't touched) rather than 500ing the whole dashboard.
+        cursor.execute("SELECT COUNT(*) AS n FROM cases WHERE state_json->>'status' = 'blocked'")
+        blocked_count = int(cursor.fetchone()["n"])
+    except Exception:
+        # `cases` belongs to V2Repository's schema, not this module's -
+        # tolerate it not existing yet rather than 500ing the dashboard.
         blocked_count = 0
-    cursor.execute("SELECT COUNT(*) FROM employee_work_items WHERE status != 'completed' AND urgency >= 0.8")
-    sla_breaches = cursor.fetchone()[0]
-    cursor.execute("SELECT feedback, COUNT(*) FROM employee_recommendation_feedback GROUP BY feedback")
-    utilization = {r[0]: r[1] for r in cursor.fetchall()}
-    cursor.execute("SELECT COUNT(DISTINCT employee_id) FROM employees")
-    cohort_size = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) AS n FROM employee_work_items WHERE status != 'completed' AND urgency >= 0.8")
+    sla_breaches = int(cursor.fetchone()["n"])
+    cursor.execute("SELECT feedback, COUNT(*) AS c FROM employee_recommendation_feedback GROUP BY feedback")
+    utilization = {r["feedback"]: r["c"] for r in cursor.fetchall()}
+    cursor.execute("SELECT COUNT(DISTINCT employee_id) AS c FROM employees")
+    cohort_size = int(cursor.fetchone()["c"])
     conn.close()
 
     return {
