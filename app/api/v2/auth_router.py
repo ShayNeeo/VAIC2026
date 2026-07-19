@@ -122,7 +122,7 @@ def register_customer_user(body: CustomerRegistrationRequest) -> CustomerRegistr
                         detail={"code": "CUSTOMER_ALREADY_EXISTS", "message": "Mã số thuế này đã có hồ sơ đăng nhập."},
                     )
                 cur.execute(
-                    "INSERT INTO companies (tax_id, company_name) VALUES (%s, %s) ON CONFLICT (tax_id) DO NOTHING",
+                    "INSERT INTO companies (tax_id, company_name, established_date, legal_form, registered_address, business_address) VALUES (%s, %s, '2024-01-01', 'DN khac', 'Chua cung cap', 'Chua cung cap') ON CONFLICT (tax_id) DO NOTHING",
                     (customer_id, attributes["company_name"]),
                 )
                 cur.execute(
