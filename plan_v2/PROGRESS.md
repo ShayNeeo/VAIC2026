@@ -35,6 +35,8 @@
 | V2-016 | Independent RAG MCP server | Done | Official MCP client/server transport, 4 tools, persistent 3-source/19-chunk index, ACL/auth/audit tests | Hash embedding + SQLite + synthetic corpus; production backend/auth/data còn mở |
 | V2-017 | Complexity Router + Risk & Guardrail Gate as named components | Done | `app/workflow/router.py` (`ComplexityRouter`), `app/workflow/risk_gate.py` (`RiskGuardrailGate`), `risk_gate_result` in `SharedCaseState`/JSON contract, `tests/unit/test_v2_risk_gate_and_router.py`, `docs/SHB_MULTI_AGENT_WORKFLOW_DIAGRAM_MAPPING.md` | Product/Compliance/Operations stay sequential by design (Compliance genuinely needs Product's product_ids first — see mapping doc section 3); this is a scoped, spec-aligned deviation from a literal reading of the diagram's parallel boxes, not an oversight |
 | V2-018–025 | Intelligent Expert Agent collaboration upgrade | Done cho synthetic local MVP | LangGraph Product/Credit/Insurance, immutable manifests, exact tool allowlist, typed findings/synthesis, Agent Knowledge Console, AI Decision Log và E2E approval/execute tests | LLM/MCP thật, dữ liệu thật và security sign-off production vẫn chưa có; Legal/Eligibility và Operations giữ deterministic |
+| V2-026 | Customer credit request → Agent appraisal → Credit Specialist final decision | Done cho synthetic local MVP | PostgreSQL migration, `/api/v2/credit-requests`, Customer form, Credit Specialist approval queue, appraisal/unit/API smoke tests | Agent appraisal là deterministic screening; chưa thay thế underwriting/risk policy thật |
+| V2-027 | RM forward gate + second agent (service advisory) | Done cho synthetic local MVP | Migration 002, `WithRM`→`PendingApproval`, `POST /forward`, RM UI queue, service recommend unit + API smoke | Service advisory rule-based; chưa tick chọn dịch vụ khi approve |
 
 ## Decision log
 
@@ -52,6 +54,7 @@
 - Expert Agent không được yêu cầu hoặc lưu Chain-of-Thought; chỉ lưu decision rationale summary, facts/inferences/unknowns và evidence refs đã sanitize.
 - Agent role/tool permission do immutable manifest + trusted runtime identity quyết định; system prompt không phải authorization boundary.
 - Collaboration đi qua Coordinator bằng typed message; hard rule, Evidence Validator, Risk Gate và Approval không bị LLM/Coordinator override.
+- Credit request Agent chỉ đưa khuyến nghị có giải thích; `credit:final_approve` thuộc Credit Specialist và luôn yêu cầu thao tác UI/API rõ ràng cùng lý do.
 
 ## Verification log
 
