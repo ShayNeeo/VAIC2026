@@ -8,12 +8,24 @@ on:
 jobs:
   python-tests:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vaic
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       # Embeddings default key-free "local" provider so CI runs offline
-      # / zero API keys reproducible. Set KNOWLEDGE_EMBEDDING_PROVIDER
-      # / RAG_MCP_EMBEDDING_PROVIDER to "gemini" (Google AI Studio key
-      # GOOGLE_API_KEY, gemini-embedding-2) or "openai" production semantic
-      # recall. Intent extraction stays deterministic (INTENT_USE_LLM=false).
+      # / zero API keys reproducible.
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/vaic"
       INTENT_USE_LLM: "false"
       DEFAULT_LLM: "google"
       GOOGLE_MODEL: "gemma-4-31b-it"

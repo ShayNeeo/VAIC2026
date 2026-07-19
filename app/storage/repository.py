@@ -1,14 +1,23 @@
-"""PostgreSQL-backed V2 repository with optimistic locking and hash-chained audit."""
+"""PostgreSQL-backed V2 repository with optimistic locking and hash-chained audit.
+
+When settings.DATABASE_URL is set the backend is PostgreSQL (see app/storage/pg.py).
+When it is unset (offline / local dev / CI unit tests) the repository
+falls back to a SQLite file at ``db_path`` (default settings.V2_DB_PATH),
+so the ``db_path`` argument is genuinely honored for backward compatibility
+instead of always demanding a live Postgres connection.
+"""
 
 from __future__ import annotations
 
 import hashlib
 import json
+import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from threading import RLock
 from typing import Any, Dict, List, Optional
 
+from app.config import settings
 from app.storage import pg
 from app.storage.pg import Json
 from app.schemas.v2.intake import CustomerBusinessSnapshot, ExtractedField, FieldConflict, IntakeDocument, IntakeSession
@@ -67,31 +76,40 @@ def _canonical(value: Any) -> str:
 
 class V2Repository:
     def __init__(self, db_path: str | None = None) -> None:
-        # db_path is accepted for backward compatibility with callers that
-        # still pass settings.V2_DB_PATH, but the backend is PostgreSQL now:
-        # the connection target comes from settings.DATABASE_URL (see
-        # app/storage/pg.py). The argument is otherwise ignored.
-        self.db_path = db_path
+        # db_path is honored: when DATABASE_URL is unset the repository
+        # uses a SQLite file at db_path (default settings.V2_DB_PATH),
+        # keeping offline / local-dev / CI unit tests working. When
+        # DATABASE_URL is set the PostgreSQL backend is used instead.
+        self.db_path = db_path or settings.V2_DB_PATH
         self._lock = RLock()
         self._initialize()
 
     def _connect(self):
+        if not settings.DATABASE_URL:
+            # Offline / local-dev fallback: SQLite at db_path.
+            return sqlite3.connect(self.db_path)
         return pg.connect()
 
     def _initialize(self) -> None:
+        pg = bool(settings.DATABASE_URL)
+        # Dialect-aware DDL: Postgres uses JSONB / BIGSERIAL / BIGINT,
+        # SQLite uses TEXT / INTEGER AUTOINCREMENT-equivalent.
+        json_col = "JSONB" if pg else "TEXT"
+        big_serial = "BIGSERIAL" if pg else "INTEGER"
+        big_int = "BIGINT" if pg else "INTEGER"
         with self._lock, self._connect() as connection:
             connection.execute(
-                """
+                f"""
                 CREATE TABLE IF NOT EXISTS cases (
                     case_id TEXT PRIMARY KEY,
                     employee_id TEXT NOT NULL,
                     customer_id TEXT,
                     version INTEGER NOT NULL,
-                    state_json JSONB NOT NULL,
+                    state_json {json_col} NOT NULL,
                     updated_at TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS audit_events (
-                    sequence BIGSERIAL PRIMARY KEY,
+                    sequence {big_serial} PRIMARY KEY,
                     event_id TEXT UNIQUE NOT NULL,
                     case_id TEXT NOT NULL,
                     trace_id TEXT NOT NULL,
@@ -107,7 +125,7 @@ class V2Repository:
                     case_id TEXT NOT NULL,
                     approver_id TEXT NOT NULL,
                     payload_hash TEXT NOT NULL,
-                    expires_at BIGINT NOT NULL,
+                    expires_at {big_int} NOT NULL,
                     status TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS idempotency_records (
@@ -135,8 +153,7 @@ class V2Repository:
                     previous_hash TEXT,
                     created_at TEXT NOT NULL,
                     created_by TEXT NOT NULL,
-                    source_system TEXT NOT NULL,
-                    FOREIGN KEY (object_id) REFERENCES metadata_objects(object_id)
+                    source_system TEXT NOT NULL
                 );
                 CREATE TABLE IF NOT EXISTS metadata_relations (
                     relation_id TEXT PRIMARY KEY,

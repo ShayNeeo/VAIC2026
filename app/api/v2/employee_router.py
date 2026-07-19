@@ -129,7 +129,10 @@ ensure_employee_copilot_demo_personas()
 # (read-only cross-module query); ensure it exists even if this module is
 # the first thing to touch settings.V2_DB_PATH (e.g. a fresh isolated test
 # DB, or the employee layer being hit before any sales-case flow has run).
-V2Repository(settings.V2_DB_PATH)
+# Skip when DATABASE_URL is unset (offline/test mode) so importing this
+# module does not require a live Postgres connection.
+if settings.DATABASE_URL:
+    V2Repository(settings.V2_DB_PATH)
 
 
 def _repo() -> V2Repository:
@@ -350,7 +353,7 @@ def get_my_context(identity: VerifiedIdentity = Depends(require_verified_identit
             work_ctx.active_case_id = case_row[0]
         cursor.execute("SELECT item_id FROM employee_work_items WHERE employee_id = ? AND status != 'completed'", (emp_id,))
         work_ctx.pending_task_ids = [r[0] for r in cursor.fetchall()]
-        cursor.execute("SELECT case_id FROM cases WHERE json_extract(state_json, '$.status') = 'blocked'")
+        cursor.execute("SELECT case_id FROM cases WHERE state_json->>'status' = 'blocked'")
         work_ctx.blocked_case_ids = [r[0] for r in cursor.fetchall()]
         # Which specialist subtype(s) this employee's own pending_review
         # cases are actually waiting on -- derived from the SAME
@@ -359,7 +362,7 @@ def get_my_context(identity: VerifiedIdentity = Depends(require_verified_identit
         # not a hardcoded "always legal_specialist" guess (see
         # docs/EMPLOYEE_ROLE_DESIGN_EVALUATION_REPORT.md §9).
         cursor.execute(
-            "SELECT state_json FROM cases WHERE employee_id = ? AND json_extract(state_json, '$.status') = 'pending_review'",
+            "SELECT state_json FROM cases WHERE employee_id = ? AND state_json->>'status' = 'pending_review'",
             (emp_id,),
         )
         waiting_roles: set[str] = set()
@@ -572,7 +575,7 @@ def get_team_workload(identity: VerifiedIdentity = Depends(require_verified_iden
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT COUNT(*) FROM cases WHERE json_extract(state_json, '$.status') = 'blocked'")
+        cursor.execute("SELECT COUNT(*) FROM cases WHERE state_json->>'status' = 'blocked'")
         blocked_count = cursor.fetchone()[0]
     except sqlite3.OperationalError:
         # `cases` belongs to V2Repository's schema, not this module's --
