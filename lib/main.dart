@@ -34,7 +34,7 @@ class AgentApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: lightAgentTheme(),
       darkTheme: agentTheme(Brightness.dark),
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.light,
       routerConfig: _router,
     );
   }

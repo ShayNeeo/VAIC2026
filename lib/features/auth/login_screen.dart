@@ -34,15 +34,29 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<EmployeeWorkspaceController>(
-      builder: (context, controller, _) => AgentMeshBackground(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Center(
+      builder: (context, controller, _) => Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFF36F21), Color(0xFFE65100)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 460),
-                child: _Panel(controller: controller, employee: _employee, password: _password, personas: _personas, selected: _selected, onPick: (p) => setState(() => _selected = p), onSubmit: () => _submit(context)),
+                child: _Panel(
+                  controller: controller,
+                  employee: _employee,
+                  password: _password,
+                  personas: _personas,
+                  selected: _selected,
+                  onPick: (p) => setState(() => _selected = p),
+                  onSubmit: () => _submit(context),
+                ),
               ),
             ),
           ),
@@ -77,102 +91,213 @@ class _Panel extends StatelessWidget {
   final ValueChanged<String> onPick;
   final VoidCallback onSubmit;
 
-  const _Panel({required this.controller, required this.employee, required this.password, required this.personas, required this.selected, required this.onPick, required this.onSubmit});
+  const _Panel({
+    required this.controller,
+    required this.employee,
+    required this.password,
+    required this.personas,
+    required this.selected,
+    required this.onPick,
+    required this.onSubmit,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(26),
-      glow: AppColors.navy,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: AppColors.navy,
-                borderRadius: BorderRadius.circular(13),
-                
-              ),
-              child: const Center(child: Icon(Icons.bolt_outlined, color: Colors.white, size: 24)),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('VAIC Agent OS', style: GoogleFonts.beVietnamPro(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.txt)),
-                const Text('Corporate Sales Copilot', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-              ]),
-            ),
-          ]),
-          const SizedBox(height: 20),
-          const AgentKicker(label: 'Verified Identity', icon: Icons.verified_user_outlined),
-          const SizedBox(height: 18),
-          TextField(
-            controller: employee,
-            textCapitalization: TextCapitalization.characters,
-            style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
-            decoration: const InputDecoration(labelText: 'Employee ID', prefixIcon: Icon(Icons.badge_outlined)),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: password,
-            obscureText: true,
-            style: const TextStyle(color: AppColors.txt, fontFamily: 'BeVietnamPro'),
-            decoration: const InputDecoration(labelText: 'Mật khẩu', prefixIcon: Icon(Icons.lock_outline)),
-          ),
-          const SizedBox(height: 16),
-          const Text('HOẶC CHỌN PERSONA DEMO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.6, color: AppColors.muted)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: personas.map((p) {
-              final active = selected == p.$1;
-              return InkWell(
-                onTap: () {
-                  onPick(p.$1);
-                  employee.text = p.$1;
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+    return Card(
+      color: Colors.white,
+      elevation: 12,
+      shadowColor: Colors.black.withValues(alpha: 0.15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: active ? p.$5.withValues(alpha: 0.16) : AppColors.ink800,
-                    borderRadius: BorderRadius.circular(11),
-                    border: Border.all(color: active ? p.$5 : AppColors.line),
+                    color: AppColors.orange,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.orange.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(p.$4, size: 16, color: active ? p.$5 : AppColors.muted),
-                    const SizedBox(width: 7),
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(p.$1, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: active ? AppColors.txt : AppColors.txt2)),
-                      Text(p.$3, style: const TextStyle(fontSize: 9, color: AppColors.muted)),
-                    ]),
-                  ]),
+                  child: const Center(
+                    child: Icon(Icons.bolt_outlined, color: Colors.white, size: 26),
+                  ),
                 ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 20),
-          if (controller.error != null) ...[
-            Container(
-              padding: const EdgeInsets.all(11),
-              decoration: BoxDecoration(color: AppColors.blockBg, borderRadius: BorderRadius.circular(11), border: Border.all(color: AppColors.block.withValues(alpha: 0.5))),
-              child: Text(controller.error!, style: const TextStyle(color: AppColors.block, fontSize: 12)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'VAIC Agent OS',
+                        style: GoogleFonts.beVietnamPro(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.orangeDark,
+                        ),
+                      ),
+                      const Text(
+                        'Corporate Sales Copilot',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            const AgentKicker(label: 'Xác thực danh tính', icon: Icons.verified_user_outlined),
+            const SizedBox(height: 20),
+            TextField(
+              controller: employee,
+              textCapitalization: TextCapitalization.characters,
+              style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'BeVietnamPro'),
+              decoration: const InputDecoration(
+                labelText: 'Mã nhân viên / Khách hàng',
+                prefixIcon: Icon(Icons.badge_outlined, color: AppColors.orange),
+                filled: true,
+                fillColor: Color(0xFFFFFDFB),
+              ),
             ),
             const SizedBox(height: 14),
+            TextField(
+              controller: password,
+              obscureText: true,
+              style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'BeVietnamPro'),
+              decoration: const InputDecoration(
+                labelText: 'Mật khẩu',
+                prefixIcon: Icon(Icons.lock_outline, color: AppColors.orange),
+                filled: true,
+                fillColor: Color(0xFFFFFDFB),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'HOẶC CHỌN PERSONA DEMO',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.6,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: personas.map((p) {
+                final active = selected == p.$1;
+                return InkWell(
+                  onTap: () {
+                    onPick(p.$1);
+                    employee.text = p.$1;
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: active ? AppColors.orangeLight : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: active ? AppColors.orange : AppColors.border,
+                        width: active ? 1.5 : 1.0,
+                      ),
+                      boxShadow: active
+                          ? [
+                              BoxShadow(
+                                color: AppColors.orange.withValues(alpha: 0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(p.$4, size: 16, color: active ? AppColors.orange : AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.$1,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: active ? AppColors.orangeDark : AppColors.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              p.$3,
+                              style: const TextStyle(fontSize: 9, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            if (controller.error != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.blockBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.block.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  controller.error!,
+                  style: const TextStyle(color: AppColors.block, fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            FilledButton.icon(
+              onPressed: controller.isLoading ? null : onSubmit,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: controller.isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.login),
+              label: Text(
+                controller.isLoading ? 'Đang xác thực…' : 'Đăng nhập Workspace',
+                style: GoogleFonts.beVietnamPro(fontWeight: FontWeight.w700, fontSize: 14),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Demo mode · RM-999 / demo1234 · dữ liệu synthetic',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            ),
           ],
-          FilledButton.icon(
-            onPressed: controller.isLoading ? null : onSubmit,
-            icon: controller.isLoading
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink900))
-                : const Icon(Icons.login),
-            label: Text(controller.isLoading ? 'Đang xác thực…' : 'Đăng nhập Workspace'),
-          ),
-          const SizedBox(height: 12),
-          const Text('Demo mode · RM-999 / demo1234 · dữ liệu synthetic', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: AppColors.muted)),
-        ],
+        ),
       ),
     );
   }
