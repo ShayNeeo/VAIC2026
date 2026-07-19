@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.v2.router import router as v2_router
 from app.api.v2.auth_router import router as auth_router
+from app.api.v2.credit_request_router import router as credit_request_router
 from app.api.v2.employee_router import case_action_router
 from app.api.v2.employee_router import knowledge_router
 from app.api.v2.employee_router import recommendation_router
@@ -45,6 +46,7 @@ app.add_middleware(
 )
 app.include_router(v2_router)
 app.include_router(auth_router, prefix="/api/v2")
+app.include_router(credit_request_router, prefix="/api/v2")
 app.include_router(employee_router, prefix="/api/v2")
 app.include_router(recommendation_router, prefix="/api/v2")
 app.include_router(case_action_router, prefix="/api/v2")
