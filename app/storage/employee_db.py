@@ -29,7 +29,14 @@ def get_db_connection():
 
 
 def init_employee_db() -> None:
-    """Initialize employee tables and seed mock data."""
+    """Initialize employee tables and seed mock data.
+
+    No-ops when DATABASE_URL is not configured (offline/test mode) so
+    importing this module (which happens at FastAPI startup AND at
+    pytest collection) does not hard-fail without a Postgres DSN.
+    """
+    if not settings.DATABASE_URL:
+        return
     conn = get_db_connection()
     cursor = conn.cursor()
 
